@@ -65,4 +65,5 @@ class DefaultFirebaseOptions {
     storageBucket: 'fit-app-82c38.firebasestorage.app',
     iosBundleId: 'com.example.fitApp',
   );
+
 }

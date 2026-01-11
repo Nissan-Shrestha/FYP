@@ -26,9 +26,7 @@ class _SplashScreenState extends State<SplashScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: Center(
-        child: Text('Splash Screen', style: TextStyle(fontSize: 24)),
-      ),
+      body: Center(child: Image.asset("assets/icons/fit logo.jpg")),
     );
   }
 }

@@ -150,9 +150,7 @@ class _LoginScreenState extends State<LoginScreen> {
                 onTap: () {
                   Navigator.push(
                     context,
-                    MaterialPageRoute(
-                      builder: (_) => const RegistrationScreen(),
-                    ),
+                    MaterialPageRoute(builder: (_) => RegistrationScreen()),
                   );
                 },
                 child: RichText(
