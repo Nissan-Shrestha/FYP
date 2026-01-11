@@ -50,19 +50,19 @@ class DefaultFirebaseOptions {
   }
 
   static const FirebaseOptions android = FirebaseOptions(
-    apiKey: 'AIzaSyDqgkyQdF7DEbS8tCCFmvIKvoUtMRn1LsQ',
-    appId: '1:471495733562:android:45e8e567a74e21c9e8a003',
-    messagingSenderId: '471495733562',
-    projectId: 'fit-app-82c38',
-    storageBucket: 'fit-app-82c38.firebasestorage.app',
+    apiKey: 'AIzaSyBUgoG2hsr6kcUNAkG-FQCaHCplv5VVx84',
+    appId: '1:382773239202:android:114609cb72532c01e326fb',
+    messagingSenderId: '382773239202',
+    projectId: 'fit-app-auth-b7c35',
+    storageBucket: 'fit-app-auth-b7c35.firebasestorage.app',
   );
 
   static const FirebaseOptions ios = FirebaseOptions(
-    apiKey: 'AIzaSyABRgb0KpTxgiIM6fveIpwntiCD-ev7qdE',
-    appId: '1:471495733562:ios:36ba66b25b5c3f61e8a003',
-    messagingSenderId: '471495733562',
-    projectId: 'fit-app-82c38',
-    storageBucket: 'fit-app-82c38.firebasestorage.app',
+    apiKey: 'AIzaSyCXfwUFXh6P846xmm3D4JO6SgjqBYAmc4U',
+    appId: '1:382773239202:ios:d0fd6362091afb5de326fb',
+    messagingSenderId: '382773239202',
+    projectId: 'fit-app-auth-b7c35',
+    storageBucket: 'fit-app-auth-b7c35.firebasestorage.app',
     iosBundleId: 'com.example.fitApp',
   );
 
