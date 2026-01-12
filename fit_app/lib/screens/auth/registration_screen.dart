@@ -13,6 +13,7 @@ class RegistrationScreen extends StatefulWidget {
 
 class _RegistrationScreenState extends State<RegistrationScreen> {
   final _formKey = GlobalKey<FormState>();
+
   final _usernameController = TextEditingController();
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
@@ -27,19 +28,25 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
     super.dispose();
   }
 
-  void _register(AuthViewModel authVM) async {
+  void _register(AuthViewmodel authVM) async {
     if (_formKey.currentState!.validate()) {
-      await authVM.register(_emailController.text, _passwordController.text);
+      // Call the correct ViewModel method
+      await authVM.signUp(
+        _emailController.text.trim(),
+        _passwordController.text.trim(),
+        _usernameController.text.trim(),
+      );
 
-      if (authVM.user != null) {
-        Navigator.pop(context); // go back to login after registration
+      // Navigate back if registration succeeded
+      if (authVM.user != null && mounted) {
+        Navigator.pop(context);
       }
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    final authVM = Provider.of<AuthViewModel>(context);
+    final authVM = context.watch<AuthViewmodel>();
 
     return Scaffold(
       resizeToAvoidBottomInset: false,
@@ -54,7 +61,7 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
                 width: 100,
                 child: Image.asset("assets/icons/fit logo.jpg"),
               ),
-              SizedBox(height: 25),
+              const SizedBox(height: 25),
               Text(
                 "Create a new account to get started",
                 textAlign: TextAlign.center,
@@ -63,7 +70,7 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
                   fontWeight: FontWeight.w600,
                 ),
               ),
-              SizedBox(height: 25),
+              const SizedBox(height: 25),
 
               // Username
               TextFormField(
@@ -78,16 +85,13 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
                     borderRadius: BorderRadius.circular(100),
                     borderSide: BorderSide.none,
                   ),
-                  contentPadding: const EdgeInsets.symmetric(
-                    horizontal: 16,
-                    vertical: 14,
-                  ),
+                  contentPadding:
+                      const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
                 ),
-                validator: (value) => (value == null || value.isEmpty)
-                    ? 'Enter a username'
-                    : null,
+                validator: (value) =>
+                    (value == null || value.isEmpty) ? 'Enter a username' : null,
               ),
-              SizedBox(height: 25),
+              const SizedBox(height: 25),
 
               // Email
               TextFormField(
@@ -102,16 +106,14 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
                     borderRadius: BorderRadius.circular(100),
                     borderSide: BorderSide.none,
                   ),
-                  contentPadding: const EdgeInsets.symmetric(
-                    horizontal: 16,
-                    vertical: 14,
-                  ),
+                  contentPadding:
+                      const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
                 ),
                 validator: (value) => (value == null || !value.contains('@'))
                     ? 'Enter a valid email'
                     : null,
               ),
-              SizedBox(height: 25),
+              const SizedBox(height: 25),
 
               // Password
               TextFormField(
@@ -127,16 +129,14 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
                     borderRadius: BorderRadius.circular(100),
                     borderSide: BorderSide.none,
                   ),
-                  contentPadding: const EdgeInsets.symmetric(
-                    horizontal: 16,
-                    vertical: 14,
-                  ),
+                  contentPadding:
+                      const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
                 ),
                 validator: (value) => (value == null || value.length < 6)
                     ? 'Password too short'
                     : null,
               ),
-              SizedBox(height: 25),
+              const SizedBox(height: 25),
 
               // Confirm Password
               TextFormField(
@@ -152,65 +152,63 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
                     borderRadius: BorderRadius.circular(100),
                     borderSide: BorderSide.none,
                   ),
-                  contentPadding: const EdgeInsets.symmetric(
-                    horizontal: 16,
-                    vertical: 14,
-                  ),
+                  contentPadding:
+                      const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
                 ),
-                validator: (value) => (value != _passwordController.text)
-                    ? 'Passwords do not match'
-                    : null,
+                validator: (value) =>
+                    (value != _passwordController.text)
+                        ? 'Passwords do not match'
+                        : null,
               ),
-              SizedBox(height: 30),
+              const SizedBox(height: 30),
 
               // Register button
-              if (authVM.isLoading)
-                const CircularProgressIndicator()
-              else
-                GestureDetector(
-                  onTap: () => _register(authVM),
-                  child: Container(
-                    width: double.maxFinite,
-                    height: 60,
-                    decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(100),
-                      color: const Color(0xff00A300),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withOpacity(0.2),
-                          blurRadius: 8,
-                          spreadRadius: 2,
-                          offset: const Offset(0, 4),
+              authVM.isLoading
+                  ? const CircularProgressIndicator()
+                  : GestureDetector(
+                      onTap: () => _register(authVM),
+                      child: Container(
+                        width: double.maxFinite,
+                        height: 60,
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(100),
+                          color: const Color(0xff00A300),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withOpacity(0.2),
+                              blurRadius: 8,
+                              spreadRadius: 2,
+                              offset: const Offset(0, 4),
+                            ),
+                          ],
                         ),
-                      ],
-                    ),
-                    child: Center(
-                      child: Text(
-                        "Create Account",
-                        style: GoogleFonts.caveat(
-                          fontSize: 24,
-                          fontWeight: FontWeight.w800,
-                          color: Colors.white,
+                        child: Center(
+                          child: Text(
+                            "Create Account",
+                            style: GoogleFonts.caveat(
+                              fontSize: 24,
+                              fontWeight: FontWeight.w800,
+                              color: Colors.white,
+                            ),
+                          ),
                         ),
                       ),
                     ),
-                  ),
-                ),
-
-              SizedBox(height: 25),
+              const SizedBox(height: 25),
 
               // Show error
               if (authVM.error != null)
                 Text(authVM.error!, style: const TextStyle(color: Colors.red)),
 
-              SizedBox(height: 25),
+              const SizedBox(height: 25),
 
               // Go to Login
               GestureDetector(
                 onTap: () {
                   Navigator.push(
                     context,
-                    MaterialPageRoute(builder: (_) => const LoginScreen()),
+                    MaterialPageRoute(
+                        builder: (_) => const LoginScreen()),
                   );
                 },
                 child: RichText(
@@ -222,9 +220,9 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
                       fontWeight: FontWeight.w400,
                     ),
                     children: [
-                      TextSpan(
+                      const TextSpan(
                         text: "  Login",
-                        style: const TextStyle(
+                        style: TextStyle(
                           color: Colors.green,
                           fontWeight: FontWeight.w800,
                         ),

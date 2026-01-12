@@ -43,4 +43,39 @@ class AuthService {
       throw e;
     }
   }
+
+  /// Signs in an existing user with email and password.
+  ///
+  /// Returns a [UserModel] if login succeeds.
+  /// Throws a [FirebaseAuthException] if login fails.
+  Future<UserModel?> signIn(String email, String password) async {
+    try {
+      UserCredential result = await _auth.signInWithEmailAndPassword(
+        email: email,
+        password: password,
+      );
+
+      return UserModel.fromFirebaseUser(result.user!);
+    } catch (e) {
+      throw e;
+    }
+  }
+
+  /// Signs out the currently logged-in user.
+  Future<void> signOut() async {
+    await _auth.signOut();
+  }
+
+  /// Listens to authentication state changes.
+  /// Emits a [UserModel] when logged in, and `null` when logged out.
+ Stream<UserModel?> get user {
+  return _auth.authStateChanges().map((User? firebaseUser) {
+    if (firebaseUser != null) {
+      return UserModel.fromFirebaseUser(firebaseUser);
+    } else {
+      return null;
+    }
+  });
+}
+
 }

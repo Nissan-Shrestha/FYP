@@ -24,9 +24,9 @@ class _LoginScreenState extends State<LoginScreen> {
     super.dispose();
   }
 
-  void _login(AuthViewModel authVM) async {
+  void _login(AuthViewmodel authVM) async {
     if (_formKey.currentState!.validate()) {
-      await authVM.login(_emailController.text, _passwordController.text);
+      await authVM.signIn(_emailController.text, _passwordController.text);
       if (authVM.user != null) {
         Navigator.pushReplacement(
           context,
@@ -38,7 +38,7 @@ class _LoginScreenState extends State<LoginScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final authVM = Provider.of<AuthViewModel>(context);
+    final authVM = Provider.of<AuthViewmodel>(context);
 
     return Scaffold(
       body: SingleChildScrollView(
