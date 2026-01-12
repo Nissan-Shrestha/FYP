@@ -15,10 +15,12 @@ class _SplashScreenState extends State<SplashScreen> {
   void initState() {
     super.initState();
 
-    Timer(const Duration(seconds: 2), () {
+    // Wait 2 seconds, then navigate
+    Future.delayed(const Duration(seconds: 2), () {
+      if (!mounted) return; // Safety check: only navigate if widget is alive
       Navigator.pushReplacement(
         context,
-        MaterialPageRoute(builder: (context) => LoginScreen()),
+        MaterialPageRoute(builder: (_) => LoginScreen()),
       );
     });
   }
