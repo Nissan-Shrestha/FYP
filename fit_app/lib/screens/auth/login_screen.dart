@@ -1,9 +1,9 @@
+import 'package:fit_app/screens/nav/navigation_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../viewmodels/auth_viewmodel.dart';
 import 'registration_screen.dart';
-import '../home/homescreen.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -30,7 +30,7 @@ class _LoginScreenState extends State<LoginScreen> {
       if (authVM.user != null) {
         Navigator.pushReplacement(
           context,
-          MaterialPageRoute(builder: (_) => Homescreen()),
+          MaterialPageRoute(builder: (_) => NavigationScreen()),
         );
       }
     }
