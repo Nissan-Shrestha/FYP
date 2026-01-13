@@ -35,7 +35,7 @@ class AuthService {
 
       User user = result.user!;
 
-      await user.displayName;
+      await user.updateDisplayName(username);
       await user.reload();
 
       return UserModel.fromFirebaseUser(_auth.currentUser!);
@@ -68,14 +68,13 @@ class AuthService {
 
   /// Listens to authentication state changes.
   /// Emits a [UserModel] when logged in, and `null` when logged out.
- Stream<UserModel?> get user {
-  return _auth.authStateChanges().map((User? firebaseUser) {
-    if (firebaseUser != null) {
-      return UserModel.fromFirebaseUser(firebaseUser);
-    } else {
-      return null;
-    }
-  });
-}
-
+  Stream<UserModel?> get user {
+    return _auth.authStateChanges().map((User? firebaseUser) {
+      if (firebaseUser != null) {
+        return UserModel.fromFirebaseUser(firebaseUser);
+      } else {
+        return null;
+      }
+    });
+  }
 }
