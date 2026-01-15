@@ -12,12 +12,23 @@ class AuthViewmodel extends ChangeNotifier {
   bool get isLoading => _isLoading;
   String? get error => _error;
 
+  // Listen to Firebase auth changes immediately on ViewModel creation
+  // This ensures that the ViewModel always knows the current user,
+  // even after the app restarts.
+  AuthViewmodel() {
+    _authService.user.listen((user) {
+      _user = user;          // update the ViewModel's _user whenever Firebase state changes
+      notifyListeners();     // rebuild UI whenever user state changes
+    });
+  }
+
   Future<void> signIn(String email, String password) async {
     _isLoading = true;
     _error = null;
     notifyListeners();
     try {
-      _user = await _authService.signIn(email, password);
+      // Firebase authStateChanges() will automatically update _user
+      await _authService.signIn(email, password);
     } catch (e) {
       _error = e.toString();
     } finally {
@@ -30,8 +41,8 @@ class AuthViewmodel extends ChangeNotifier {
     _isLoading = true;
     _error = null;
     notifyListeners();
-    try {
-      _user = await _authService.signUp(email, password, username);
+    try {      
+      await _authService.signUp(email, password, username);
     } catch (e) {
       _error = e.toString();
     } finally {
@@ -42,7 +53,6 @@ class AuthViewmodel extends ChangeNotifier {
 
   Future<void> signOut() async {
     await _authService.signOut();
-    _user = null;
-    notifyListeners();
+   
   }
 }
