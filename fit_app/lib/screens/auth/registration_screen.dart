@@ -30,14 +30,12 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
 
   void _register(AuthViewmodel authVM) async {
     if (_formKey.currentState!.validate()) {
-      // Call the correct ViewModel method
       await authVM.signUp(
         _emailController.text.trim(),
         _passwordController.text.trim(),
         _usernameController.text.trim(),
       );
 
-      // Navigate back if registration succeeded
       if (authVM.user != null && mounted) {
         Navigator.pop(context);
       }
@@ -56,12 +54,31 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
           key: _formKey,
           child: Column(
             children: [
-              SizedBox(
-                height: 100,
-                width: 100,
-                child: Image.asset("assets/icons/fit logo.jpg"),
+              SizedBox(height: 50),
+
+              /// LOGO CARD (matched to login)
+              Container(
+                height: 120,
+                width: 120,
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(28),
+                  color: Colors.white,
+                  image: const DecorationImage(
+                    image: AssetImage("assets/icons/fit logo.jpg"),
+                    fit: BoxFit.cover,
+                  ),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black26,
+                      blurRadius: 12,
+                      offset: Offset(0, 6),
+                    ),
+                  ],
+                ),
               ),
+
               const SizedBox(height: 25),
+
               Text(
                 "Create a new account to get started",
                 textAlign: TextAlign.center,
@@ -70,99 +87,152 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
                   fontWeight: FontWeight.w600,
                 ),
               ),
+
               const SizedBox(height: 25),
 
-              // Username
-              TextFormField(
-                controller: _usernameController,
-                decoration: InputDecoration(
-                  hintText: 'Username',
-                  hintStyle: GoogleFonts.caveat(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w400,
-                  ),
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(100),
-                    borderSide: BorderSide.none,
-                  ),
-                  contentPadding:
-                      const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+              /// USERNAME
+              Container(
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(100),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.12),
+                      blurRadius: 8,
+                      offset: const Offset(0, 4),
+                    ),
+                  ],
                 ),
-                validator: (value) =>
-                    (value == null || value.isEmpty) ? 'Enter a username' : null,
+                child: TextFormField(
+                  controller: _usernameController,
+                  decoration: InputDecoration(
+                    hintText: 'Username',
+                    hintStyle: GoogleFonts.caveat(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w400,
+                    ),
+                    border: InputBorder.none,
+                    contentPadding: const EdgeInsets.symmetric(
+                      horizontal: 20,
+                      vertical: 16,
+                    ),
+                  ),
+                  validator: (value) => (value == null || value.isEmpty)
+                      ? 'Enter a username'
+                      : null,
+                ),
               ),
+
               const SizedBox(height: 25),
 
-              // Email
-              TextFormField(
-                controller: _emailController,
-                decoration: InputDecoration(
-                  hintText: 'Email address',
-                  hintStyle: GoogleFonts.caveat(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w400,
-                  ),
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(100),
-                    borderSide: BorderSide.none,
-                  ),
-                  contentPadding:
-                      const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+              /// EMAIL
+              Container(
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(100),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.12),
+                      blurRadius: 8,
+                      offset: const Offset(0, 4),
+                    ),
+                  ],
                 ),
-                validator: (value) => (value == null || !value.contains('@'))
-                    ? 'Enter a valid email'
-                    : null,
+                child: TextFormField(
+                  controller: _emailController,
+                  decoration: InputDecoration(
+                    hintText: 'Email address',
+                    hintStyle: GoogleFonts.caveat(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w400,
+                    ),
+                    border: InputBorder.none,
+                    contentPadding: const EdgeInsets.symmetric(
+                      horizontal: 20,
+                      vertical: 16,
+                    ),
+                  ),
+                  validator: (value) => (value == null || !value.contains('@'))
+                      ? 'Enter a valid email'
+                      : null,
+                ),
               ),
+
               const SizedBox(height: 25),
 
-              // Password
-              TextFormField(
-                controller: _passwordController,
-                obscureText: true,
-                decoration: InputDecoration(
-                  hintText: 'Password',
-                  hintStyle: GoogleFonts.caveat(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w400,
-                  ),
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(100),
-                    borderSide: BorderSide.none,
-                  ),
-                  contentPadding:
-                      const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+              /// PASSWORD
+              Container(
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(100),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.12),
+                      blurRadius: 8,
+                      offset: const Offset(0, 4),
+                    ),
+                  ],
                 ),
-                validator: (value) => (value == null || value.length < 6)
-                    ? 'Password too short'
-                    : null,
+                child: TextFormField(
+                  controller: _passwordController,
+                  obscureText: true,
+                  decoration: InputDecoration(
+                    hintText: 'Password',
+                    hintStyle: GoogleFonts.caveat(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w400,
+                    ),
+                    border: InputBorder.none,
+                    contentPadding: const EdgeInsets.symmetric(
+                      horizontal: 20,
+                      vertical: 16,
+                    ),
+                  ),
+                  validator: (value) => (value == null || value.length < 6)
+                      ? 'Password too short'
+                      : null,
+                ),
               ),
+
               const SizedBox(height: 25),
 
-              // Confirm Password
-              TextFormField(
-                controller: _confirmPasswordController,
-                obscureText: true,
-                decoration: InputDecoration(
-                  hintText: 'Confirm Password',
-                  hintStyle: GoogleFonts.caveat(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w400,
-                  ),
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(100),
-                    borderSide: BorderSide.none,
-                  ),
-                  contentPadding:
-                      const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+              /// CONFIRM PASSWORD
+              Container(
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(100),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.12),
+                      blurRadius: 8,
+                      offset: const Offset(0, 4),
+                    ),
+                  ],
                 ),
-                validator: (value) =>
-                    (value != _passwordController.text)
-                        ? 'Passwords do not match'
-                        : null,
+                child: TextFormField(
+                  controller: _confirmPasswordController,
+                  obscureText: true,
+                  decoration: InputDecoration(
+                    hintText: 'Confirm Password',
+                    hintStyle: GoogleFonts.caveat(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w400,
+                    ),
+                    border: InputBorder.none,
+                    contentPadding: const EdgeInsets.symmetric(
+                      horizontal: 20,
+                      vertical: 16,
+                    ),
+                  ),
+                  validator: (value) => (value != _passwordController.text)
+                      ? 'Passwords do not match'
+                      : null,
+                ),
               ),
+
               const SizedBox(height: 30),
 
-              // Register button
+              /// REGISTER BUTTON
               authVM.isLoading
                   ? const CircularProgressIndicator()
                   : GestureDetector(
@@ -175,10 +245,9 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
                           color: const Color(0xff00A300),
                           boxShadow: [
                             BoxShadow(
-                              color: Colors.black.withOpacity(0.2),
-                              blurRadius: 8,
-                              spreadRadius: 2,
-                              offset: const Offset(0, 4),
+                              color: Colors.black.withOpacity(0.18),
+                              blurRadius: 10,
+                              offset: const Offset(0, 5),
                             ),
                           ],
                         ),
@@ -194,21 +263,20 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
                         ),
                       ),
                     ),
+
               const SizedBox(height: 25),
 
-              // Show error
               if (authVM.error != null)
                 Text(authVM.error!, style: const TextStyle(color: Colors.red)),
 
               const SizedBox(height: 25),
 
-              // Go to Login
+              /// GO TO LOGIN
               GestureDetector(
                 onTap: () {
                   Navigator.push(
                     context,
-                    MaterialPageRoute(
-                        builder: (_) => const LoginScreen()),
+                    MaterialPageRoute(builder: (_) => const LoginScreen()),
                   );
                 },
                 child: RichText(
@@ -219,8 +287,8 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
                       fontSize: 16,
                       fontWeight: FontWeight.w400,
                     ),
-                    children: [
-                      const TextSpan(
+                    children: const [
+                      TextSpan(
                         text: "  Login",
                         style: TextStyle(
                           color: Colors.green,
