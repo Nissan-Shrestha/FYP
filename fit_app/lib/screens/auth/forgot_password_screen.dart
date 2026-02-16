@@ -5,8 +5,7 @@ class ForgotPasswordScreen extends StatefulWidget {
   const ForgotPasswordScreen({super.key});
 
   @override
-  State<ForgotPasswordScreen> createState() =>
-      _ForgotPasswordScreenState();
+  State<ForgotPasswordScreen> createState() => _ForgotPasswordScreenState();
 }
 
 class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
@@ -34,14 +33,27 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
           key: _formKey,
           child: Column(
             children: [
-
               const SizedBox(height: 150),
 
-              /// LOGO
-              SizedBox(
-                height: 100,
-                width: 100,
-                child: Image.asset("assets/icons/fit logo.jpg"),
+              /// LOGO (matched to other screens)
+              Container(
+                height: 120,
+                width: 120,
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(28),
+                  color: Colors.white,
+                  image: const DecorationImage(
+                    image: AssetImage("assets/icons/fit logo.jpg"),
+                    fit: BoxFit.cover,
+                  ),
+                  boxShadow: const [
+                    BoxShadow(
+                      color: Colors.black26,
+                      blurRadius: 12,
+                      offset: Offset(0, 6),
+                    ),
+                  ],
+                ),
               ),
 
               const SizedBox(height: 25),
@@ -58,33 +70,42 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
 
               const SizedBox(height: 25),
 
-              /// EMAIL FIELD
-              TextFormField(
-                controller: _emailController,
-                decoration: InputDecoration(
-                  hintText: 'Email Address',
-                  hintStyle: GoogleFonts.caveat(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w400,
-                  ),
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(100),
-                    borderSide: BorderSide.none,
-                  ),
-                  contentPadding: const EdgeInsets.symmetric(
-                    horizontal: 16,
-                    vertical: 14,
-                  ),
+              /// EMAIL FIELD (shadowed like others)
+              Container(
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(100),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.12),
+                      blurRadius: 8,
+                      offset: const Offset(0, 4),
+                    ),
+                  ],
                 ),
-                validator: (value) =>
-                    (value == null || !value.contains('@'))
-                        ? 'Enter a valid email'
-                        : null,
+                child: TextFormField(
+                  controller: _emailController,
+                  decoration: InputDecoration(
+                    hintText: 'Email Address',
+                    hintStyle: GoogleFonts.caveat(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w400,
+                    ),
+                    border: InputBorder.none,
+                    contentPadding: const EdgeInsets.symmetric(
+                      horizontal: 20,
+                      vertical: 16,
+                    ),
+                  ),
+                  validator: (value) => (value == null || !value.contains('@'))
+                      ? 'Enter a valid email'
+                      : null,
+                ),
               ),
 
               const SizedBox(height: 25),
 
-              /// CONTINUE BUTTON
+              /// CONTINUE BUTTON (shadowed like login/register)
               GestureDetector(
                 onTap: _continue,
                 child: Container(
@@ -93,6 +114,13 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                   decoration: BoxDecoration(
                     borderRadius: BorderRadius.circular(100),
                     color: const Color(0xff00A300),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.18),
+                        blurRadius: 10,
+                        offset: const Offset(0, 5),
+                      ),
+                    ],
                   ),
                   child: Center(
                     child: Text(
