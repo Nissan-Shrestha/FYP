@@ -17,7 +17,6 @@ class _SplashScreenState extends State<SplashScreen> {
   void initState() {
     super.initState();
 
-    // Wait 2 seconds, then navigate based on auth state
     Future.delayed(const Duration(seconds: 2), () {
       if (!mounted) return;
 
@@ -26,7 +25,7 @@ class _SplashScreenState extends State<SplashScreen> {
       Navigator.pushReplacement(
         context,
         MaterialPageRoute(
-          builder: (_) => auth.user != null
+          builder: (_) => auth.profile != null
               ? const NavigationScreen()
               : const LoginScreen(),
         ),

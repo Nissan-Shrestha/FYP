@@ -36,8 +36,9 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
         _usernameController.text.trim(),
       );
 
-      if (authVM.user != null && mounted) {
-        Navigator.pop(context);
+      if (authVM.error == null && mounted) {
+        await authVM.signOut(); // 🔥 Important
+        Navigator.pop(context); // Go back to login
       }
     }
   }

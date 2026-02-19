@@ -26,7 +26,13 @@ class ProfileScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final authVM = Provider.of<AuthViewmodel>(context);
-    final user = authVM.user;
+    final profile = authVM.profile;
+
+    if (profile == null) {
+      return const Scaffold(
+        body: Center(child: CircularProgressIndicator()),
+      );
+    }
 
     return Scaffold(
       backgroundColor: const Color(0xFFF2F2F2),
@@ -80,18 +86,14 @@ class ProfileScreen extends StatelessWidget {
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Text(
-                                user?.username.isNotEmpty == true
-                                    ? capitalize(user!.username)
-                                    : "No Name",
+                                capitalize(profile.username),
                                 style: GoogleFonts.caveat(
                                   fontWeight: FontWeight.bold,
                                   fontSize: 22,
                                 ),
                               ),
                               Text(
-                                user?.email.isNotEmpty == true
-                                    ? user!.email
-                                    : "No Email",
+                                profile.email,
                                 style: GoogleFonts.caveat(fontSize: 16),
                               ),
                             ],
@@ -110,13 +112,16 @@ class ProfileScreen extends StatelessWidget {
                           MaterialPageRoute(builder: (_) => const PlanScreen()),
                         );
                       },
-                      child: _profileRow("My Plan", "Free"),
+                      child: _profileRow("My Plan", profile.plan),
                     ),
 
                     const Divider(height: 1),
 
                     /// WARDROBE
-                    _profileRow("Wardrobe", "67/100"),
+                    _profileRow(
+                      "Wardrobe",
+                      "${profile.wardrobeCount}/${profile.wardrobeLimit}",
+                    ),
 
                     const Divider(height: 1),
 
@@ -135,73 +140,28 @@ class ProfileScreen extends StatelessWidget {
 
                     const Divider(height: 1),
 
-                    /// OUTFITS UPDATED
-                    _profileRow("My Outfits", "50/200"),
+                    /// OUTFITS
+                    _profileRow(
+                      "My Outfits",
+                      "${profile.outfitsCount}/${profile.outfitsLimit}",
+                    ),
 
                     const Divider(height: 1),
 
                     /// STYLE POINTS
-                    _profileRow("Style Points", "67000"),
+                    _profileRow(
+                      "Style Points",
+                      profile.stylePoints.toString(),
+                    ),
 
                     const Divider(height: 1),
 
-                    /// CURRENCY BOTTOM SHEET
-                    GestureDetector(
-                      onTap: () {
-                        showModalBottomSheet(
-                          context: context,
-                          shape: const RoundedRectangleBorder(
-                            borderRadius: BorderRadius.vertical(
-                              top: Radius.circular(25),
-                            ),
-                          ),
-                          builder: (_) {
-                            return Padding(
-                              padding: const EdgeInsets.all(20),
-                              child: Column(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  Text(
-                                    "Select Currency",
-                                    style: GoogleFonts.caveat(
-                                      fontSize: 24,
-                                      fontWeight: FontWeight.bold,
-                                    ),
-                                  ),
-                                  const SizedBox(height: 20),
-                                  ListTile(
-                                    title: Text(
-                                      "USD",
-                                      style: GoogleFonts.caveat(fontSize: 18),
-                                    ),
-                                    onTap: () => Navigator.pop(context),
-                                  ),
-                                  ListTile(
-                                    title: Text(
-                                      "EUR",
-                                      style: GoogleFonts.caveat(fontSize: 18),
-                                    ),
-                                    onTap: () => Navigator.pop(context),
-                                  ),
-                                  ListTile(
-                                    title: Text(
-                                      "NPR",
-                                      style: GoogleFonts.caveat(fontSize: 18),
-                                    ),
-                                    onTap: () => Navigator.pop(context),
-                                  ),
-                                ],
-                              ),
-                            );
-                          },
-                        );
-                      },
-                      child: _profileRow("Currency", "USD"),
-                    ),
+                    /// CURRENCY
+                    _profileRow("Currency", profile.currency),
 
                     const SizedBox(height: 20),
 
-                    /// LOGOUT BUTTON
+                    /// LOGOUT
                     Padding(
                       padding: const EdgeInsets.symmetric(horizontal: 20),
                       child: GestureDetector(

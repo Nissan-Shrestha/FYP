@@ -27,11 +27,15 @@ class _LoginScreenState extends State<LoginScreen> {
 
   void _login(AuthViewmodel authVM) async {
     if (_formKey.currentState!.validate()) {
-      await authVM.signIn(_emailController.text, _passwordController.text);
-      if (authVM.user != null) {
+      await authVM.signIn(
+        _emailController.text.trim(),
+        _passwordController.text.trim(),
+      );
+
+      if (authVM.profile != null && mounted) {
         Navigator.pushReplacement(
           context,
-          MaterialPageRoute(builder: (_) => NavigationScreen()),
+          MaterialPageRoute(builder: (_) => const NavigationScreen()),
         );
       }
     }
