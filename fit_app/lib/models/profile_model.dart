@@ -43,4 +43,25 @@ class ProfileModel {
       profilePicture: json['profile_picture'],
     );
   }
+
+  ProfileModel copyWith({
+  String? username,
+  String? profilePicture,
+}) {
+  return ProfileModel(
+    id: id,
+    firebaseUid: firebaseUid,
+    username: username ?? this.username,
+    email: email,
+    plan: plan,
+    wardrobeCount: wardrobeCount,
+    wardrobeLimit: wardrobeLimit,
+    outfitsCount: outfitsCount,
+    outfitsLimit: outfitsLimit,
+    stylePoints: stylePoints,
+    currency: currency,
+    profilePicture: profilePicture ?? this.profilePicture,
+  );
 }
+}
+

@@ -1,6 +1,8 @@
+import 'package:fit_app/constants.dart';
 import 'package:fit_app/viewmodels/auth_viewmodel.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:provider/provider.dart';
 import '../auth/login_screen.dart';
 import 'plan_screen.dart';
@@ -23,15 +25,148 @@ class ProfileScreen extends StatelessWidget {
     return s[0].toUpperCase() + s.substring(1);
   }
 
+  void _showEditUsernameSheet(BuildContext context, AuthViewmodel authVM) {
+    final controller = TextEditingController(text: authVM.profile!.username);
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(25)),
+      ),
+      builder: (_) {
+        return Padding(
+          padding: EdgeInsets.only(
+            left: 20,
+            right: 20,
+            bottom: MediaQuery.of(context).viewInsets.bottom + 20,
+            top: 30,
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                "Edit Username",
+                style: GoogleFonts.caveat(
+                  fontSize: 26,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+
+              const SizedBox(height: 20),
+
+              TextField(
+                controller: controller,
+                decoration: InputDecoration(
+                  hintText: "Enter new username",
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                ),
+              ),
+
+              const SizedBox(height: 20),
+
+              GestureDetector(
+                onTap: () async {
+                  final newName = controller.text.trim();
+
+                  if (newName.isNotEmpty) {
+                    await authVM.updateUsername(newName);
+                  }
+
+                  Navigator.pop(context);
+                },
+
+                child: Container(
+                  height: 50,
+                  width: double.infinity,
+                  decoration: BoxDecoration(
+                    color: const Color(0xff00A300),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Center(
+                    child: Text(
+                      "Save",
+                      style: GoogleFonts.caveat(
+                        fontSize: 20,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.white,
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+
+              const SizedBox(height: 10),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  void _showProfilePictureSheet(BuildContext context, AuthViewmodel authVM) {
+    showModalBottomSheet(
+      context: context,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(25)),
+      ),
+      builder: (_) {
+        return Padding(
+          padding: const EdgeInsets.all(20),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                "Update Profile Picture",
+                style: GoogleFonts.caveat(
+                  fontSize: 26,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+
+              const SizedBox(height: 20),
+
+              ListTile(
+                leading: Icon(Icons.camera_alt),
+                title: Text("Take Photo"),
+                onTap: () {
+                  Navigator.pop(context);
+                  authVM.updateProfilePicture(ImageSource.camera);
+                },
+              ),
+
+              ListTile(
+                leading: const Icon(Icons.photo),
+                title: const Text("Choose from Gallery"),
+                onTap: () {
+                  Navigator.pop(context);
+                  authVM.updateProfilePicture(ImageSource.gallery);
+                },
+              ),
+
+              const SizedBox(height: 10),
+
+              ListTile(
+                leading: const Icon(Icons.close),
+                title: const Text("Cancel"),
+                onTap: () => Navigator.pop(context),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final authVM = Provider.of<AuthViewmodel>(context);
     final profile = authVM.profile;
 
     if (profile == null) {
-      return const Scaffold(
-        body: Center(child: CircularProgressIndicator()),
-      );
+      return const Scaffold(body: Center(child: CircularProgressIndicator()));
     }
 
     return Scaffold(
@@ -67,36 +202,71 @@ class ProfileScreen extends StatelessWidget {
                 ),
                 child: Column(
                   children: [
-                    /// USER INFO
                     Padding(
                       padding: const EdgeInsets.all(20),
                       child: Row(
                         children: [
-                          const CircleAvatar(
-                            radius: 30,
-                            backgroundColor: Color(0xff00A300),
-                            child: Icon(
-                              Icons.person,
-                              color: Colors.white,
-                              size: 30,
+                          /// PROFILE PICTURE (TAPPABLE)
+                          GestureDetector(
+                            onTap: () =>
+                                _showProfilePictureSheet(context, authVM),
+
+                            child: CircleAvatar(
+                              radius: 35,
+                              backgroundColor: const Color(0xff00A300),
+                              backgroundImage: profile.profilePicture != null
+                                  ? NetworkImage(
+                                      "${ApiConfig.serverBaseUrl}${profile.profilePicture}",
+                                    )
+                                  : null,
+
+                              child: profile.profilePicture == null
+                                  ? const Icon(
+                                      Icons.person,
+                                      color: Colors.white,
+                                      size: 35,
+                                    )
+                                  : null,
                             ),
                           ),
+
                           const SizedBox(width: 15),
-                          Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                capitalize(profile.username),
-                                style: GoogleFonts.caveat(
-                                  fontWeight: FontWeight.bold,
-                                  fontSize: 22,
+
+                          /// USERNAME + EMAIL
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Row(
+                                  children: [
+                                    Text(
+                                      capitalize(profile.username),
+                                      style: GoogleFonts.caveat(
+                                        fontWeight: FontWeight.bold,
+                                        fontSize: 22,
+                                      ),
+                                    ),
+
+                                    const SizedBox(width: 8),
+
+                                    GestureDetector(
+                                      onTap: () => _showEditUsernameSheet(
+                                        context,
+                                        authVM,
+                                      ),
+                                      child: const Icon(Icons.edit, size: 18),
+                                    ),
+                                  ],
                                 ),
-                              ),
-                              Text(
-                                profile.email,
-                                style: GoogleFonts.caveat(fontSize: 16),
-                              ),
-                            ],
+
+                                const SizedBox(height: 4),
+
+                                Text(
+                                  profile.email,
+                                  style: GoogleFonts.caveat(fontSize: 16),
+                                ),
+                              ],
+                            ),
                           ),
                         ],
                       ),
@@ -149,10 +319,7 @@ class ProfileScreen extends StatelessWidget {
                     const Divider(height: 1),
 
                     /// STYLE POINTS
-                    _profileRow(
-                      "Style Points",
-                      profile.stylePoints.toString(),
-                    ),
+                    _profileRow("Style Points", profile.stylePoints.toString()),
 
                     const Divider(height: 1),
 
