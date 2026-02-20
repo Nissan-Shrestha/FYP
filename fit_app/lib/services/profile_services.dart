@@ -1,11 +1,12 @@
 import 'dart:convert';
 import 'dart:io';
 
+import 'package:fit_app/constants.dart';
 import 'package:fit_app/models/profile_model.dart';
 import 'package:http/http.dart' as http;
 
 class ProfileService {
-  static const String baseUrl = "http://10.0.2.2:8000/api/profile/";
+  static const String baseUrl = "${ApiConfig.serverBaseUrl}/api/profile/";
 
   static Future<ProfileModel> getOrCreateProfile({
     required String firebaseUid,
@@ -53,32 +54,24 @@ class ProfileService {
   }
 
   static Future<ProfileModel> uploadProfilePicture({
-  required String firebaseUid,
-  required File imageFile,
-}) async {
+    required String firebaseUid,
+    required File imageFile,
+  }) async {
+    var request = http.MultipartRequest('PATCH', Uri.parse(baseUrl));
 
-  var request = http.MultipartRequest(
-    'PATCH',
-    Uri.parse(baseUrl),
-  );
+    request.fields['firebase_uid'] = firebaseUid;
 
-  request.fields['firebase_uid'] = firebaseUid;
+    request.files.add(
+      await http.MultipartFile.fromPath('profile_picture', imageFile.path),
+    );
 
-  request.files.add(
-    await http.MultipartFile.fromPath(
-      'profile_picture',
-      imageFile.path,
-    ),
-  );
+    var response = await request.send();
 
-  var response = await request.send();
-
-  if (response.statusCode == 200) {
-    final responseBody = await response.stream.bytesToString();
-    return ProfileModel.fromJson(jsonDecode(responseBody));
-  } else {
-    throw Exception("Image upload failed");
+    if (response.statusCode == 200) {
+      final responseBody = await response.stream.bytesToString();
+      return ProfileModel.fromJson(jsonDecode(responseBody));
+    } else {
+      throw Exception("Image upload failed");
+    }
   }
-}
-
 }
