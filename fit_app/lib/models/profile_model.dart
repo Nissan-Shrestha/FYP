@@ -8,7 +8,7 @@ class ProfileModel {
   final int wardrobeLimit;
   final int outfitsCount;
   final int outfitsLimit;
-  final int stylePoints;
+
   final String currency;
   final String? profilePicture;
 
@@ -22,7 +22,7 @@ class ProfileModel {
     required this.wardrobeLimit,
     required this.outfitsCount,
     required this.outfitsLimit,
-    required this.stylePoints,
+
     required this.currency,
     this.profilePicture,
   });
@@ -38,30 +38,26 @@ class ProfileModel {
       wardrobeLimit: json['wardrobe_limit'],
       outfitsCount: json['outfits_count'],
       outfitsLimit: json['outfits_limit'],
-      stylePoints: json['style_points'],
+
       currency: json['currency'],
       profilePicture: json['profile_picture'],
     );
   }
 
-  ProfileModel copyWith({
-  String? username,
-  String? profilePicture,
-}) {
-  return ProfileModel(
-    id: id,
-    firebaseUid: firebaseUid,
-    username: username ?? this.username,
-    email: email,
-    plan: plan,
-    wardrobeCount: wardrobeCount,
-    wardrobeLimit: wardrobeLimit,
-    outfitsCount: outfitsCount,
-    outfitsLimit: outfitsLimit,
-    stylePoints: stylePoints,
-    currency: currency,
-    profilePicture: profilePicture ?? this.profilePicture,
-  );
-}
-}
+  ProfileModel copyWith({String? username, String? profilePicture}) {
+    return ProfileModel(
+      id: id,
+      firebaseUid: firebaseUid,
+      username: username ?? this.username,
+      email: email,
+      plan: plan,
+      wardrobeCount: wardrobeCount,
+      wardrobeLimit: wardrobeLimit,
+      outfitsCount: outfitsCount,
+      outfitsLimit: outfitsLimit,
 
+      currency: currency,
+      profilePicture: profilePicture ?? this.profilePicture,
+    );
+  }
+}

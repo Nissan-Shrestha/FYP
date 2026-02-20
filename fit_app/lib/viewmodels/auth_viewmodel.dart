@@ -99,37 +99,44 @@ class AuthViewmodel extends ChangeNotifier {
     }
   }
 
+  Future<void> updateProfilePicture(ImageSource source) async {
+    if (_profile == null) return;
 
-Future<void> updateProfilePicture(ImageSource source) async {
-  if (_profile == null) return;
+    try {
+      final picker = ImagePicker();
+      final pickedFile = await picker.pickImage(source: source);
 
-  try {
-    final picker = ImagePicker();
-    final pickedFile = await picker.pickImage(source: source);
+      if (pickedFile == null) return;
 
-    if (pickedFile == null) return;
+      File imageFile = File(pickedFile.path);
 
-    File imageFile = File(pickedFile.path);
+      _isLoading = true;
+      notifyListeners();
 
-    _isLoading = true;
-    notifyListeners();
+      final updatedProfile = await ProfileService.uploadProfilePicture(
+        firebaseUid: _profile!.firebaseUid,
+        imageFile: imageFile,
+      );
 
-    final updatedProfile = await ProfileService.uploadProfilePicture(
-      firebaseUid: _profile!.firebaseUid,
-      imageFile: imageFile,
-    );
-
-    _profile = updatedProfile;
-
-  } catch (e) {
-    _error = e.toString();
-  } finally {
-    _isLoading = false;
-    notifyListeners();
+      _profile = updatedProfile;
+    } catch (e) {
+      _error = e.toString();
+    } finally {
+      _isLoading = false;
+      notifyListeners();
+    }
   }
-}
 
+  Future<void> checkCurrentUser() async {
+    final user = _authService.currentUser;
 
-
-
+    if (user != null) {
+      _profile = await ProfileService.getOrCreateProfile(
+        firebaseUid: user.uid,
+        email: user.email ?? "",
+        username: null,
+      );
+      notifyListeners();
+    }
+  }
 }

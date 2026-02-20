@@ -12,7 +12,7 @@ class Profile(models.Model):
     outfits_count = models.IntegerField(default=0)
     outfits_limit = models.IntegerField(default=200)
 
-    style_points = models.IntegerField(default=0)
+    
     currency = models.CharField(max_length=10, default="USD")
 
     profile_picture = models.ImageField(upload_to="profile_pics/", null=True, blank=True)

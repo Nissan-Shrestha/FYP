@@ -323,14 +323,6 @@ class ProfileScreen extends StatelessWidget {
 
                       const Divider(height: 1),
 
-                      /// STYLE POINTS
-                      _profileRow(
-                        "Style Points",
-                        profile.stylePoints.toString(),
-                      ),
-
-                      const Divider(height: 1),
-
                       /// CURRENCY
                       _profileRow("Currency", profile.currency),
 

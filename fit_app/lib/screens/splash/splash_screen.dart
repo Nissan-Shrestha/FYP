@@ -16,21 +16,24 @@ class _SplashScreenState extends State<SplashScreen> {
   @override
   void initState() {
     super.initState();
+    _initialize();
+  }
 
-    Future.delayed(const Duration(seconds: 2), () {
-      if (!mounted) return;
+  Future<void> _initialize() async {
+    final auth = Provider.of<AuthViewmodel>(context, listen: false);
 
-      final auth = Provider.of<AuthViewmodel>(context, listen: false);
+    await auth.checkCurrentUser();
 
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(
-          builder: (_) => auth.profile != null
-              ? const NavigationScreen()
-              : const LoginScreen(),
-        ),
-      );
-    });
+    if (!mounted) return;
+
+    Navigator.pushReplacement(
+      context,
+      MaterialPageRoute(
+        builder: (_) => auth.profile != null
+            ? const NavigationScreen()
+            : const LoginScreen(),
+      ),
+    );
   }
 
   @override
