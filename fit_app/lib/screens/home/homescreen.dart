@@ -1,7 +1,10 @@
+import 'package:fit_app/constants.dart';
 import 'package:fit_app/screens/notifications/notification_screen.dart';
 import 'package:fit_app/screens/schedule/schedule_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:provider/provider.dart';
+import 'package:fit_app/viewmodels/auth_viewmodel.dart';
 
 class Homescreen extends StatelessWidget {
   const Homescreen({super.key});
@@ -20,12 +23,18 @@ class Homescreen extends StatelessWidget {
               spacing: 10,
               children: [
                 Expanded(
-                  child: Text(
-                    "Hello Nissan",
-                    style: GoogleFonts.caveat(
-                      fontSize: 28,
-                      fontWeight: FontWeight.bold,
-                    ),
+                  child: Consumer<AuthViewmodel>(
+                    builder: (context, authVM, _) {
+                      final username = authVM.profile?.username ?? "User";
+
+                      return Text(
+                        "Hello ${capitalize(username)}",
+                        style: GoogleFonts.caveat(
+                          fontSize: 28,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      );
+                    },
                   ),
                 ),
                 GestureDetector(

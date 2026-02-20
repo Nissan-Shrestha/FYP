@@ -18,7 +18,7 @@ class ProfileService {
       "email": email,
     };
 
-    // 🔥 only include username if not null
+    //  only include username if not null
     if (username != null) {
       body["username"] = username;
     }

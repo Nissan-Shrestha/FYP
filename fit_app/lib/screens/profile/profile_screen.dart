@@ -20,11 +20,6 @@ class ProfileScreen extends StatelessWidget {
     );
   }
 
-  String capitalize(String s) {
-    if (s.isEmpty) return s;
-    return s[0].toUpperCase() + s.substring(1);
-  }
-
   void _showEditUsernameSheet(BuildContext context, AuthViewmodel authVM) {
     final controller = TextEditingController(text: authVM.profile!.username);
 
