@@ -23,6 +23,7 @@ class _SplashScreenState extends State<SplashScreen> {
     final auth = Provider.of<AuthViewmodel>(context, listen: false);
 
     await auth.checkCurrentUser();
+    await Future.delayed(const Duration(seconds: 2));
 
     if (!mounted) return;
 
@@ -39,7 +40,12 @@ class _SplashScreenState extends State<SplashScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: Center(child: Image.asset("assets/icons/fit logo.jpg")),
+      body: Padding(
+        padding: EdgeInsets.symmetric(horizontal: 20),
+        child: Center(
+          child: SizedBox(child: Image.asset("assets/icons/fit logo.jpg")),
+        ),
+      ),
     );
   }
 }
