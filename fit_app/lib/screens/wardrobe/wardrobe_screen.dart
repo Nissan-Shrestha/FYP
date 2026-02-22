@@ -1,5 +1,6 @@
 import 'package:fit_app/screens/notifications/notification_screen.dart';
 import 'package:fit_app/screens/schedule/schedule_screen.dart';
+import 'package:fit_app/screens/wardrobe/add_item_screen.dart';
 import 'package:fit_app/screens/wardrobe/create_wardrobe_screen.dart';
 import 'package:fit_app/screens/wardrobe/wardrobe_view_screen.dart';
 import 'package:flutter/material.dart';
@@ -70,21 +71,29 @@ class WardrobeScreen extends StatelessWidget {
               Row(
                 children: [
                   /// ADD BUTTON
-                  Container(
-                    height: 60,
-                    width: 60,
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      shape: BoxShape.circle,
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withOpacity(0.1),
-                          blurRadius: 6,
-                          offset: const Offset(0, 3),
-                        ),
-                      ],
+                  GestureDetector(
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(builder: (_) => const AddItemScreen()),
+                      );
+                    },
+                    child: Container(
+                      height: 60,
+                      width: 60,
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        shape: BoxShape.circle,
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withOpacity(0.1),
+                            blurRadius: 6,
+                            offset: const Offset(0, 3),
+                          ),
+                        ],
+                      ),
+                      child: const Icon(Icons.add),
                     ),
-                    child: const Icon(Icons.add),
                   ),
 
                   const SizedBox(width: 15),
@@ -225,30 +234,38 @@ class WardrobeScreen extends StatelessWidget {
 
               const SizedBox(height: 16),
 
-              Container(
-                height: 120,
-                width: double.infinity,
-                decoration: BoxDecoration(
-                  color: Colors.grey.shade300,
-                  borderRadius: BorderRadius.circular(16),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withOpacity(0.08),
-                      blurRadius: 6,
-                      offset: const Offset(0, 3),
-                    ),
-                  ],
-                ),
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    const Icon(Icons.add, size: 36),
-                    const SizedBox(height: 8),
-                    Text(
-                      "Add new items",
-                      style: GoogleFonts.caveat(fontSize: 18),
-                    ),
-                  ],
+              GestureDetector(
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (_) => const AddItemScreen()),
+                  );
+                },
+                child: Container(
+                  height: 120,
+                  width: double.infinity,
+                  decoration: BoxDecoration(
+                    color: Colors.grey.shade300,
+                    borderRadius: BorderRadius.circular(16),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.08),
+                        blurRadius: 6,
+                        offset: const Offset(0, 3),
+                      ),
+                    ],
+                  ),
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      const Icon(Icons.add, size: 36),
+                      const SizedBox(height: 8),
+                      Text(
+                        "Add new items",
+                        style: GoogleFonts.caveat(fontSize: 18),
+                      ),
+                    ],
+                  ),
                 ),
               ),
 
