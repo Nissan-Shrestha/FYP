@@ -186,7 +186,7 @@ class _HomescreenState extends State<Homescreen> {
                   builder: (context) {
                     return Stack(
                       children: [
-                        Container(
+                        SizedBox(
                           height: 200,
                           width: double.maxFinite,
                           child: Column(

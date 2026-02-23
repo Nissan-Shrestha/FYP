@@ -43,7 +43,7 @@ class ScheduleScreen extends StatelessWidget {
                 shape: BoxShape.circle,
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withOpacity(0.08),
+                    color: Colors.black.withValues(alpha: 0.08),
                     blurRadius: 4,
                     offset: const Offset(0, 2),
                   ),
@@ -87,7 +87,7 @@ class ScheduleScreen extends StatelessWidget {
                   borderRadius: BorderRadius.circular(12),
                   boxShadow: [
                     BoxShadow(
-                      color: Colors.black.withOpacity(0.12),
+                      color: Colors.black.withValues(alpha: 0.12),
                       blurRadius: 5,
                       offset: const Offset(0, 3),
                     ),
@@ -128,7 +128,7 @@ class ScheduleScreen extends StatelessWidget {
                         borderRadius: BorderRadius.circular(4),
                         boxShadow: [
                           BoxShadow(
-                            color: Colors.black.withOpacity(0.12),
+                            color: Colors.black.withValues(alpha: 0.12),
                             blurRadius: 4,
                             offset: const Offset(0, 2),
                           ),
@@ -159,3 +159,4 @@ class ScheduleScreen extends StatelessWidget {
     );
   }
 }
+
