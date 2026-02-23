@@ -87,6 +87,26 @@ def clothing_items(request):
     if not serializer.is_valid():
         return Response(serializer.errors, status=400)
 
+    required_fields = [
+        "name",
+        "category",
+        "season",
+        "occasion",
+        "size",
+        "material",
+        "brand",
+    ]
+    missing_fields = [
+        field
+        for field in required_fields
+        if not str(serializer.validated_data.get(field, "")).strip()
+    ]
+    if missing_fields:
+        return Response(
+            {"error": f"Missing required fields: {', '.join(missing_fields)}"},
+            status=400,
+        )
+
     item = ClothingItem.objects.create(
         owner=profile,
         name=serializer.validated_data.get("name"),
@@ -102,6 +122,49 @@ def clothing_items(request):
     default_wardrobe.items.add(item)
 
     return Response(ClothingItemSerializer(item).data, status=201)
+
+
+@api_view(["PATCH", "DELETE"])
+def clothing_item_detail(request, item_id):
+    firebase_uid = request.query_params.get("firebase_uid") or request.data.get("firebase_uid")
+    profile, error_response = _get_profile_by_firebase_uid(firebase_uid)
+    if error_response:
+        return error_response
+
+    try:
+        item = ClothingItem.objects.get(id=item_id, owner=profile)
+    except ClothingItem.DoesNotExist:
+        return Response({"error": "Clothing item not found"}, status=404)
+
+    if request.method == "PATCH":
+        fields = ["name", "category", "season", "occasion", "size", "material", "brand"]
+        for field in fields:
+            if field in request.data:
+                value = str(request.data.get(field, "")).strip()
+                if not value:
+                    return Response({"error": f"{field} cannot be empty"}, status=400)
+                setattr(item, field, value)
+
+        if request.FILES.get("image"):
+            item.image = request.FILES["image"]
+
+        # Enforce required fields after partial update.
+        missing = [
+            field for field in fields if not str(getattr(item, field, "")).strip()
+        ]
+        if missing:
+            return Response(
+                {"error": f"Missing required fields: {', '.join(missing)}"},
+                status=400,
+            )
+        if not item.image:
+            return Response({"error": "image is required"}, status=400)
+
+        item.save()
+        return Response(ClothingItemSerializer(item).data, status=200)
+
+    item.delete()
+    return Response(status=204)
 
 
 @api_view(["GET", "POST"])
@@ -129,6 +192,39 @@ def wardrobes(request):
 
     wardrobe = Wardrobe.objects.create(owner=profile, name=name, is_default=False)
     return Response(WardrobeSerializer(wardrobe).data, status=201)
+
+
+@api_view(["PATCH", "DELETE"])
+def wardrobe_detail(request, wardrobe_id):
+    firebase_uid = request.query_params.get("firebase_uid") or request.data.get("firebase_uid")
+    profile, error_response = _get_profile_by_firebase_uid(firebase_uid)
+    if error_response:
+        return error_response
+
+    try:
+        wardrobe = Wardrobe.objects.get(id=wardrobe_id, owner=profile)
+    except Wardrobe.DoesNotExist:
+        return Response({"error": "Wardrobe not found"}, status=404)
+
+    if request.method == "DELETE":
+        if wardrobe.is_default:
+            return Response({"error": "Default wardrobe cannot be deleted"}, status=400)
+        wardrobe.delete()
+        return Response(status=204)
+
+    new_name = (request.data.get("name") or "").strip()
+    if not new_name:
+        return Response({"error": "name is required"}, status=400)
+    if wardrobe.is_default:
+        return Response({"error": "Default wardrobe cannot be renamed"}, status=400)
+    if new_name.lower() == DEFAULT_WARDROBE_NAME:
+        return Response({"error": "default wardrobe name is reserved"}, status=400)
+    if Wardrobe.objects.filter(owner=profile, name__iexact=new_name).exclude(id=wardrobe.id).exists():
+        return Response({"error": "Wardrobe name already exists"}, status=400)
+
+    wardrobe.name = new_name
+    wardrobe.save(update_fields=["name", "updated_at"])
+    return Response(WardrobeSerializer(wardrobe).data, status=200)
 
 
 @api_view(["GET", "POST"])

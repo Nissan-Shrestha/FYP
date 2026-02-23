@@ -2,6 +2,7 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:fit_app/firebase_options.dart';
 import 'package:fit_app/screens/splash/splash_screen.dart';
 import 'package:fit_app/viewmodels/auth_viewmodel.dart';
+import 'package:fit_app/viewmodels/wardrobe_viewmodel.dart';
 import 'package:fit_app/viewmodels/weather_viewmodel.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
@@ -22,6 +23,7 @@ class MyApp extends StatelessWidget {
       providers: [
         ChangeNotifierProvider(create: (_) => AuthViewmodel()),
         ChangeNotifierProvider(create: (_) => WeatherViewmodel()),
+        ChangeNotifierProvider(create: (_) => WardrobeViewmodel()),
       ],
       child: MaterialApp(
         title: 'Flutter Demo',

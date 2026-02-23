@@ -1,11 +1,66 @@
+import 'package:fit_app/viewmodels/auth_viewmodel.dart';
+import 'package:fit_app/viewmodels/wardrobe_viewmodel.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:provider/provider.dart';
 
-class CreateWardrobeScreen extends StatelessWidget {
+class CreateWardrobeScreen extends StatefulWidget {
   const CreateWardrobeScreen({super.key});
 
   @override
+  State<CreateWardrobeScreen> createState() => _CreateWardrobeScreenState();
+}
+
+class _CreateWardrobeScreenState extends State<CreateWardrobeScreen> {
+  final TextEditingController _nameController = TextEditingController();
+
+  @override
+  void dispose() {
+    _nameController.dispose();
+    super.dispose();
+  }
+
+  Future<void> _createWardrobe(BuildContext context) async {
+    final authVM = context.read<AuthViewmodel>();
+    final wardrobeVM = context.read<WardrobeViewmodel>();
+    final firebaseUid = authVM.profile?.firebaseUid;
+    final name = _nameController.text.trim();
+
+    if (firebaseUid == null) {
+      _showMessage(context, "User not found. Please log in again.");
+      return;
+    }
+    if (name.isEmpty) {
+      _showMessage(context, "Please enter a wardrobe name.");
+      return;
+    }
+
+    final result = await wardrobeVM.createWardrobe(
+      firebaseUid: firebaseUid,
+      name: name,
+    );
+
+    if (!mounted) return;
+
+    if (result != null) {
+      _showMessage(context, "Wardrobe created");
+      Navigator.pop(context);
+      return;
+    }
+
+    _showMessage(context, wardrobeVM.error ?? "Failed to create wardrobe");
+  }
+
+  void _showMessage(BuildContext context, String message) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(message)),
+    );
+  }
+
+  @override
   Widget build(BuildContext context) {
+    final wardrobeVM = context.watch<WardrobeViewmodel>();
+
     return Scaffold(
       resizeToAvoidBottomInset: false,
       backgroundColor: const Color(0xffF2F2F2),
@@ -71,8 +126,11 @@ class CreateWardrobeScreen extends StatelessWidget {
                   ],
                 ),
                 child: TextField(
+                  controller: _nameController,
+                  textInputAction: TextInputAction.done,
+                  onSubmitted: (_) => _createWardrobe(context),
                   decoration: InputDecoration(
-                    hintText: "Enter a name for the outfit",
+                    hintText: "Enter a name for the wardrobe",
                     hintStyle: GoogleFonts.caveat(fontSize: 16),
                     border: InputBorder.none,
                     contentPadding: const EdgeInsets.symmetric(
@@ -82,38 +140,14 @@ class CreateWardrobeScreen extends StatelessWidget {
                   ),
                 ),
               ),
-              const SizedBox(height: 20),
-              Text(
-                "Cover Image",
-                style: GoogleFonts.caveat(
-                  fontSize: 22,
-                  fontWeight: FontWeight.w700,
-                ),
-              ),
-              const SizedBox(height: 10),
-              Center(
-                child: Container(
-                  width: 160,
-                  height: 160,
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(18),
-                    border: Border.all(
-                      color: Colors.grey.shade500,
-                      width: 1,
-                      style: BorderStyle.solid,
-                    ),
-                  ),
-                  child: const Center(
-                    child: Icon(Icons.add, size: 30, color: Colors.black87),
-                  ),
-                ),
-              ),
               const SizedBox(height: 36),
               SizedBox(
                 width: double.infinity,
                 height: 52,
                 child: ElevatedButton(
-                  onPressed: () {},
+                  onPressed: wardrobeVM.isSubmitting
+                      ? null
+                      : () => _createWardrobe(context),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: const Color(0xff17A8F2),
                     foregroundColor: Colors.white,
@@ -123,7 +157,7 @@ class CreateWardrobeScreen extends StatelessWidget {
                     ),
                   ),
                   child: Text(
-                    "Create",
+                    wardrobeVM.isSubmitting ? "Creating..." : "Create",
                     style: GoogleFonts.caveat(
                       fontSize: 28,
                       fontWeight: FontWeight.bold,

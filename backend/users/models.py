@@ -27,17 +27,73 @@ class ClothingItem(models.Model):
         related_name="clothing_items",
     )
     name = models.CharField(max_length=150)
-    category = models.CharField(max_length=100, blank=True)
-    season = models.CharField(max_length=50, blank=True)
-    occasion = models.CharField(max_length=100, blank=True)
-    size = models.CharField(max_length=50, blank=True)
-    material = models.CharField(max_length=100, blank=True)
-    brand = models.CharField(max_length=100, blank=True)
+    category = models.CharField(max_length=100)
+    season = models.CharField(max_length=50)
+    occasion = models.CharField(max_length=100)
+    size = models.CharField(max_length=50)
+    material = models.CharField(max_length=100)
+    brand = models.CharField(max_length=100)
     image = models.ImageField(upload_to="clothing_items/", null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
 
+    class Meta:
+        constraints = [
+            models.CheckConstraint(
+                condition=~models.Q(name=""),
+                name="clothing_item_name_not_empty",
+            ),
+            models.CheckConstraint(
+                condition=~models.Q(category=""),
+                name="clothing_item_category_not_empty",
+            ),
+            models.CheckConstraint(
+                condition=~models.Q(season=""),
+                name="clothing_item_season_not_empty",
+            ),
+            models.CheckConstraint(
+                condition=~models.Q(occasion=""),
+                name="clothing_item_occasion_not_empty",
+            ),
+            models.CheckConstraint(
+                condition=~models.Q(size=""),
+                name="clothing_item_size_not_empty",
+            ),
+            models.CheckConstraint(
+                condition=~models.Q(material=""),
+                name="clothing_item_material_not_empty",
+            ),
+            models.CheckConstraint(
+                condition=~models.Q(brand=""),
+                name="clothing_item_brand_not_empty",
+            ),
+            models.CheckConstraint(
+                condition=~models.Q(image=""),
+                name="clothing_item_image_not_empty",
+            ),
+        ]
+
     def __str__(self):
         return f"{self.name} ({self.owner.username})"
+
+    def save(self, *args, **kwargs):
+        # If the image is being replaced, delete the old file after a successful save.
+        old_image = None
+        if self.pk:
+            try:
+                old_image = ClothingItem.objects.only("image").get(pk=self.pk).image
+            except ClothingItem.DoesNotExist:
+                old_image = None
+
+        super().save(*args, **kwargs)
+
+        if old_image and self.image and old_image.name != self.image.name:
+            old_image.delete(save=False)
+
+    def delete(self, *args, **kwargs):
+        image = self.image
+        super().delete(*args, **kwargs)
+        if image:
+            image.delete(save=False)
 
 
 class Wardrobe(models.Model):

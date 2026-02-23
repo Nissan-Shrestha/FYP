@@ -1,5 +1,11 @@
+import 'dart:io';
+
+import 'package:fit_app/viewmodels/auth_viewmodel.dart';
+import 'package:fit_app/viewmodels/wardrobe_viewmodel.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:image_picker/image_picker.dart';
+import 'package:provider/provider.dart';
 
 class AddItemScreen extends StatefulWidget {
   const AddItemScreen({super.key});
@@ -9,6 +15,10 @@ class AddItemScreen extends StatefulWidget {
 }
 
 class _AddItemScreenState extends State<AddItemScreen> {
+  final ImagePicker _imagePicker = ImagePicker();
+  File? _selectedImage;
+
+  String itemName = "Enter item name";
   String season = "Choose the season";
   String occasion = "Choose the occasion";
   String category = "Choose the category";
@@ -17,8 +27,152 @@ class _AddItemScreenState extends State<AddItemScreen> {
   String brand = "Enter the brand";
   String purchase = "Enter purchase info";
 
+  Future<void> _saveItem() async {
+    final authVM = context.read<AuthViewmodel>();
+    final wardrobeVM = context.read<WardrobeViewmodel>();
+    final firebaseUid = authVM.profile?.firebaseUid;
+
+    if (firebaseUid == null) {
+      _showMessage("User not found. Please log in again.");
+      return;
+    }
+
+    final cleanName = _valueOrEmpty(itemName, "Enter item name");
+    if (cleanName.isEmpty) {
+      _showMessage("Please add an item name.");
+      return;
+    }
+
+    final requiredSelections = <String, String>{
+      "Category": _valueOrEmpty(category, "Choose the category"),
+      "Season": _valueOrEmpty(season, "Choose the season"),
+      "Occasion": _valueOrEmpty(occasion, "Choose the occasion"),
+      "Size": _valueOrEmpty(size, "Choose the size"),
+      "Material": _valueOrEmpty(material, "Choose the material"),
+      "Brand": _valueOrEmpty(brand, "Enter the brand"),
+    };
+    final missing = requiredSelections.entries
+        .where((entry) => entry.value.isEmpty)
+        .map((entry) => entry.key)
+        .toList();
+    if (missing.isNotEmpty) {
+      _showMessage("Please fill: ${missing.join(", ")}");
+      return;
+    }
+
+    if (_selectedImage == null) {
+      _showMessage("Please add an item photo.");
+      return;
+    }
+
+    final result = await wardrobeVM.createClothingItem(
+      firebaseUid: firebaseUid,
+      name: cleanName,
+      category: _valueOrEmpty(category, "Choose the category"),
+      season: _valueOrEmpty(season, "Choose the season"),
+      occasion: _valueOrEmpty(occasion, "Choose the occasion"),
+      size: _valueOrEmpty(size, "Choose the size"),
+      material: _valueOrEmpty(material, "Choose the material"),
+      brand: requiredSelections["Brand"]!,
+      imageFile: _selectedImage,
+    );
+
+    if (!mounted) return;
+
+    if (result != null) {
+      _showMessage("Item saved");
+      Navigator.pop(context);
+      return;
+    }
+
+    _showMessage(wardrobeVM.error ?? "Failed to save item");
+  }
+
+  String _valueOrEmpty(String value, String placeholder) {
+    return value == placeholder ? "" : value.trim();
+  }
+
+  void _showMessage(String message) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(message)),
+    );
+  }
+
+  Future<void> _pickImage(ImageSource source) async {
+    try {
+      final picked = await _imagePicker.pickImage(source: source);
+      if (picked == null) return;
+
+      setState(() {
+        _selectedImage = File(picked.path);
+      });
+    } catch (e) {
+      _showMessage("Failed to pick image");
+    }
+  }
+
+  Future<void> _openImagePickerSheet() async {
+    await showModalBottomSheet<void>(
+      context: context,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(18)),
+      ),
+      builder: (context) {
+        return SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(18, 14, 18, 20),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  "Add Item Photo",
+                  style: GoogleFonts.caveat(
+                    fontSize: 24,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                const SizedBox(height: 12),
+                ListTile(
+                  contentPadding: EdgeInsets.zero,
+                  leading: const Icon(Icons.camera_alt_outlined),
+                  title: const Text("Take Photo"),
+                  onTap: () {
+                    Navigator.pop(context);
+                    _pickImage(ImageSource.camera);
+                  },
+                ),
+                ListTile(
+                  contentPadding: EdgeInsets.zero,
+                  leading: const Icon(Icons.photo_library_outlined),
+                  title: const Text("Choose from Gallery"),
+                  onTap: () {
+                    Navigator.pop(context);
+                    _pickImage(ImageSource.gallery);
+                  },
+                ),
+                if (_selectedImage != null)
+                  ListTile(
+                    contentPadding: EdgeInsets.zero,
+                    leading: const Icon(Icons.delete_outline, color: Colors.red),
+                    title: const Text("Remove Photo"),
+                    onTap: () {
+                      setState(() => _selectedImage = null);
+                      Navigator.pop(context);
+                    },
+                  ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
+    final wardrobeVM = context.watch<WardrobeViewmodel>();
+
     return Scaffold(
       backgroundColor: const Color(0xffF2F2F2),
       appBar: AppBar(
@@ -68,26 +222,54 @@ class _AddItemScreenState extends State<AddItemScreen> {
           children: [
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16),
-              child: Container(
-                width: double.infinity,
-                height: 300,
-                decoration: BoxDecoration(
-                  color: const Color(0xffD9D9D9),
-                  borderRadius: BorderRadius.circular(16),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withValues(alpha: 0.06),
-                      blurRadius: 6,
-                      offset: const Offset(0, 3),
-                    ),
-                  ],
-                ),
-                child: const Center(
-                  child: Icon(
-                    Icons.add_a_photo_outlined,
-                    size: 42,
-                    color: Colors.black45,
+              child: GestureDetector(
+                onTap: wardrobeVM.isSubmitting ? null : _openImagePickerSheet,
+                child: Container(
+                  width: double.infinity,
+                  height: 300,
+                  decoration: BoxDecoration(
+                    color: const Color(0xffD9D9D9),
+                    borderRadius: BorderRadius.circular(16),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withValues(alpha: 0.06),
+                        blurRadius: 6,
+                        offset: const Offset(0, 3),
+                      ),
+                    ],
+                    image: _selectedImage != null
+                        ? DecorationImage(
+                            image: FileImage(_selectedImage!),
+                            fit: BoxFit.cover,
+                          )
+                        : null,
                   ),
+                  child: _selectedImage == null
+                      ? const Center(
+                          child: Icon(
+                            Icons.add_a_photo_outlined,
+                            size: 42,
+                            color: Colors.black45,
+                          ),
+                        )
+                      : Align(
+                          alignment: Alignment.bottomRight,
+                          child: Container(
+                            margin: const EdgeInsets.all(12),
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 10,
+                              vertical: 6,
+                            ),
+                            decoration: BoxDecoration(
+                              color: Colors.black.withValues(alpha: 0.55),
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            child: const Text(
+                              "Change Photo",
+                              style: TextStyle(color: Colors.white),
+                            ),
+                          ),
+                        ),
                 ),
               ),
             ),
@@ -110,6 +292,17 @@ class _AddItemScreenState extends State<AddItemScreen> {
                 padding: const EdgeInsets.fromLTRB(16, 16, 16, 22),
                 child: Column(
                   children: [
+                    _FieldRow(
+                      label: "Name",
+                      value: itemName,
+                      onTap: () => _openInputSheet(
+                        title: "Item Name",
+                        hint: "e.g. Blue Denim Jacket",
+                        onApplied: (value) => setState(
+                          () => itemName = value.isEmpty ? itemName : value,
+                        ),
+                      ),
+                    ),
                     _FieldRow(
                       label: "Season",
                       value: season,
@@ -196,7 +389,7 @@ class _AddItemScreenState extends State<AddItemScreen> {
                       width: double.infinity,
                       height: 46,
                       child: ElevatedButton(
-                        onPressed: () {},
+                        onPressed: wardrobeVM.isSubmitting ? null : _saveItem,
                         style: ElevatedButton.styleFrom(
                           backgroundColor: const Color(0xff0AAE00),
                           foregroundColor: Colors.white,
@@ -206,7 +399,7 @@ class _AddItemScreenState extends State<AddItemScreen> {
                           ),
                         ),
                         child: Text(
-                          "Save",
+                          wardrobeVM.isSubmitting ? "Saving..." : "Save",
                           style: GoogleFonts.caveat(
                             fontSize: 24,
                             fontWeight: FontWeight.bold,
