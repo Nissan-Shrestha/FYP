@@ -410,9 +410,9 @@ class _WardrobeScreenState extends State<WardrobeScreen> {
                   itemCount: wardrobes.length,
                   gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
                     crossAxisCount: 2,
-                    mainAxisSpacing: 22,
+                    mainAxisSpacing: 20,
                     crossAxisSpacing: 18,
-                    childAspectRatio: 0.77,
+                    childAspectRatio: 0.75,
                   ),
                   itemBuilder: (context, index) {
                     final wardrobe = wardrobes[index];
