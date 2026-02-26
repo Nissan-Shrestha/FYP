@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:geolocator/geolocator.dart';
 
 class LocationService {
@@ -26,13 +28,23 @@ class LocationService {
 
     // Create LocationSettings
     const locationSettings = LocationSettings(
-      accuracy: LocationAccuracy.medium,
+      // Low accuracy gets a fix faster on emulators and is enough for weather.
+      accuracy: LocationAccuracy.low,
       distanceFilter: 0,
     );
 
-    // Get position
-    return await Geolocator.getCurrentPosition(
-      locationSettings: locationSettings,
-    );
+    try {
+      return await Geolocator.getCurrentPosition(
+        locationSettings: locationSettings,
+      ).timeout(const Duration(seconds: 10));
+    } on TimeoutException {
+      final lastKnown = await Geolocator.getLastKnownPosition();
+      if (lastKnown != null) {
+        return lastKnown;
+      }
+      throw Exception(
+        "Location request timed out. Set an emulator location and try again.",
+      );
+    }
   }
 }

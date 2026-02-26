@@ -117,9 +117,7 @@ class _WardrobeScreenState extends State<WardrobeScreen> {
             controller: controller,
             autofocus: true,
             textInputAction: TextInputAction.done,
-            decoration: const InputDecoration(
-              hintText: "Wardrobe name",
-            ),
+            decoration: const InputDecoration(hintText: "Wardrobe name"),
             onSubmitted: (value) => Navigator.pop(dialogContext, value.trim()),
           ),
           actions: [
@@ -154,7 +152,10 @@ class _WardrobeScreenState extends State<WardrobeScreen> {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(
-          result != null ? "Wardrobe renamed" : (context.read<WardrobeViewmodel>().error ?? "Failed to rename wardrobe"),
+          result != null
+              ? "Wardrobe renamed"
+              : (context.read<WardrobeViewmodel>().error ??
+                    "Failed to rename wardrobe"),
         ),
       ),
     );
@@ -199,7 +200,10 @@ class _WardrobeScreenState extends State<WardrobeScreen> {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(
-          ok ? "Wardrobe deleted" : (context.read<WardrobeViewmodel>().error ?? "Failed to delete wardrobe"),
+          ok
+              ? "Wardrobe deleted"
+              : (context.read<WardrobeViewmodel>().error ??
+                    "Failed to delete wardrobe"),
         ),
       ),
     );
@@ -292,7 +296,9 @@ class _WardrobeScreenState extends State<WardrobeScreen> {
                     onTap: () {
                       Navigator.push(
                         context,
-                        MaterialPageRoute(builder: (_) => const AddItemScreen()),
+                        MaterialPageRoute(
+                          builder: (_) => const AddItemScreen(),
+                        ),
                       );
                     },
                     child: Container(
@@ -319,7 +325,8 @@ class _WardrobeScreenState extends State<WardrobeScreen> {
                   Expanded(
                     child: SizedBox(
                       height: 80,
-                      child: wardrobeVM.isLoadingClothingItems &&
+                      child:
+                          wardrobeVM.isLoadingClothingItems &&
                               recentItems.isEmpty
                           ? const Center(child: CircularProgressIndicator())
                           : recentItems.isEmpty
@@ -405,12 +412,13 @@ class _WardrobeScreenState extends State<WardrobeScreen> {
                     crossAxisCount: 2,
                     mainAxisSpacing: 22,
                     crossAxisSpacing: 18,
-                    childAspectRatio: 0.78,
+                    childAspectRatio: 0.77,
                   ),
                   itemBuilder: (context, index) {
                     final wardrobe = wardrobes[index];
                     final previewItems =
-                        wardrobeVM.wardrobePreviewItems[wardrobe.id] ?? const [];
+                        wardrobeVM.wardrobePreviewItems[wardrobe.id] ??
+                        const [];
                     final previewImageUrls = previewItems
                         .map((item) => item.image)
                         .whereType<String>()
@@ -420,14 +428,17 @@ class _WardrobeScreenState extends State<WardrobeScreen> {
                     return WardrobeCategoryCard(
                       title: wardrobe.name,
                       isDefault: wardrobe.isDefault,
+                      itemCount: wardrobe.itemCount,
                       hasItems: previewItems.isNotEmpty,
                       previewImageUrls: previewImageUrls,
                       onTap: () {
                         if (firebaseUid != null) {
-                          context.read<WardrobeViewmodel>().fetchItemsForWardrobe(
-                            firebaseUid: firebaseUid,
-                            wardrobeId: wardrobe.id,
-                          );
+                          context
+                              .read<WardrobeViewmodel>()
+                              .fetchItemsForWardrobe(
+                                firebaseUid: firebaseUid,
+                                wardrobeId: wardrobe.id,
+                              );
                         }
                         Navigator.push(
                           context,
@@ -577,6 +588,7 @@ class _WardrobeScreenState extends State<WardrobeScreen> {
 class WardrobeCategoryCard extends StatelessWidget {
   final String title;
   final bool isDefault;
+  final int itemCount;
   final bool hasItems;
   final List<String> previewImageUrls;
   final VoidCallback? onTap;
@@ -586,6 +598,7 @@ class WardrobeCategoryCard extends StatelessWidget {
     super.key,
     required this.title,
     this.isDefault = false,
+    this.itemCount = 0,
     this.hasItems = false,
     this.previewImageUrls = const [],
     this.onTap,
@@ -596,7 +609,8 @@ class WardrobeCategoryCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final imageSlots = List<String?>.generate(
       4,
-      (index) => index < previewImageUrls.length ? previewImageUrls[index] : null,
+      (index) =>
+          index < previewImageUrls.length ? previewImageUrls[index] : null,
     );
 
     return Column(
@@ -669,6 +683,10 @@ class WardrobeCategoryCard extends StatelessWidget {
           style: GoogleFonts.caveat(fontSize: 16, fontWeight: FontWeight.w600),
           textAlign: TextAlign.center,
         ),
+        Text(
+          "$itemCount item${itemCount == 1 ? "" : "s"}",
+          style: const TextStyle(fontSize: 11, color: Colors.black54),
+        ),
       ],
     );
   }
@@ -695,23 +713,15 @@ class MiniBox extends StatelessWidget {
         child: Container(
           color: Colors.grey.shade300,
           child: imageUrl == null
-              ? Icon(
-                  icon,
-                  color: Colors.grey.shade800,
-                  size: 22,
-                )
+              ? Icon(icon, color: Colors.grey.shade800, size: 22)
               : Image.network(
                   imageUrl!,
                   fit: BoxFit.cover,
-                  errorBuilder: (_, __, ___) => Icon(
-                    icon,
-                    color: Colors.grey.shade800,
-                    size: 22,
-                  ),
+                  errorBuilder: (_, __, ___) =>
+                      Icon(icon, color: Colors.grey.shade800, size: 22),
                 ),
         ),
       ),
     );
   }
 }
-

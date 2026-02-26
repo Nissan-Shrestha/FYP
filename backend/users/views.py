@@ -1,3 +1,6 @@
+from datetime import date
+from decimal import Decimal, InvalidOperation
+
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
 from .models import ClothingItem, Profile, Wardrobe
@@ -27,6 +30,33 @@ def _ensure_default_wardrobe(profile):
         wardrobe.is_default = True
         wardrobe.save(update_fields=["is_default"])
     return wardrobe
+
+
+def _parse_optional_decimal(value, field_name):
+    if value is None:
+        return None, None
+    text = str(value).strip()
+    if not text:
+        return None, None
+    try:
+        return Decimal(text), None
+    except (InvalidOperation, ValueError):
+        return None, Response({"error": f"{field_name} must be a valid number"}, status=400)
+
+
+def _parse_optional_date(value, field_name):
+    if value is None:
+        return None, None
+    text = str(value).strip()
+    if not text:
+        return None, None
+    try:
+        return date.fromisoformat(text), None
+    except ValueError:
+        return None, Response(
+            {"error": f"{field_name} must be in YYYY-MM-DD format"},
+            status=400,
+        )
 
 
 @api_view(["POST", "PATCH"])
@@ -116,6 +146,9 @@ def clothing_items(request):
         size=serializer.validated_data.get("size", ""),
         material=serializer.validated_data.get("material", ""),
         brand=serializer.validated_data.get("brand", ""),
+        purchase_store=(serializer.validated_data.get("purchase_store", "") or "").strip(),
+        purchase_price=serializer.validated_data.get("purchase_price"),
+        purchase_date=serializer.validated_data.get("purchase_date"),
         image=request.FILES.get("image"),
     )
 
@@ -144,6 +177,27 @@ def clothing_item_detail(request, item_id):
                 if not value:
                     return Response({"error": f"{field} cannot be empty"}, status=400)
                 setattr(item, field, value)
+
+        if "purchase_store" in request.data:
+            item.purchase_store = str(request.data.get("purchase_store", "")).strip()
+
+        if "purchase_price" in request.data:
+            parsed_price, error_response = _parse_optional_decimal(
+                request.data.get("purchase_price"),
+                "purchase_price",
+            )
+            if error_response:
+                return error_response
+            item.purchase_price = parsed_price
+
+        if "purchase_date" in request.data:
+            parsed_date, error_response = _parse_optional_date(
+                request.data.get("purchase_date"),
+                "purchase_date",
+            )
+            if error_response:
+                return error_response
+            item.purchase_date = parsed_date
 
         if request.FILES.get("image"):
             item.image = request.FILES["image"]

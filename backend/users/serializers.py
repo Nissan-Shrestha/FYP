@@ -25,7 +25,12 @@ class ClothingItemSerializer(serializers.ModelSerializer):
 
 
 class WardrobeSerializer(serializers.ModelSerializer):
+    item_count = serializers.SerializerMethodField()
+
     class Meta:
         model = Wardrobe
         fields = "__all__"
         read_only_fields = ("id", "owner", "items", "created_at", "updated_at")
+
+    def get_item_count(self, obj):
+        return obj.items.count()

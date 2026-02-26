@@ -33,6 +33,14 @@ class ClothingItem(models.Model):
     size = models.CharField(max_length=50)
     material = models.CharField(max_length=100)
     brand = models.CharField(max_length=100)
+    purchase_store = models.CharField(max_length=150, blank=True, default="")
+    purchase_price = models.DecimalField(
+        max_digits=10,
+        decimal_places=2,
+        null=True,
+        blank=True,
+    )
+    purchase_date = models.DateField(null=True, blank=True)
     image = models.ImageField(upload_to="clothing_items/", null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
 

@@ -152,13 +152,14 @@ class WardrobeViewmodel extends ChangeNotifier {
         name: name,
       );
 
-      wardrobes = wardrobes.map((w) => w.id == wardrobeId ? updated : w).toList()
-        ..sort((a, b) {
-          if (a.isDefault != b.isDefault) {
-            return a.isDefault ? -1 : 1;
-          }
-          return a.name.toLowerCase().compareTo(b.name.toLowerCase());
-        });
+      wardrobes =
+          wardrobes.map((w) => w.id == wardrobeId ? updated : w).toList()
+            ..sort((a, b) {
+              if (a.isDefault != b.isDefault) {
+                return a.isDefault ? -1 : 1;
+              }
+              return a.name.toLowerCase().compareTo(b.name.toLowerCase());
+            });
 
       return updated;
     } catch (e) {
@@ -205,6 +206,9 @@ class WardrobeViewmodel extends ChangeNotifier {
     String size = "",
     String material = "",
     String brand = "",
+    String? purchaseStore,
+    double? purchasePrice,
+    DateTime? purchaseDate,
     File? imageFile,
   }) async {
     try {
@@ -221,10 +225,32 @@ class WardrobeViewmodel extends ChangeNotifier {
         size: size,
         material: material,
         brand: brand,
+        purchaseStore: purchaseStore,
+        purchasePrice: purchasePrice,
+        purchaseDate: purchaseDate,
         imageFile: imageFile,
       );
 
       clothingItems = [item, ...clothingItems];
+
+      // New items are auto-added to the default wardrobe by backend rule,
+      // so update the local preview cache immediately for instant UI feedback.
+      WardrobeModel? defaultWardrobe;
+      for (final wardrobe in wardrobes) {
+        if (wardrobe.isDefault) {
+          defaultWardrobe = wardrobe;
+          break;
+        }
+      }
+      if (defaultWardrobe != null) {
+        final existingPreview =
+            wardrobePreviewItems[defaultWardrobe.id] ?? const [];
+        wardrobePreviewItems[defaultWardrobe.id] = [
+          item,
+          ...existingPreview,
+        ].take(4).toList();
+      }
+
       return item;
     } catch (e) {
       error = e.toString();
@@ -336,6 +362,9 @@ class WardrobeViewmodel extends ChangeNotifier {
     required String size,
     required String material,
     required String brand,
+    String? purchaseStore,
+    double? purchasePrice,
+    DateTime? purchaseDate,
     File? imageFile,
   }) async {
     try {
@@ -353,6 +382,9 @@ class WardrobeViewmodel extends ChangeNotifier {
         size: size,
         material: material,
         brand: brand,
+        purchaseStore: purchaseStore,
+        purchasePrice: purchasePrice,
+        purchaseDate: purchaseDate,
         imageFile: imageFile,
       );
 
@@ -364,7 +396,9 @@ class WardrobeViewmodel extends ChangeNotifier {
           .toList();
       wardrobePreviewItems = {
         for (final entry in wardrobePreviewItems.entries)
-          entry.key: entry.value.map((item) => item.id == itemId ? updated : item).toList(),
+          entry.key: entry.value
+              .map((item) => item.id == itemId ? updated : item)
+              .toList(),
       };
       return updated;
     } catch (e) {

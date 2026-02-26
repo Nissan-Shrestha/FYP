@@ -8,6 +8,9 @@ class ClothingItemModel {
   final String size;
   final String material;
   final String brand;
+  final String purchaseStore;
+  final double? purchasePrice;
+  final DateTime? purchaseDate;
   final String? image;
   final DateTime createdAt;
 
@@ -21,6 +24,9 @@ class ClothingItemModel {
     required this.size,
     required this.material,
     required this.brand,
+    required this.purchaseStore,
+    required this.purchasePrice,
+    required this.purchaseDate,
     required this.image,
     required this.createdAt,
   });
@@ -36,6 +42,9 @@ class ClothingItemModel {
       size: (json["size"] as String?) ?? "",
       material: (json["material"] as String?) ?? "",
       brand: (json["brand"] as String?) ?? "",
+      purchaseStore: (json["purchase_store"] as String?) ?? "",
+      purchasePrice: _parsePurchasePrice(json["purchase_price"]),
+      purchaseDate: _parsePurchaseDate(json["purchase_date"]),
       image: json["image"] as String?,
       createdAt: DateTime.parse(json["created_at"] as String),
     );
@@ -52,8 +61,24 @@ class ClothingItemModel {
       "size": size,
       "material": material,
       "brand": brand,
+      "purchase_store": purchaseStore,
+      "purchase_price": purchasePrice,
+      "purchase_date": purchaseDate?.toIso8601String(),
       "image": image,
       "created_at": createdAt.toIso8601String(),
     };
+  }
+
+  static double? _parsePurchasePrice(dynamic value) {
+    if (value == null) return null;
+    if (value is num) return value.toDouble();
+    return double.tryParse(value.toString());
+  }
+
+  static DateTime? _parsePurchaseDate(dynamic value) {
+    if (value == null) return null;
+    final text = value.toString().trim();
+    if (text.isEmpty) return null;
+    return DateTime.tryParse(text);
   }
 }
