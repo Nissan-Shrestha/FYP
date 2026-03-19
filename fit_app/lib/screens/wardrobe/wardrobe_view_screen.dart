@@ -39,11 +39,10 @@ class _WardrobeViewScreenState extends State<WardrobeViewScreen> {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final wardrobeVM = context.read<WardrobeViewmodel>();
       wardrobeVM.fetchItemsForWardrobe(
-        firebaseUid: firebaseUid,
         wardrobeId: widget.wardrobeId,
       );
       if (wardrobeVM.clothingItems.isEmpty) {
-        wardrobeVM.fetchClothingItems(firebaseUid);
+        wardrobeVM.fetchClothingItems();
       }
     });
   }
@@ -61,7 +60,7 @@ class _WardrobeViewScreenState extends State<WardrobeViewScreen> {
     }
 
     if (wardrobeVM.clothingItems.isEmpty && !wardrobeVM.isLoadingClothingItems) {
-      await wardrobeVM.fetchClothingItems(firebaseUid);
+      await wardrobeVM.fetchClothingItems();
     }
 
     if (!mounted) return;
@@ -203,10 +202,9 @@ class _WardrobeViewScreenState extends State<WardrobeViewScreen> {
                                 : () async {
                                     int successCount = 0;
                                     for (final itemId in selectedToAdd.toList()) {
-                                      final ok = await context
+                                       final ok = await context
                                           .read<WardrobeViewmodel>()
                                           .addItemToWardrobe(
-                                            firebaseUid: firebaseUid,
                                             wardrobeId: widget.wardrobeId,
                                             itemId: itemId,
                                           );
@@ -220,7 +218,6 @@ class _WardrobeViewScreenState extends State<WardrobeViewScreen> {
                                     await context
                                         .read<WardrobeViewmodel>()
                                         .fetchItemsForWardrobe(
-                                          firebaseUid: firebaseUid,
                                           wardrobeId: widget.wardrobeId,
                                         );
                                     if (!mounted) return;
@@ -348,7 +345,6 @@ class _WardrobeViewScreenState extends State<WardrobeViewScreen> {
     }
 
     final ok = await context.read<WardrobeViewmodel>().removeItemFromWardrobe(
-      firebaseUid: firebaseUid,
       wardrobeId: widget.wardrobeId,
       itemId: item.id,
     );
@@ -403,7 +399,6 @@ class _WardrobeViewScreenState extends State<WardrobeViewScreen> {
     }
 
     final ok = await context.read<WardrobeViewmodel>().deleteClothingItem(
-      firebaseUid: firebaseUid,
       itemId: item.id,
     );
 
@@ -469,9 +464,7 @@ class _WardrobeViewScreenState extends State<WardrobeViewScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final authVM = context.watch<AuthViewmodel>();
     final wardrobeVM = context.watch<WardrobeViewmodel>();
-    final firebaseUid = authVM.profile?.firebaseUid;
     final items = _sortedItems(wardrobeVM.selectedWardrobeItems);
 
     return Scaffold(
@@ -594,12 +587,9 @@ class _WardrobeViewScreenState extends State<WardrobeViewScreen> {
                   : wardrobeVM.error != null && items.isEmpty
                   ? _ErrorState(
                       message: wardrobeVM.error!,
-                      onRetry: firebaseUid == null
-                          ? null
-                          : () => context.read<WardrobeViewmodel>().fetchItemsForWardrobe(
-                                firebaseUid: firebaseUid,
-                                wardrobeId: widget.wardrobeId,
-                              ),
+                      onRetry: () => context.read<WardrobeViewmodel>().fetchItemsForWardrobe(
+                            wardrobeId: widget.wardrobeId,
+                          ),
                     )
                   : items.isEmpty
                   ? Center(

@@ -35,7 +35,6 @@ class AuthViewmodel extends ChangeNotifier {
 
       if (user != null) {
         _profile = await ProfileService.getOrCreateProfile(
-          firebaseUid: user.uid,
           email: user.email ?? "",
           username: username, // from textfield
         );
@@ -59,7 +58,6 @@ class AuthViewmodel extends ChangeNotifier {
 
       if (user != null) {
         _profile = await ProfileService.getOrCreateProfile(
-          firebaseUid: user.uid,
           email: user.email ?? "",
           username: null, // important
         );
@@ -86,7 +84,6 @@ class AuthViewmodel extends ChangeNotifier {
 
     try {
       final updatedProfile = await ProfileService.updateUsername(
-        firebaseUid: _profile!.firebaseUid,
         newUsername: newName,
       );
 
@@ -114,7 +111,6 @@ class AuthViewmodel extends ChangeNotifier {
       notifyListeners();
 
       final updatedProfile = await ProfileService.uploadProfilePicture(
-        firebaseUid: _profile!.firebaseUid,
         imageFile: imageFile,
       );
 
@@ -132,7 +128,6 @@ class AuthViewmodel extends ChangeNotifier {
 
     if (user != null) {
       _profile = await ProfileService.getOrCreateProfile(
-        firebaseUid: user.uid,
         email: user.email ?? "",
         username: null,
       );

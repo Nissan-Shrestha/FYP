@@ -1,4 +1,3 @@
-import 'package:fit_app/viewmodels/auth_viewmodel.dart';
 import 'package:fit_app/viewmodels/wardrobe_viewmodel.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -21,22 +20,15 @@ class _CreateWardrobeScreenState extends State<CreateWardrobeScreen> {
   }
 
   Future<void> _createWardrobe(BuildContext context) async {
-    final authVM = context.read<AuthViewmodel>();
     final wardrobeVM = context.read<WardrobeViewmodel>();
-    final firebaseUid = authVM.profile?.firebaseUid;
     final name = _nameController.text.trim();
 
-    if (firebaseUid == null) {
-      _showMessage(context, "User not found. Please log in again.");
-      return;
-    }
     if (name.isEmpty) {
       _showMessage(context, "Please enter a wardrobe name.");
       return;
     }
 
     final result = await wardrobeVM.createWardrobe(
-      firebaseUid: firebaseUid,
       name: name,
     );
 

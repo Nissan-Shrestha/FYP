@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'dart:io';
 
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:fit_app/constants.dart';
 import 'package:fit_app/models/WardrobeModel.dart';
 import 'package:fit_app/models/clothing_item_model.dart';
@@ -9,118 +10,107 @@ import 'package:http/http.dart' as http;
 class WardrobeService {
   static const String _baseApi = "${ApiConfig.serverBaseUrl}/api";
 
-  static Future<List<WardrobeModel>> fetchWardrobes({
-    required String firebaseUid,
-  }) async {
-    final uri = Uri.parse("$_baseApi/wardrobes/").replace(
-      queryParameters: {"firebase_uid": firebaseUid},
-    );
+  /// Gets the Firebase ID token for the current user.
+  static Future<String> _getIdToken() async {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user == null) throw Exception("User not logged in");
+    return await user.getIdToken() ?? (throw Exception("Could not get ID token"));
+  }
 
-    final response = await http.get(uri);
+  /// Returns headers with the Bearer token + optional Content-Type.
+  static Future<Map<String, String>> _authHeaders({bool json = true}) async {
+    final token = await _getIdToken();
+    return {
+      "Authorization": "Bearer $token",
+      if (json) "Content-Type": "application/json",
+    };
+  }
+
+  static Future<List<WardrobeModel>> fetchWardrobes() async {
+    final response = await http.get(
+      Uri.parse("$_baseApi/wardrobes/"),
+      headers: await _authHeaders(json: false),
+    );
     if (response.statusCode == 200) {
       final List<dynamic> data = jsonDecode(response.body);
       return data
           .map((json) => WardrobeModel.fromJson(json as Map<String, dynamic>))
           .toList();
     }
-
     throw Exception("Failed to fetch wardrobes");
   }
 
   static Future<WardrobeModel> createWardrobe({
-    required String firebaseUid,
     required String name,
   }) async {
     final response = await http.post(
       Uri.parse("$_baseApi/wardrobes/"),
-      headers: {"Content-Type": "application/json"},
-      body: jsonEncode({"firebase_uid": firebaseUid, "name": name}),
+      headers: await _authHeaders(),
+      body: jsonEncode({"name": name}),
     );
-
     if (response.statusCode == 201) {
       return WardrobeModel.fromJson(jsonDecode(response.body));
     }
-
     throw Exception("Failed to create wardrobe");
   }
 
   static Future<WardrobeModel> renameWardrobe({
-    required String firebaseUid,
     required int wardrobeId,
     required String name,
   }) async {
     final response = await http.patch(
       Uri.parse("$_baseApi/wardrobes/$wardrobeId/"),
-      headers: {"Content-Type": "application/json"},
-      body: jsonEncode({"firebase_uid": firebaseUid, "name": name}),
+      headers: await _authHeaders(),
+      body: jsonEncode({"name": name}),
     );
-
     if (response.statusCode == 200) {
       return WardrobeModel.fromJson(jsonDecode(response.body));
     }
-
     throw Exception("Failed to rename wardrobe");
   }
 
   static Future<void> deleteWardrobe({
-    required String firebaseUid,
     required int wardrobeId,
   }) async {
-    final uri = Uri.parse("$_baseApi/wardrobes/$wardrobeId/").replace(
-      queryParameters: {"firebase_uid": firebaseUid},
+    final response = await http.delete(
+      Uri.parse("$_baseApi/wardrobes/$wardrobeId/"),
+      headers: await _authHeaders(json: false),
     );
-
-    final response = await http.delete(uri);
     if (response.statusCode == 204) return;
-
     throw Exception("Failed to delete wardrobe");
   }
 
-  static Future<List<ClothingItemModel>> fetchClothingItems({
-    required String firebaseUid,
-  }) async {
-    final uri = Uri.parse("$_baseApi/clothing-items/").replace(
-      queryParameters: {"firebase_uid": firebaseUid},
+  static Future<List<ClothingItemModel>> fetchClothingItems() async {
+    final response = await http.get(
+      Uri.parse("$_baseApi/clothing-items/"),
+      headers: await _authHeaders(json: false),
     );
-
-    final response = await http.get(uri);
     if (response.statusCode == 200) {
       final List<dynamic> data = jsonDecode(response.body);
       return data
-          .map(
-            (json) =>
-                ClothingItemModel.fromJson(json as Map<String, dynamic>),
-          )
+          .map((json) => ClothingItemModel.fromJson(json as Map<String, dynamic>))
           .toList();
     }
-
     throw Exception("Failed to fetch clothing items");
   }
 
   static Future<List<ClothingItemModel>> fetchWardrobeItems({
-    required String firebaseUid,
     required int wardrobeId,
   }) async {
-    final uri = Uri.parse("$_baseApi/wardrobes/$wardrobeId/items/").replace(
-      queryParameters: {"firebase_uid": firebaseUid},
+    final response = await http.get(
+      Uri.parse("$_baseApi/wardrobes/$wardrobeId/items/"),
+      headers: await _authHeaders(json: false),
     );
-
-    final response = await http.get(uri);
     if (response.statusCode == 200) {
       final List<dynamic> data = jsonDecode(response.body);
       return data
-          .map(
-            (json) =>
-                ClothingItemModel.fromJson(json as Map<String, dynamic>),
-          )
+          .map((json) => ClothingItemModel.fromJson(json as Map<String, dynamic>))
           .toList();
     }
-
     throw Exception("Failed to fetch wardrobe items");
   }
 
   static Future<ClothingItemModel> createClothingItem({
-    required String firebaseUid,
     required String name,
     String category = "",
     String season = "",
@@ -133,12 +123,13 @@ class WardrobeService {
     DateTime? purchaseDate,
     File? imageFile,
   }) async {
+    final token = await _getIdToken();
     final request = http.MultipartRequest(
       "POST",
       Uri.parse("$_baseApi/clothing-items/"),
     );
 
-    request.fields["firebase_uid"] = firebaseUid;
+    request.headers["Authorization"] = "Bearer $token";
     request.fields["name"] = name;
     request.fields["category"] = category;
     request.fields["season"] = season;
@@ -168,63 +159,50 @@ class WardrobeService {
     if (streamedResponse.statusCode == 201) {
       return ClothingItemModel.fromJson(jsonDecode(responseBody));
     }
-
     throw Exception("Failed to create clothing item");
   }
 
   static Future<WardrobeModel> addItemToWardrobe({
-    required String firebaseUid,
     required int wardrobeId,
     required int itemId,
   }) async {
     final response = await http.post(
       Uri.parse("$_baseApi/wardrobes/$wardrobeId/items/"),
-      headers: {"Content-Type": "application/json"},
-      body: jsonEncode({"firebase_uid": firebaseUid, "item_id": itemId}),
+      headers: await _authHeaders(),
+      body: jsonEncode({"item_id": itemId}),
     );
-
     if (response.statusCode == 200) {
       return WardrobeModel.fromJson(jsonDecode(response.body));
     }
-
     throw Exception("Failed to add item to wardrobe");
   }
 
   static Future<WardrobeModel> removeItemFromWardrobe({
-    required String firebaseUid,
     required int wardrobeId,
     required int itemId,
   }) async {
-    final uri = Uri.parse("$_baseApi/wardrobes/$wardrobeId/items/$itemId/").replace(
-      queryParameters: {"firebase_uid": firebaseUid},
+    final response = await http.delete(
+      Uri.parse("$_baseApi/wardrobes/$wardrobeId/items/$itemId/"),
+      headers: await _authHeaders(json: false),
     );
-
-    final response = await http.delete(uri);
     if (response.statusCode == 200) {
       return WardrobeModel.fromJson(jsonDecode(response.body));
     }
-
     throw Exception("Failed to remove item from wardrobe");
   }
 
   static Future<void> deleteClothingItem({
-    required String firebaseUid,
     required int itemId,
   }) async {
-    final uri = Uri.parse("$_baseApi/clothing-items/$itemId/").replace(
-      queryParameters: {"firebase_uid": firebaseUid},
+    final response = await http.delete(
+      Uri.parse("$_baseApi/clothing-items/$itemId/"),
+      headers: await _authHeaders(json: false),
     );
-
-    final response = await http.delete(uri);
-    if (response.statusCode == 204) {
-      return;
-    }
-
+    if (response.statusCode == 204) return;
     throw Exception("Failed to delete clothing item");
   }
 
   static Future<ClothingItemModel> updateClothingItem({
-    required String firebaseUid,
     required int itemId,
     required String name,
     required String category,
@@ -238,12 +216,13 @@ class WardrobeService {
     DateTime? purchaseDate,
     File? imageFile,
   }) async {
+    final token = await _getIdToken();
     final request = http.MultipartRequest(
       "PATCH",
       Uri.parse("$_baseApi/clothing-items/$itemId/"),
     );
 
-    request.fields["firebase_uid"] = firebaseUid;
+    request.headers["Authorization"] = "Bearer $token";
     request.fields["name"] = name;
     request.fields["category"] = category;
     request.fields["season"] = season;
@@ -252,12 +231,10 @@ class WardrobeService {
     request.fields["material"] = material;
     request.fields["brand"] = brand;
     request.fields["purchase_store"] = (purchaseStore ?? "").trim();
-    request.fields["purchase_price"] = purchasePrice == null
-        ? ""
-        : purchasePrice.toStringAsFixed(2);
-    request.fields["purchase_date"] = purchaseDate == null
-        ? ""
-        : _dateOnly(purchaseDate);
+    request.fields["purchase_price"] =
+        purchasePrice == null ? "" : purchasePrice.toStringAsFixed(2);
+    request.fields["purchase_date"] =
+        purchaseDate == null ? "" : _dateOnly(purchaseDate);
 
     if (imageFile != null) {
       request.files.add(
@@ -270,7 +247,6 @@ class WardrobeService {
     if (streamed.statusCode == 200) {
       return ClothingItemModel.fromJson(jsonDecode(body));
     }
-
     throw Exception("Failed to update clothing item");
   }
 

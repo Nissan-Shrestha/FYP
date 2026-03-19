@@ -19,15 +19,13 @@ class WardrobeViewmodel extends ChangeNotifier {
 
   String? error;
 
-  Future<void> fetchWardrobes(String firebaseUid) async {
+  Future<void> fetchWardrobes() async {
     try {
       isLoadingWardrobes = true;
       error = null;
       notifyListeners();
 
-      wardrobes = await WardrobeService.fetchWardrobes(
-        firebaseUid: firebaseUid,
-      );
+      wardrobes = await WardrobeService.fetchWardrobes();
     } catch (e) {
       error = e.toString();
     } finally {
@@ -36,15 +34,13 @@ class WardrobeViewmodel extends ChangeNotifier {
     }
   }
 
-  Future<void> fetchClothingItems(String firebaseUid) async {
+  Future<void> fetchClothingItems() async {
     try {
       isLoadingClothingItems = true;
       error = null;
       notifyListeners();
 
-      clothingItems = await WardrobeService.fetchClothingItems(
-        firebaseUid: firebaseUid,
-      );
+      clothingItems = await WardrobeService.fetchClothingItems();
     } catch (e) {
       error = e.toString();
     } finally {
@@ -54,7 +50,6 @@ class WardrobeViewmodel extends ChangeNotifier {
   }
 
   Future<void> fetchItemsForWardrobe({
-    required String firebaseUid,
     required int wardrobeId,
   }) async {
     try {
@@ -63,7 +58,6 @@ class WardrobeViewmodel extends ChangeNotifier {
       notifyListeners();
 
       selectedWardrobeItems = await WardrobeService.fetchWardrobeItems(
-        firebaseUid: firebaseUid,
         wardrobeId: wardrobeId,
       );
       wardrobePreviewItems[wardrobeId] = selectedWardrobeItems.take(4).toList();
@@ -75,10 +69,7 @@ class WardrobeViewmodel extends ChangeNotifier {
     }
   }
 
-  Future<void> fetchWardrobePreviews(
-    String firebaseUid, {
-    int previewLimit = 4,
-  }) async {
+  Future<void> fetchWardrobePreviews({int previewLimit = 4}) async {
     try {
       isLoadingWardrobePreviews = true;
       notifyListeners();
@@ -87,7 +78,6 @@ class WardrobeViewmodel extends ChangeNotifier {
       for (final wardrobe in wardrobes) {
         try {
           final items = await WardrobeService.fetchWardrobeItems(
-            firebaseUid: firebaseUid,
             wardrobeId: wardrobe.id,
           );
           previewMap[wardrobe.id] = items.take(previewLimit).toList();
@@ -104,7 +94,6 @@ class WardrobeViewmodel extends ChangeNotifier {
   }
 
   Future<WardrobeModel?> createWardrobe({
-    required String firebaseUid,
     required String name,
   }) async {
     try {
@@ -112,10 +101,7 @@ class WardrobeViewmodel extends ChangeNotifier {
       error = null;
       notifyListeners();
 
-      final wardrobe = await WardrobeService.createWardrobe(
-        firebaseUid: firebaseUid,
-        name: name,
-      );
+      final wardrobe = await WardrobeService.createWardrobe(name: name);
 
       wardrobes = [...wardrobes, wardrobe]
         ..sort((a, b) {
@@ -137,7 +123,6 @@ class WardrobeViewmodel extends ChangeNotifier {
   }
 
   Future<WardrobeModel?> renameWardrobe({
-    required String firebaseUid,
     required int wardrobeId,
     required String name,
   }) async {
@@ -147,7 +132,6 @@ class WardrobeViewmodel extends ChangeNotifier {
       notifyListeners();
 
       final updated = await WardrobeService.renameWardrobe(
-        firebaseUid: firebaseUid,
         wardrobeId: wardrobeId,
         name: name,
       );
@@ -172,7 +156,6 @@ class WardrobeViewmodel extends ChangeNotifier {
   }
 
   Future<bool> deleteWardrobe({
-    required String firebaseUid,
     required int wardrobeId,
   }) async {
     try {
@@ -180,10 +163,7 @@ class WardrobeViewmodel extends ChangeNotifier {
       error = null;
       notifyListeners();
 
-      await WardrobeService.deleteWardrobe(
-        firebaseUid: firebaseUid,
-        wardrobeId: wardrobeId,
-      );
+      await WardrobeService.deleteWardrobe(wardrobeId: wardrobeId);
 
       wardrobes = wardrobes.where((w) => w.id != wardrobeId).toList();
       wardrobePreviewItems.remove(wardrobeId);
@@ -198,7 +178,6 @@ class WardrobeViewmodel extends ChangeNotifier {
   }
 
   Future<ClothingItemModel?> createClothingItem({
-    required String firebaseUid,
     required String name,
     String category = "",
     String season = "",
@@ -217,7 +196,6 @@ class WardrobeViewmodel extends ChangeNotifier {
       notifyListeners();
 
       final item = await WardrobeService.createClothingItem(
-        firebaseUid: firebaseUid,
         name: name,
         category: category,
         season: season,
@@ -262,7 +240,6 @@ class WardrobeViewmodel extends ChangeNotifier {
   }
 
   Future<bool> addItemToWardrobe({
-    required String firebaseUid,
     required int wardrobeId,
     required int itemId,
   }) async {
@@ -272,7 +249,6 @@ class WardrobeViewmodel extends ChangeNotifier {
       notifyListeners();
 
       await WardrobeService.addItemToWardrobe(
-        firebaseUid: firebaseUid,
         wardrobeId: wardrobeId,
         itemId: itemId,
       );
@@ -287,7 +263,6 @@ class WardrobeViewmodel extends ChangeNotifier {
   }
 
   Future<bool> removeItemFromWardrobe({
-    required String firebaseUid,
     required int wardrobeId,
     required int itemId,
   }) async {
@@ -297,7 +272,6 @@ class WardrobeViewmodel extends ChangeNotifier {
       notifyListeners();
 
       await WardrobeService.removeItemFromWardrobe(
-        firebaseUid: firebaseUid,
         wardrobeId: wardrobeId,
         itemId: itemId,
       );
@@ -321,7 +295,6 @@ class WardrobeViewmodel extends ChangeNotifier {
   }
 
   Future<bool> deleteClothingItem({
-    required String firebaseUid,
     required int itemId,
   }) async {
     try {
@@ -329,10 +302,7 @@ class WardrobeViewmodel extends ChangeNotifier {
       error = null;
       notifyListeners();
 
-      await WardrobeService.deleteClothingItem(
-        firebaseUid: firebaseUid,
-        itemId: itemId,
-      );
+      await WardrobeService.deleteClothingItem(itemId: itemId);
 
       clothingItems = clothingItems.where((item) => item.id != itemId).toList();
       selectedWardrobeItems = selectedWardrobeItems
@@ -353,7 +323,6 @@ class WardrobeViewmodel extends ChangeNotifier {
   }
 
   Future<ClothingItemModel?> updateClothingItem({
-    required String firebaseUid,
     required int itemId,
     required String name,
     required String category,
@@ -373,7 +342,6 @@ class WardrobeViewmodel extends ChangeNotifier {
       notifyListeners();
 
       final updated = await WardrobeService.updateClothingItem(
-        firebaseUid: firebaseUid,
         itemId: itemId,
         name: name,
         category: category,

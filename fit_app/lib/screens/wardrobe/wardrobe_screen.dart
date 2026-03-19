@@ -20,11 +20,11 @@ class WardrobeScreen extends StatefulWidget {
 class _WardrobeScreenState extends State<WardrobeScreen> {
   bool _loaded = false;
 
-  Future<void> _loadWardrobeTabData(String firebaseUid) async {
+  Future<void> _loadWardrobeTabData() async {
     final wardrobeVM = context.read<WardrobeViewmodel>();
-    await wardrobeVM.fetchWardrobes(firebaseUid);
-    await wardrobeVM.fetchClothingItems(firebaseUid);
-    await wardrobeVM.fetchWardrobePreviews(firebaseUid);
+    await wardrobeVM.fetchWardrobes();
+    await wardrobeVM.fetchClothingItems();
+    await wardrobeVM.fetchWardrobePreviews();
   }
 
   Future<void> _showWardrobeActions({
@@ -32,13 +32,6 @@ class _WardrobeScreenState extends State<WardrobeScreen> {
     required String wardrobeName,
     required bool isDefaultWardrobe,
   }) async {
-    final firebaseUid = context.read<AuthViewmodel>().profile?.firebaseUid;
-    if (firebaseUid == null) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(const SnackBar(content: Text("User not found")));
-      return;
-    }
 
     await showModalBottomSheet<void>(
       context: context,
@@ -139,11 +132,7 @@ class _WardrobeScreenState extends State<WardrobeScreen> {
     final trimmed = newName.trim();
     if (trimmed.isEmpty || trimmed == currentName) return;
 
-    final firebaseUid = context.read<AuthViewmodel>().profile?.firebaseUid;
-    if (firebaseUid == null) return;
-
     final result = await context.read<WardrobeViewmodel>().renameWardrobe(
-      firebaseUid: firebaseUid,
       wardrobeId: wardrobeId,
       name: trimmed,
     );
@@ -188,11 +177,7 @@ class _WardrobeScreenState extends State<WardrobeScreen> {
 
     if (shouldDelete != true || !mounted) return;
 
-    final firebaseUid = context.read<AuthViewmodel>().profile?.firebaseUid;
-    if (firebaseUid == null) return;
-
     final ok = await context.read<WardrobeViewmodel>().deleteWardrobe(
-      firebaseUid: firebaseUid,
       wardrobeId: wardrobeId,
     );
 
@@ -220,7 +205,7 @@ class _WardrobeScreenState extends State<WardrobeScreen> {
 
     _loaded = true;
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      _loadWardrobeTabData(firebaseUid);
+      _loadWardrobeTabData();
     });
   }
 
@@ -432,14 +417,11 @@ class _WardrobeScreenState extends State<WardrobeScreen> {
                       hasItems: previewItems.isNotEmpty,
                       previewImageUrls: previewImageUrls,
                       onTap: () {
-                        if (firebaseUid != null) {
                           context
                               .read<WardrobeViewmodel>()
                               .fetchItemsForWardrobe(
-                                firebaseUid: firebaseUid,
                                 wardrobeId: wardrobe.id,
                               );
-                        }
                         Navigator.push(
                           context,
                           MaterialPageRoute(
@@ -479,7 +461,7 @@ class _WardrobeScreenState extends State<WardrobeScreen> {
                         onPressed: firebaseUid == null
                             ? null
                             : () {
-                                _loadWardrobeTabData(firebaseUid);
+                                _loadWardrobeTabData();
                               },
                         child: const Text("Retry"),
                       ),

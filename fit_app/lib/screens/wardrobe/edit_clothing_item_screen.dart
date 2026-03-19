@@ -2,7 +2,6 @@ import 'dart:io';
 
 import 'package:fit_app/constants.dart';
 import 'package:fit_app/models/clothing_item_model.dart';
-import 'package:fit_app/viewmodels/auth_viewmodel.dart';
 import 'package:fit_app/viewmodels/wardrobe_viewmodel.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -53,13 +52,7 @@ class _EditClothingItemScreenState extends State<EditClothingItemScreen> {
   }
 
   Future<void> _saveChanges() async {
-    final authVM = context.read<AuthViewmodel>();
     final wardrobeVM = context.read<WardrobeViewmodel>();
-    final firebaseUid = authVM.profile?.firebaseUid;
-    if (firebaseUid == null) {
-      _showMessage("User not found. Please log in again.");
-      return;
-    }
 
     final values = <String, String>{
       "Name": itemName.trim(),
@@ -80,7 +73,6 @@ class _EditClothingItemScreenState extends State<EditClothingItemScreen> {
     }
 
     final result = await wardrobeVM.updateClothingItem(
-      firebaseUid: firebaseUid,
       itemId: widget.item.id,
       name: values["Name"]!,
       category: values["Category"]!,

@@ -3,6 +3,7 @@ from decimal import Decimal, InvalidOperation
 
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
+from .firebase_auth import get_firebase_uid
 from .models import ClothingItem, Profile, Wardrobe
 from .serializers import ClothingItemSerializer, ProfileSerializer, WardrobeSerializer
 
@@ -61,10 +62,9 @@ def _parse_optional_date(value, field_name):
 
 @api_view(["POST", "PATCH"])
 def get_or_create_profile(request):
-    firebase_uid = request.data.get("firebase_uid")
-
-    if not firebase_uid:
-        return Response({"error": "firebase_uid is required"}, status=400)
+    firebase_uid, err = get_firebase_uid(request)
+    if err:
+        return err
 
     profile, created = Profile.objects.get_or_create(
         firebase_uid=firebase_uid
@@ -102,7 +102,10 @@ def get_or_create_profile(request):
 
 @api_view(["GET", "POST"])
 def clothing_items(request):
-    firebase_uid = request.query_params.get("firebase_uid") or request.data.get("firebase_uid")
+    firebase_uid, err = get_firebase_uid(request)
+    if err:
+        return err
+
     profile, error_response = _get_profile_by_firebase_uid(firebase_uid)
     if error_response:
         return error_response
@@ -159,7 +162,10 @@ def clothing_items(request):
 
 @api_view(["PATCH", "DELETE"])
 def clothing_item_detail(request, item_id):
-    firebase_uid = request.query_params.get("firebase_uid") or request.data.get("firebase_uid")
+    firebase_uid, err = get_firebase_uid(request)
+    if err:
+        return err
+
     profile, error_response = _get_profile_by_firebase_uid(firebase_uid)
     if error_response:
         return error_response
@@ -223,7 +229,10 @@ def clothing_item_detail(request, item_id):
 
 @api_view(["GET", "POST"])
 def wardrobes(request):
-    firebase_uid = request.query_params.get("firebase_uid") or request.data.get("firebase_uid")
+    firebase_uid, err = get_firebase_uid(request)
+    if err:
+        return err
+
     profile, error_response = _get_profile_by_firebase_uid(firebase_uid)
     if error_response:
         return error_response
@@ -250,7 +259,10 @@ def wardrobes(request):
 
 @api_view(["PATCH", "DELETE"])
 def wardrobe_detail(request, wardrobe_id):
-    firebase_uid = request.query_params.get("firebase_uid") or request.data.get("firebase_uid")
+    firebase_uid, err = get_firebase_uid(request)
+    if err:
+        return err
+
     profile, error_response = _get_profile_by_firebase_uid(firebase_uid)
     if error_response:
         return error_response
@@ -283,7 +295,10 @@ def wardrobe_detail(request, wardrobe_id):
 
 @api_view(["GET", "POST"])
 def wardrobe_items(request, wardrobe_id):
-    firebase_uid = request.query_params.get("firebase_uid") or request.data.get("firebase_uid")
+    firebase_uid, err = get_firebase_uid(request)
+    if err:
+        return err
+
     profile, error_response = _get_profile_by_firebase_uid(firebase_uid)
     if error_response:
         return error_response
@@ -312,7 +327,10 @@ def wardrobe_items(request, wardrobe_id):
 
 @api_view(["DELETE"])
 def remove_item_from_wardrobe(request, wardrobe_id, item_id):
-    firebase_uid = request.query_params.get("firebase_uid") or request.data.get("firebase_uid")
+    firebase_uid, err = get_firebase_uid(request)
+    if err:
+        return err
+
     profile, error_response = _get_profile_by_firebase_uid(firebase_uid)
     if error_response:
         return error_response

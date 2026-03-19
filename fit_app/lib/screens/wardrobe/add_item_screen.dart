@@ -1,6 +1,5 @@
 import 'dart:io';
 
-import 'package:fit_app/viewmodels/auth_viewmodel.dart';
 import 'package:fit_app/viewmodels/wardrobe_viewmodel.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -32,14 +31,7 @@ class _AddItemScreenState extends State<AddItemScreen> {
   DateTime? _purchaseDate;
 
   Future<void> _saveItem() async {
-    final authVM = context.read<AuthViewmodel>();
     final wardrobeVM = context.read<WardrobeViewmodel>();
-    final firebaseUid = authVM.profile?.firebaseUid;
-
-    if (firebaseUid == null) {
-      _showMessage("User not found. Please log in again.");
-      return;
-    }
 
     final cleanName = _valueOrEmpty(itemName, "Enter item name");
     if (cleanName.isEmpty) {
@@ -70,7 +62,6 @@ class _AddItemScreenState extends State<AddItemScreen> {
     }
 
     final result = await wardrobeVM.createClothingItem(
-      firebaseUid: firebaseUid,
       name: cleanName,
       category: _valueOrEmpty(category, "Choose the category"),
       season: _valueOrEmpty(season, "Choose the season"),
