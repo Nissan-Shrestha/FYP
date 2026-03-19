@@ -1,0 +1,46 @@
+# =============================================
+# ROOT-LEVEL GITIGNORE
+# =============================================
+
+# =============================================
+# SECRETS & CREDENTIALS — NEVER COMMIT THESE
+# =============================================
+**/*serviceAccountKey*.json
+**/*firebase-adminsdk*.json
+**/*.json.secret
+**/.env
+**/.env.*
+!**/.env.example
+
+# =============================================
+# Python / Django (backend/)
+# =============================================
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+venv/
+env/
+.venv/
+backend/media/
+backend/staticfiles/
+backend/static_collected/
+*.sqlite3
+
+# =============================================
+# Flutter (fit_app/)
+# =============================================
+fit_app/.dart_tool/
+fit_app/build/
+fit_app/.flutter-plugins-dependencies
+fit_app/.pub-cache/
+
+# =============================================
+# IDE & OS
+# =============================================
+.idea/
+.vscode/
+.DS_Store
+Thumbs.db
+*.swp
+*.swo

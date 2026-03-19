@@ -76,8 +76,42 @@ class OutfitsScreen extends StatelessWidget {
                     ),
                   ],
                 ),
-                child: Center(
-                  child: Text("This is just a placeholder for now"),
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(
+                    vertical: 10,
+                    horizontal: 15,
+                  ),
+                  child: Row(
+                    spacing: 10,
+                    children: [
+                      Expanded(
+                        child: Container(
+                          width: double.maxFinite,
+                          decoration: BoxDecoration(
+                            borderRadius: BorderRadius.circular(16),
+                            image: DecorationImage(
+                              fit: BoxFit.cover,
+                              image: NetworkImage(
+                                "https://www.realsimple.com/thmb/46MVTJ_t0HSHaVFUNeu0dhBWvhY=/1500x0/filters:no_upscale():max_bytes(150000):strip_icc()/what-to-wear-Formal-events-fd6eff677fe84b05b11e99eb8c2cc14f.jpg",
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+                      Expanded(
+                        child: Container(
+                          decoration: BoxDecoration(color: Colors.blueGrey),
+                          child: Center(
+                            child: Text(
+                              "This is just a placeholder for now..will be replaced once outfit ai is implemented",
+                              textAlign: TextAlign.center,
+                              style: TextStyle(color: Colors.white),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
               ),
               SizedBox(height: 20),
