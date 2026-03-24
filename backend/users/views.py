@@ -6,6 +6,9 @@ from rest_framework.response import Response
 from .firebase_auth import get_firebase_uid
 from .models import ClothingItem, Profile, Wardrobe, ClothingOption
 from .serializers import ClothingItemSerializer, ProfileSerializer, WardrobeSerializer, ClothingOptionSerializer
+from rembg import remove
+from django.core.files.base import ContentFile
+import io
 
 
 DEFAULT_WARDROBE_NAME = "all clothes"
@@ -58,6 +61,37 @@ def _parse_optional_date(value, field_name):
             {"error": f"{field_name} must be in YYYY-MM-DD format"},
             status=400,
         )
+
+
+def _process_background_removal(image_file):
+    """
+    Takes a Django UploadedFile, removes background using rembg,
+    and returns a new ContentFile (PNG).
+    """
+    if not image_file:
+        return None
+    
+    try:
+        # Reset file pointer if needed
+        image_file.seek(0)
+        input_data = image_file.read()
+        
+        # Process with rembg
+        output_data = remove(input_data)
+        
+        # Determine name (force .png for transparency)
+        name = image_file.name
+        if "." in name:
+            name = name.rsplit(".", 1)[0] + ".png"
+        else:
+            name = name + ".png"
+            
+        return ContentFile(output_data, name=name)
+    except Exception as e:
+        print(f"Rembg error: {e}")
+        # On failure, return original (or handle differently)
+        image_file.seek(0)
+        return image_file
 
 
 @api_view(["POST", "PATCH"])
@@ -161,7 +195,7 @@ def clothing_items(request):
         purchase_store=(serializer.validated_data.get("purchase_store", "") or "").strip(),
         purchase_price=serializer.validated_data.get("purchase_price"),
         purchase_date=serializer.validated_data.get("purchase_date"),
-        image=request.FILES.get("image"),
+        image=_process_background_removal(request.FILES.get("image")),
     )
 
     default_wardrobe.items.add(item)
@@ -215,7 +249,7 @@ def clothing_item_detail(request, item_id):
             item.purchase_date = parsed_date
 
         if request.FILES.get("image"):
-            item.image = request.FILES["image"]
+            item.image = _process_background_removal(request.FILES["image"])
 
         # Enforce required fields after partial update.
         missing = [

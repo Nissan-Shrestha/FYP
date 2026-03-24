@@ -32,7 +32,6 @@ class _WardrobeScreenState extends State<WardrobeScreen> {
     required String wardrobeName,
     required bool isDefaultWardrobe,
   }) async {
-
     await showModalBottomSheet<void>(
       context: context,
       shape: const RoundedRectangleBorder(
@@ -329,8 +328,8 @@ class _WardrobeScreenState extends State<WardrobeScreen> {
                                 final imageUrl = item.image == null
                                     ? null
                                     : item.image!.startsWith("http")
-                                        ? item.image!
-                                        : "${ApiConfig.serverBaseUrl}${item.image!}";
+                                    ? item.image!
+                                    : "${ApiConfig.serverBaseUrl}${item.image!}";
 
                                 return Padding(
                                   padding: const EdgeInsets.only(right: 15),
@@ -399,7 +398,8 @@ class _WardrobeScreenState extends State<WardrobeScreen> {
                     crossAxisCount: 2,
                     mainAxisSpacing: 20,
                     crossAxisSpacing: 18,
-                    childAspectRatio: (MediaQuery.of(context).size.width / 2) / 280,
+                    childAspectRatio:
+                        (MediaQuery.of(context).size.width / 2) / 280,
                   ),
                   itemBuilder: (context, index) {
                     final wardrobe = wardrobes[index];
@@ -409,9 +409,11 @@ class _WardrobeScreenState extends State<WardrobeScreen> {
                     final previewImageUrls = previewItems
                         .map((item) => item.image)
                         .whereType<String>()
-                        .map((path) => path.startsWith("http") 
-                            ? path 
-                            : "${ApiConfig.serverBaseUrl}$path")
+                        .map(
+                          (path) => path.startsWith("http")
+                              ? path
+                              : "${ApiConfig.serverBaseUrl}$path",
+                        )
                         .take(4)
                         .toList();
                     return WardrobeCategoryCard(
@@ -421,11 +423,9 @@ class _WardrobeScreenState extends State<WardrobeScreen> {
                       hasItems: previewItems.isNotEmpty,
                       previewImageUrls: previewImageUrls,
                       onTap: () {
-                          context
-                              .read<WardrobeViewmodel>()
-                              .fetchItemsForWardrobe(
-                                wardrobeId: wardrobe.id,
-                              );
+                        context.read<WardrobeViewmodel>().fetchItemsForWardrobe(
+                          wardrobeId: wardrobe.id,
+                        );
                         Navigator.push(
                           context,
                           MaterialPageRoute(
