@@ -4,8 +4,69 @@ from decimal import Decimal, InvalidOperation
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
 from .firebase_auth import get_firebase_uid
-from .models import ClothingItem, Profile, Wardrobe, ClothingOption
-from .serializers import ClothingItemSerializer, ProfileSerializer, WardrobeSerializer, ClothingOptionSerializer
+from .models import ClothingItem, Profile, Wardrobe, ClothingOption, Outfit
+from .serializers import ClothingItemSerializer, ProfileSerializer, WardrobeSerializer, ClothingOptionSerializer, OutfitSerializer
+
+
+@api_view(["GET", "POST"])
+def outfits(request):
+    firebase_uid, err = get_firebase_uid(request)
+    if err:
+        return err
+
+    profile, error_response = _get_profile_by_firebase_uid(firebase_uid)
+    if error_response:
+        return error_response
+
+    if request.method == "GET":
+        queryset = Outfit.objects.filter(owner=profile).order_by("-created_at")
+        serializer = OutfitSerializer(queryset, many=True, context={"request": request})
+        return Response(serializer.data)
+
+    # POST logic: Create a new outfit
+    name = (request.data.get("name") or "").strip()
+    if not name:
+        return Response({"error": "Outfit name is required"}, status=400)
+
+    if Outfit.objects.filter(owner=profile, name__iexact=name).exists():
+        return Response({"error": "Outfit with this name already exists"}, status=400)
+
+    item_ids = request.data.get("item_ids", [])
+    if not isinstance(item_ids, list) or not item_ids:
+        return Response({"error": "At least one item_id is required"}, status=400)
+
+    # Create the outfit
+    outfit = Outfit.objects.create(
+        owner=profile,
+        name=name,
+        occasion=(request.data.get("occasion") or "").strip(),
+    )
+
+    # Add items that belong to the user
+    valid_items = ClothingItem.objects.filter(id__in=item_ids, owner=profile)
+    outfit.items.set(valid_items)
+
+    serializer = OutfitSerializer(outfit, context={"request": request})
+    return Response(serializer.data, status=201)
+
+
+@api_view(["DELETE"])
+def outfit_detail(request, outfit_id):
+    firebase_uid, err = get_firebase_uid(request)
+    if err:
+        return err
+
+    profile, error_response = _get_profile_by_firebase_uid(firebase_uid)
+    if error_response:
+        return error_response
+
+    try:
+        outfit = Outfit.objects.get(id=outfit_id, owner=profile)
+    except Outfit.DoesNotExist:
+        return Response({"error": "Outfit not found"}, status=404)
+
+    outfit.delete()
+    return Response(status=204)
 from rembg import remove
 from django.core.files.base import ContentFile
 import io
