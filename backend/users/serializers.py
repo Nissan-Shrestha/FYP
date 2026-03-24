@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import ClothingItem, Profile, Wardrobe, ClothingOption
+from .models import ClothingItem, Profile, Wardrobe, ClothingOption, Outfit
 
 class ClothingOptionSerializer(serializers.ModelSerializer):
     class Meta:
@@ -50,3 +50,17 @@ class WardrobeSerializer(serializers.ModelSerializer):
 
     def get_item_count(self, obj):
         return obj.items.count()
+
+
+class OutfitSerializer(serializers.ModelSerializer):
+    items = ClothingItemSerializer(many=True, read_only=True)
+    item_ids = serializers.ListField(
+        child=serializers.IntegerField(),
+        write_only=True,
+        required=False,
+    )
+
+    class Meta:
+        model = Outfit
+        fields = "__all__"
+        read_only_fields = ("id", "owner", "created_at", "updated_at")
