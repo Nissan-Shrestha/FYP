@@ -213,9 +213,9 @@ class ProfileScreen extends StatelessWidget {
                               child: CircleAvatar(
                                 radius: 35,
                                 backgroundColor: const Color(0xff00A300),
-                                backgroundImage: profile.profilePicture != null
+                                backgroundImage: profile.fullProfilePictureUrl != null
                                     ? NetworkImage(
-                                        "${ApiConfig.serverBaseUrl}${profile.profilePicture}",
+                                        profile.fullProfilePictureUrl!,
                                       )
                                     : null,
 

@@ -18,6 +18,14 @@ class _AddItemScreenState extends State<AddItemScreen> {
   final ImagePicker _imagePicker = ImagePicker();
   File? _selectedImage;
 
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      context.read<WardrobeViewmodel>().fetchClothingOptions();
+    });
+  }
+
   String itemName = "Enter item name";
   String season = "Choose the season";
   String occasion = "Choose the occasion";
@@ -125,17 +133,28 @@ class _AddItemScreenState extends State<AddItemScreen> {
 
       final cropped = await ImageCropper().cropImage(
         sourcePath: picked.path,
+        maxWidth: 1000,
+        maxHeight: 1000,
         compressFormat: ImageCompressFormat.jpg,
         compressQuality: 90,
         uiSettings: [
           AndroidUiSettings(
-            toolbarTitle: "Crop Item Photo",
+            toolbarTitle: "Crop Item",
             toolbarColor: Colors.black,
+            statusBarColor: Colors.black,
             toolbarWidgetColor: Colors.white,
-            lockAspectRatio: false,
+            activeControlsWidgetColor: const Color(0xff0AAE00),
+            initAspectRatio: CropAspectRatioPreset.square,
+            lockAspectRatio: true,
+            aspectRatioPresets: [
+              CropAspectRatioPreset.square,
+            ],
           ),
           IOSUiSettings(
-            title: "Crop Item Photo",
+            title: "Crop Item",
+            aspectRatioPresets: [
+              CropAspectRatioPreset.square,
+            ],
           ),
         ],
       );
@@ -347,12 +366,9 @@ class _AddItemScreenState extends State<AddItemScreen> {
                       onTap: () => _openPickerSheet(
                         title: "Select Season",
                         subtitle: "Placeholder options for seasonal grouping",
-                        options: const [
-                          "Summer",
-                          "Winter",
-                          "Monsoon",
-                          "All Season",
-                        ],
+                        options: wardrobeVM.getOptionsByType("season").isNotEmpty 
+                          ? wardrobeVM.getOptionsByType("season") 
+                          : const ["Summer", "Winter", "Monsoon", "All Season"],
                         onSelected: (value) => setState(() => season = value),
                       ),
                     ),
@@ -362,7 +378,9 @@ class _AddItemScreenState extends State<AddItemScreen> {
                       onTap: () => _openPickerSheet(
                         title: "Select Occasion",
                         subtitle: "Placeholder options for where you wear this",
-                        options: const ["Casual", "Office", "Party", "Workout"],
+                        options: wardrobeVM.getOptionsByType("occasion").isNotEmpty 
+                          ? wardrobeVM.getOptionsByType("occasion") 
+                          : const ["Casual", "Office", "Party", "Workout"],
                         onSelected: (value) => setState(() => occasion = value),
                       ),
                     ),
@@ -372,12 +390,9 @@ class _AddItemScreenState extends State<AddItemScreen> {
                       onTap: () => _openPickerSheet(
                         title: "Select Category",
                         subtitle: "Placeholder clothing categories",
-                        options: const [
-                          "Top",
-                          "Bottom",
-                          "Outerwear",
-                          "Footwear",
-                        ],
+                        options: wardrobeVM.getOptionsByType("category").isNotEmpty 
+                          ? wardrobeVM.getOptionsByType("category") 
+                          : const ["Top", "Bottom", "Outerwear", "Footwear"],
                         onSelected: (value) => setState(() => category = value),
                       ),
                     ),
@@ -387,7 +402,9 @@ class _AddItemScreenState extends State<AddItemScreen> {
                       onTap: () => _openPickerSheet(
                         title: "Select Size",
                         subtitle: "Placeholder sizes",
-                        options: const ["XS", "S", "M", "L", "XL"],
+                        options: wardrobeVM.getOptionsByType("size").isNotEmpty 
+                          ? wardrobeVM.getOptionsByType("size") 
+                          : const ["XS", "S", "M", "L", "XL"],
                         onSelected: (value) => setState(() => size = value),
                       ),
                     ),
@@ -397,12 +414,9 @@ class _AddItemScreenState extends State<AddItemScreen> {
                       onTap: () => _openPickerSheet(
                         title: "Select Material",
                         subtitle: "Placeholder fabric materials",
-                        options: const [
-                          "Cotton",
-                          "Linen",
-                          "Denim",
-                          "Polyester",
-                        ],
+                        options: wardrobeVM.getOptionsByType("material").isNotEmpty 
+                          ? wardrobeVM.getOptionsByType("material") 
+                          : const ["Cotton", "Linen", "Denim", "Polyester"],
                         onSelected: (value) => setState(() => material = value),
                       ),
                     ),

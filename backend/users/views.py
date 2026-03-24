@@ -4,8 +4,8 @@ from decimal import Decimal, InvalidOperation
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
 from .firebase_auth import get_firebase_uid
-from .models import ClothingItem, Profile, Wardrobe
-from .serializers import ClothingItemSerializer, ProfileSerializer, WardrobeSerializer
+from .models import ClothingItem, Profile, Wardrobe, ClothingOption
+from .serializers import ClothingItemSerializer, ProfileSerializer, WardrobeSerializer, ClothingOptionSerializer
 
 
 DEFAULT_WARDROBE_NAME = "all clothes"
@@ -66,27 +66,36 @@ def get_or_create_profile(request):
     if err:
         return err
 
+    # Use defaults to prevent IntegrityError on fresh signup
+    # We use data from request if available, otherwise placeholders
+    initial_email = request.data.get("email", f"{firebase_uid[:10]}@example.com")
+    initial_username = request.data.get("username", f"user_{firebase_uid[:8]}")
+
     profile, created = Profile.objects.get_or_create(
-        firebase_uid=firebase_uid
+        firebase_uid=firebase_uid,
+        defaults={
+            "email": initial_email,
+            "username": initial_username,
+        }
     )
 
     # Ensure every user has the required default wardrobe.
     _ensure_default_wardrobe(profile)
 
-    #  HANDLE POST (Create or full update)
+    # Update fields based on request method
     if request.method == "POST":
         email = request.data.get("email")
         username = request.data.get("username")
-
         if email:
             profile.email = email
-
         if username:
             profile.username = username
 
-    # HANDLE PATCH (Partial update)
-    if request.method == "PATCH":
+    elif request.method == "PATCH":
+        email = request.data.get("email")
         username = request.data.get("username")
+        if email:
+            profile.email = email
         if username:
             profile.username = username
 
@@ -96,7 +105,7 @@ def get_or_create_profile(request):
 
     profile.save()
 
-    serializer = ProfileSerializer(profile)
+    serializer = ProfileSerializer(profile, context={"request": request})
     return Response(serializer.data)
 
 
@@ -112,11 +121,11 @@ def clothing_items(request):
 
     if request.method == "GET":
         queryset = ClothingItem.objects.filter(owner=profile).order_by("-created_at")
-        return Response(ClothingItemSerializer(queryset, many=True).data)
+        return Response(ClothingItemSerializer(queryset, many=True, context={"request": request}).data)
 
     default_wardrobe = _ensure_default_wardrobe(profile)
 
-    serializer = ClothingItemSerializer(data=request.data)
+    serializer = ClothingItemSerializer(data=request.data, context={"request": request})
     if not serializer.is_valid():
         return Response(serializer.errors, status=400)
 
@@ -157,7 +166,7 @@ def clothing_items(request):
 
     default_wardrobe.items.add(item)
 
-    return Response(ClothingItemSerializer(item).data, status=201)
+    return Response(ClothingItemSerializer(item, context={"request": request}).data, status=201)
 
 
 @api_view(["PATCH", "DELETE"])
@@ -221,7 +230,7 @@ def clothing_item_detail(request, item_id):
             return Response({"error": "image is required"}, status=400)
 
         item.save()
-        return Response(ClothingItemSerializer(item).data, status=200)
+        return Response(ClothingItemSerializer(item, context={"request": request}).data, status=200)
 
     item.delete()
     return Response(status=204)
@@ -241,7 +250,7 @@ def wardrobes(request):
 
     if request.method == "GET":
         queryset = Wardrobe.objects.filter(owner=profile).order_by("-is_default", "name")
-        return Response(WardrobeSerializer(queryset, many=True).data)
+        return Response(WardrobeSerializer(queryset, many=True, context={"request": request}).data)
 
     name = (request.data.get("name") or "").strip()
     if not name:
@@ -254,7 +263,7 @@ def wardrobes(request):
         return Response({"error": "Wardrobe name already exists"}, status=400)
 
     wardrobe = Wardrobe.objects.create(owner=profile, name=name, is_default=False)
-    return Response(WardrobeSerializer(wardrobe).data, status=201)
+    return Response(WardrobeSerializer(wardrobe, context={"request": request}).data, status=201)
 
 
 @api_view(["PATCH", "DELETE"])
@@ -290,7 +299,7 @@ def wardrobe_detail(request, wardrobe_id):
 
     wardrobe.name = new_name
     wardrobe.save(update_fields=["name", "updated_at"])
-    return Response(WardrobeSerializer(wardrobe).data, status=200)
+    return Response(WardrobeSerializer(wardrobe, context={"request": request}).data, status=200)
 
 
 @api_view(["GET", "POST"])
@@ -310,7 +319,7 @@ def wardrobe_items(request, wardrobe_id):
 
     if request.method == "GET":
         queryset = wardrobe.items.filter(owner=profile).order_by("-created_at")
-        return Response(ClothingItemSerializer(queryset, many=True).data)
+        return Response(ClothingItemSerializer(queryset, many=True, context={"request": request}).data)
 
     item_id = request.data.get("item_id")
     if not item_id:
@@ -322,7 +331,7 @@ def wardrobe_items(request, wardrobe_id):
         return Response({"error": "Clothing item not found"}, status=404)
 
     wardrobe.items.add(item)
-    return Response(WardrobeSerializer(wardrobe).data, status=200)
+    return Response(WardrobeSerializer(wardrobe, context={"request": request}).data, status=200)
 
 
 @api_view(["DELETE"])
@@ -352,4 +361,251 @@ def remove_item_from_wardrobe(request, wardrobe_id, item_id):
         return Response({"error": "Clothing item not found"}, status=404)
 
     wardrobe.items.remove(item)
-    return Response(WardrobeSerializer(wardrobe).data, status=200)
+    return Response(WardrobeSerializer(wardrobe, context={"request": request}).data, status=200)
+
+
+@api_view(["GET"])
+def admin_dashboard_data(request):
+    """
+    Consolidated view for the admin dashboard: total counts + recent signups.
+    """
+    firebase_uid, err = get_firebase_uid(request)
+    if err:
+        return err
+
+    profile, error_response = _get_profile_by_firebase_uid(firebase_uid)
+    if error_response:
+        return error_response
+
+    if not profile.is_admin:
+        return Response({"error": "Admin access required"}, status=403)
+
+    stats = {
+        "total_users": Profile.objects.count(),
+        "total_clothing_items": ClothingItem.objects.count(),
+        "total_wardrobes": Wardrobe.objects.count(),
+        "premium_users": Profile.objects.filter(plan__iexact="Premium").count(),
+    }
+
+    # Get the 10 most recent profiles based on ID (as proxy for signup time)
+    recent_users_qs = Profile.objects.all().order_by("-id")[:10]
+    users_data = ProfileSerializer(recent_users_qs, many=True, context={"request": request}).data
+
+    return Response({
+        "stats": stats,
+        "recent_users": users_data,
+        "admin": ProfileSerializer(profile, context={"request": request}).data
+    })
+
+
+
+@api_view(["GET"])
+def admin_me(request):
+    """Returns the profile of the currently logged-in admin."""
+    firebase_uid, err = get_firebase_uid(request)
+    if err:
+        return err
+
+    profile, error_response = _get_profile_by_firebase_uid(firebase_uid)
+    if error_response:
+        return error_response
+
+    return Response(ProfileSerializer(profile, context={"request": request}).data)
+
+
+@api_view(["GET"])
+def admin_options_list(request):
+    """Returns all clothing options (categories, seasons, etc.) grouped by type."""
+    firebase_uid, err = get_firebase_uid(request)
+    if err:
+        return err
+    
+    # We allow GET even if not admin for the mobile app to use this
+    options = ClothingOption.objects.all().order_by('name')
+    return Response(ClothingOptionSerializer(options, many=True).data)
+
+
+@api_view(["POST", "DELETE"])
+def admin_options_manage(request, option_id=None):
+    """Create or Delete clothing options. Admin only."""
+    firebase_uid, err = get_firebase_uid(request)
+    if err:
+        return err
+
+    profile, error_response = _get_profile_by_firebase_uid(firebase_uid)
+    if error_response:
+        return error_response
+
+    if not profile.is_admin:
+        return Response({"error": "Admin access required"}, status=403)
+
+    if request.method == "POST":
+        serializer = ClothingOptionSerializer(data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=201)
+        return Response(serializer.errors, status=400)
+
+    elif request.method == "DELETE":
+        if not option_id:
+            return Response({"error": "Option ID required"}, status=400)
+        try:
+            optionTarget = ClothingOption.objects.get(id=option_id)
+            optionTarget.delete()
+            return Response({"message": "Option deleted"})
+        except ClothingOption.DoesNotExist:
+            return Response({"error": "Option not found"}, status=404)
+
+
+@api_view(["GET"])
+def admin_categories(request):
+    """
+    Returns unique categories and the number of items in each.
+    Admin access only.
+    """
+    firebase_uid_req, err = get_firebase_uid(request)
+    if err:
+        return err
+
+    profile_req, error_response = _get_profile_by_firebase_uid(firebase_uid_req)
+    if error_response:
+        return error_response
+
+    if not profile_req.is_admin:
+        return Response({"error": "Admin access required"}, status=403)
+
+    from django.db.models import Count
+    categories_data = ClothingItem.objects.values("category").annotate(
+        total_items=Count("id")
+    ).order_by("-total_items")
+
+    return Response(list(categories_data))
+
+
+
+@api_view(["GET"])
+def admin_user_list(request):
+    """
+    Returns the full list of users for the User Management page.
+    """
+    firebase_uid, err = get_firebase_uid(request)
+    if err:
+        return err
+
+    profile, error_response = _get_profile_by_firebase_uid(firebase_uid)
+    if error_response:
+        return error_response
+
+    if not profile.is_admin:
+        return Response({"error": "Admin access required"}, status=403)
+
+    queryset = Profile.objects.all().order_by("-id")
+    serializer = ProfileSerializer(queryset, many=True, context={"request": request})
+    return Response(serializer.data)
+
+
+@api_view(["PATCH"])
+def admin_user_update(request, firebase_uid):
+    """
+    Updates a user's username, plan, or is_admin role.
+    Admin access only.
+    """
+    firebase_uid_req, err = get_firebase_uid(request)
+    if err:
+        return err
+
+    profile_req, error_response = _get_profile_by_firebase_uid(firebase_uid_req)
+    if error_response:
+        return error_response
+
+    if not profile_req.is_admin:
+        return Response({"error": "Admin access required"}, status=403)
+
+    try:
+        user_to_update = Profile.objects.get(firebase_uid=firebase_uid)
+    except Profile.DoesNotExist:
+        return Response({"error": "User not found"}, status=404)
+
+    # Basic updates
+    if "username" in request.data:
+        user_to_update.username = request.data["username"]
+    
+    if "plan" in request.data:
+        user_to_update.plan = request.data["plan"]
+        
+    if "is_admin" in request.data:
+        # In a real app, you might prevent revoking the last admin here
+        user_to_update.is_admin = bool(request.data["is_admin"])
+
+    user_to_update.save()
+    serializer = ProfileSerializer(user_to_update, context={"request": request})
+    return Response(serializer.data)
+
+
+@api_view(["DELETE"])
+def admin_user_avatar_delete(request, firebase_uid):
+    """
+    Deletes (clears) a user's profile picture.
+    Admin access only.
+    """
+    firebase_uid_req, err = get_firebase_uid(request)
+    if err:
+        return err
+
+    profile_req, error_response = _get_profile_by_firebase_uid(firebase_uid_req)
+    if error_response:
+        return error_response
+
+    if not profile_req.is_admin:
+        return Response({"error": "Admin access required"}, status=403)
+
+    try:
+        user_to_update = Profile.objects.get(firebase_uid=firebase_uid)
+    except Profile.DoesNotExist:
+        return Response({"error": "User not found"}, status=404)
+
+    # Clear the image
+    if user_to_update.profile_picture:
+        user_to_update.profile_picture.delete(save=False)
+        user_to_update.profile_picture = None
+        user_to_update.save()
+
+    return Response({"message": "Profile picture cleared successully."})
+
+
+
+@api_view(["GET"])
+def admin_user_view(request, firebase_uid):
+    """
+    Returns full details for a specific user: Wardrobes and Clothing Items.
+    Admin access only.
+    """
+    firebase_uid_req, err = get_firebase_uid(request)
+    if err:
+        return err
+
+    profile_req, error_response = _get_profile_by_firebase_uid(firebase_uid_req)
+    if error_response:
+        return error_response
+
+    if not profile_req.is_admin:
+        return Response({"error": "Admin access required"}, status=403)
+
+    try:
+        target_profile = Profile.objects.get(firebase_uid=firebase_uid)
+    except Profile.DoesNotExist:
+        return Response({"error": "User not found"}, status=404)
+
+    wardrobes_qs = Wardrobe.objects.filter(owner=target_profile)
+    items_qs = ClothingItem.objects.filter(owner=target_profile)
+
+    return Response({
+        "profile": ProfileSerializer(target_profile, context={"request": request}).data,
+        "wardrobes": WardrobeSerializer(wardrobes_qs, many=True, context={"request": request}).data,
+        "items": ClothingItemSerializer(items_qs, many=True, context={"request": request}).data,
+    })
+
+
+
+
+

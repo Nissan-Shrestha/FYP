@@ -12,6 +12,17 @@ class ProfileModel {
   final String currency;
   final String? profilePicture;
 
+  String? get fullProfilePictureUrl {
+    if (profilePicture == null) return null;
+    if (profilePicture!.startsWith("http")) {
+      // Intelligently replace localhost/127.0.0.1 with our server IP for mobile testing
+      return profilePicture!
+          .replaceAll("localhost", "192.168.1.67")
+          .replaceAll("127.0.0.1", "192.168.1.67");
+    }
+    return "http://192.168.1.67:8000$profilePicture";
+  }
+
   ProfileModel({
     required this.id,
     required this.firebaseUid,

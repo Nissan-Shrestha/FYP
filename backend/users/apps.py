@@ -7,4 +7,5 @@ class UsersConfig(AppConfig):
 
     def ready(self):
         from .firebase_auth import initialize_firebase
+        from . import signals  # Register signals
         initialize_firebase()

@@ -14,7 +14,8 @@ class ProfileService {
   static Future<String> _getIdToken() async {
     final user = FirebaseAuth.instance.currentUser;
     if (user == null) throw Exception("User not logged in");
-    return await user.getIdToken() ?? (throw Exception("Could not get ID token"));
+    return await user.getIdToken() ??
+        (throw Exception("Could not get ID token"));
   }
 
   /// Returns headers with the Bearer token + optional Content-Type.

@@ -1,5 +1,11 @@
 from rest_framework import serializers
-from .models import ClothingItem, Profile, Wardrobe
+from .models import ClothingItem, Profile, Wardrobe, ClothingOption
+
+class ClothingOptionSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ClothingOption
+        fields = '__all__'
+
 
 class ProfileSerializer(serializers.ModelSerializer):
     profile_picture = serializers.SerializerMethodField()
@@ -9,7 +15,12 @@ class ProfileSerializer(serializers.ModelSerializer):
         fields = '__all__'
 
     def get_profile_picture(self, obj):
-        return obj.profile_picture.url if obj.profile_picture else None
+        if not obj.profile_picture:
+            return None
+        request = self.context.get('request')
+        if request:
+            return request.build_absolute_uri(obj.profile_picture.url)
+        return obj.profile_picture.url
 
 
 class ClothingItemSerializer(serializers.ModelSerializer):
@@ -21,7 +32,12 @@ class ClothingItemSerializer(serializers.ModelSerializer):
         read_only_fields = ("id", "owner", "created_at")
 
     def get_image(self, obj):
-        return obj.image.url if obj.image else None
+        if not obj.image:
+            return None
+        request = self.context.get('request')
+        if request:
+            return request.build_absolute_uri(obj.image.url)
+        return obj.image.url
 
 
 class WardrobeSerializer(serializers.ModelSerializer):

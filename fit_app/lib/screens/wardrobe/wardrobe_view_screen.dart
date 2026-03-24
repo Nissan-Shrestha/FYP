@@ -133,9 +133,11 @@ class _WardrobeViewScreenState extends State<WardrobeViewScreen> {
                           separatorBuilder: (_, __) => const Divider(height: 1),
                           itemBuilder: (context, index) {
                             final item = availableItems[index];
-                            final imageUrl = item.image == null
-                                ? null
-                                : "${ApiConfig.serverBaseUrl}${item.image}";
+                             final imageUrl = item.image == null
+                                 ? null
+                                 : item.image!.startsWith("http")
+                                     ? item.image!
+                                     : "${ApiConfig.serverBaseUrl}${item.image!}";
                             final isSelected = selectedToAdd.contains(item.id);
 
                             return ListTile(
@@ -492,7 +494,7 @@ class _WardrobeViewScreenState extends State<WardrobeViewScreen> {
                           shape: BoxShape.circle,
                           boxShadow: [
                             BoxShadow(
-                              color: Colors.black.withValues(alpha: 0.1),
+                              color: Colors.black.withOpacity(0.1),
                               blurRadius: 4,
                               offset: const Offset(0, 2),
                             ),
@@ -609,9 +611,11 @@ class _WardrobeViewScreenState extends State<WardrobeViewScreen> {
                       itemCount: items.length,
                       itemBuilder: (context, index) {
                         final item = items[index];
-                        final imageUrl = item.image == null
-                            ? null
-                            : "${ApiConfig.serverBaseUrl}${item.image}";
+                         final imageUrl = item.image == null
+                             ? null
+                             : item.image!.startsWith("http")
+                                 ? item.image!
+                                 : "${ApiConfig.serverBaseUrl}${item.image!}";
 
                         final tile = Container(
                           decoration: const BoxDecoration(

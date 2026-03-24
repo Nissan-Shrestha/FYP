@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>User Detail | Wardrobe Admin</title>
+    
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    
+    <!-- Bootstrap Icons -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+    
+    <style>
+        .profile-header {
+            background: linear-gradient(135deg, #212529 0%, #343a40 100%);
+            color: white;
+            padding: 2rem 0;
+            margin-bottom: 2rem;
+        }
+        .item-card {
+            transition: transform 0.2s;
+            cursor: pointer;
+        }
+        .item-card:hover {
+            transform: translateY(-5px);
+        }
+        .item-img {
+            height: 180px;
+            object-fit: cover;
+            border-bottom: 1px solid #eee;
+        }
+    </style>
+</head>
+<body class="bg-light">
+
+    <!-- Top Navigation Bar -->
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark shadow-sm">
+        <div class="container-fluid">
+            <a class="navbar-brand fw-bold" href="index.html">
+                <i class="bi bi-briefcase-fill me-2"></i>Wardrobe Admin
+            </a>
+            <div class="collapse navbar-collapse">
+                <ul class="navbar-nav me-auto">
+                    <li class="nav-item">
+                        <a class="nav-link" href="index.html">Dashboard</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link active" href="users.html">Users</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="categories.html">App Options</a>
+                    </li>
+                </ul>
+                <div class="d-flex text-white align-items-center">
+                    <img id="admin-avatar" src="" class="rounded-circle me-2" width="32" height="32" style="object-fit: cover; display: none;">
+                    <i id="admin-avatar-placeholder" class="bi bi-person-circle fs-4 me-2"></i>
+                    <span id="admin-name" class="me-3">Admin</span>
+                    <a href="#" id="admin-logout" class="btn btn-sm btn-outline-danger">Logout</a>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Profile Header -->
+    <div class="profile-header shadow-sm">
+        <div class="container">
+            <div class="row align-items-center">
+                <div class="col-md-2 text-center text-md-start">
+                    <div id="user-avatar-container">
+                        <i class="bi bi-person-circle display-1 opacity-75"></i>
+                    </div>
+                    <div id="avatar-actions" class="mt-2 d-none text-center text-md-start">
+                        <button class="btn btn-sm btn-link text-danger p-0" onclick="deleteAvatar()"><i class="bi bi-trash me-1"></i>Remove Photo</button>
+                    </div>
+                </div>
+                <div class="col-md-10">
+                    <h1 id="user-display-name" class="fw-bold mb-1">Loading User...</h1>
+                    <p id="user-email" class="opacity-75 mb-2"></p>
+                    <div class="d-flex gap-2">
+                        <span id="user-plan-badge" class="badge bg-primary rounded-pill px-3">...</span>
+                        <span id="user-role-badge" class="badge bg-light text-dark rounded-pill px-3">...</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="container pb-5">
+        <div class="row">
+            <!-- Wardrobes Section -->
+            <div class="col-lg-4 mb-4">
+                <div class="card border-0 shadow-sm h-100">
+                    <div class="card-header bg-white py-3 border-0">
+                        <h5 class="fw-bold mb-0">Wardrobes</h5>
+                    </div>
+                    <div class="card-body p-0">
+                        <div class="list-group list-group-flush" id="wardrobe-list">
+                            <div class="text-center py-4">
+                                <div class="spinner-border spinner-border-sm text-primary"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Clothing Items Section -->
+            <div class="col-lg-8 mb-4">
+                <div class="card border-0 shadow-sm">
+                    <div class="card-header bg-white py-3 border-0 d-flex justify-content-between align-items-center">
+                        <h5 class="fw-bold mb-0">Clothing Items</h5>
+                        <span id="item-count-badge" class="badge bg-secondary">... items</span>
+                    </div>
+                    <div class="card-body bg-light">
+                        <div class="row g-3" id="clothing-items-grid">
+                            <!-- Items will be rendered here -->
+                            <div class="text-center py-5">
+                                <div class="spinner-border text-primary"></div>
+                                <p class="mt-2 text-muted">Retrieving gallery...</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/10.7.2/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.2/firebase-auth-compat.js"></script>
+
+    <!-- App Scripts -->
+    <script src="assets/js/api.js"></script>
+    <script src="assets/js/auth.js"></script>
+    <script src="assets/js/user_details.js"></script>
+</body>
+</html>

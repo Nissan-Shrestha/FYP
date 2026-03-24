@@ -5,10 +5,28 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:fit_app/constants.dart';
 import 'package:fit_app/models/WardrobeModel.dart';
 import 'package:fit_app/models/clothing_item_model.dart';
+import 'package:fit_app/models/clothing_option_model.dart';
 import 'package:http/http.dart' as http;
 
 class WardrobeService {
   static const String _baseApi = "${ApiConfig.serverBaseUrl}/api";
+
+  static Future<List<ClothingOptionModel>> fetchClothingOptions() async {
+    final response = await http.get(
+      Uri.parse("$_baseApi/admin/options/"),
+      headers: await _authHeaders(json: false),
+    );
+    if (response.statusCode == 200) {
+      final List<dynamic> data = jsonDecode(response.body);
+      return data
+          .map((json) => ClothingOptionModel.fromJson(json as Map<String, dynamic>))
+          .toList();
+    }
+    // Note: The /admin/options/ endpoint might actually be reachable 
+    // without admin check for mobile users in our updated logic.
+    throw Exception("Failed to fetch clothing options");
+  }
+
 
   /// Gets the Firebase ID token for the current user.
   static Future<String> _getIdToken() async {

@@ -1,10 +1,12 @@
 from django.db import models
+from django.utils import timezone
 
 
 class Profile(models.Model):
     firebase_uid = models.CharField(max_length=255, unique=True)
     username = models.CharField(max_length=150)
     email = models.EmailField()
+    is_admin = models.BooleanField(default=False)
 
     plan = models.CharField(max_length=50, default="Free")
     wardrobe_count = models.IntegerField(default=0)
@@ -15,9 +17,28 @@ class Profile(models.Model):
 
     currency = models.CharField(max_length=10, default="USD")
     profile_picture = models.ImageField(upload_to="profile_pics/", null=True, blank=True)
+    created_at = models.DateTimeField(default=timezone.now)
 
     def __str__(self):
         return self.username
+
+
+class ClothingOption(models.Model):
+    OPTION_TYPES = [
+        ('category', 'Category'),
+        ('season', 'Season'),
+        ('occasion', 'Occasion'),
+        ('size', 'Size'),
+        ('material', 'Material'),
+    ]
+    type = models.CharField(max_length=20, choices=OPTION_TYPES)
+    name = models.CharField(max_length=50)
+
+    class Meta:
+        unique_together = ('type', 'name')
+
+    def __str__(self):
+        return f"[{self.type}] {self.name}"
 
 
 class ClothingItem(models.Model):

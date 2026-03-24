@@ -199,14 +199,14 @@ class _WardrobeScreenState extends State<WardrobeScreen> {
     super.didChangeDependencies();
     if (_loaded) return;
 
-    final authVM = context.read<AuthViewmodel>();
-    final firebaseUid = authVM.profile?.firebaseUid;
-    if (firebaseUid == null) return;
-
-    _loaded = true;
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      _loadWardrobeTabData();
-    });
+    // Use current user directly from Firebase if profile is not yet loaded
+    final user = context.read<AuthViewmodel>().profile;
+    if (user != null) {
+      _loaded = true;
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        _loadWardrobeTabData();
+      });
+    }
   }
 
   @override
@@ -328,7 +328,9 @@ class _WardrobeScreenState extends State<WardrobeScreen> {
                                 final item = recentItems[index];
                                 final imageUrl = item.image == null
                                     ? null
-                                    : "${ApiConfig.serverBaseUrl}${item.image}";
+                                    : item.image!.startsWith("http")
+                                        ? item.image!
+                                        : "${ApiConfig.serverBaseUrl}${item.image!}";
 
                                 return Padding(
                                   padding: const EdgeInsets.only(right: 15),
@@ -393,11 +395,11 @@ class _WardrobeScreenState extends State<WardrobeScreen> {
                   shrinkWrap: true,
                   physics: const NeverScrollableScrollPhysics(),
                   itemCount: wardrobes.length,
-                  gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                  gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
                     crossAxisCount: 2,
                     mainAxisSpacing: 20,
                     crossAxisSpacing: 18,
-                    childAspectRatio: 0.75,
+                    childAspectRatio: (MediaQuery.of(context).size.width / 2) / 280,
                   ),
                   itemBuilder: (context, index) {
                     final wardrobe = wardrobes[index];
@@ -407,7 +409,9 @@ class _WardrobeScreenState extends State<WardrobeScreen> {
                     final previewImageUrls = previewItems
                         .map((item) => item.image)
                         .whereType<String>()
-                        .map((path) => "${ApiConfig.serverBaseUrl}$path")
+                        .map((path) => path.startsWith("http") 
+                            ? path 
+                            : "${ApiConfig.serverBaseUrl}$path")
                         .take(4)
                         .toList();
                     return WardrobeCategoryCard(
@@ -600,62 +604,64 @@ class WardrobeCategoryCard extends StatelessWidget {
         GestureDetector(
           onTap: onTap,
           onLongPress: onLongPress,
-          child: Container(
-            height: 170,
-            padding: const EdgeInsets.all(14),
-            decoration: BoxDecoration(
-              color: Colors.grey.shade300,
-              borderRadius: BorderRadius.circular(16),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.08),
-                  blurRadius: 6,
-                  offset: const Offset(0, 3),
-                ),
-              ],
-            ),
-            child: Column(
-              children: [
-                Expanded(
-                  child: Row(
-                    children: [
-                      Expanded(
-                        child: MiniBox(
-                          icon: _placeholderWardrobeIcon,
-                          imageUrl: hasItems ? imageSlots[0] : null,
-                        ),
-                      ),
-                      SizedBox(width: 10),
-                      Expanded(
-                        child: MiniBox(
-                          icon: _placeholderWardrobeIcon,
-                          imageUrl: hasItems ? imageSlots[1] : null,
-                        ),
-                      ),
-                    ],
+          child: AspectRatio(
+            aspectRatio: 1.0,
+            child: Container(
+              padding: const EdgeInsets.all(14),
+              decoration: BoxDecoration(
+                color: Colors.grey.shade300,
+                borderRadius: BorderRadius.circular(16),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.08),
+                    blurRadius: 6,
+                    offset: const Offset(0, 3),
                   ),
-                ),
-                const SizedBox(height: 10),
-                Expanded(
-                  child: Row(
-                    children: [
-                      Expanded(
-                        child: MiniBox(
-                          icon: _placeholderWardrobeIcon,
-                          imageUrl: hasItems ? imageSlots[2] : null,
+                ],
+              ),
+              child: Column(
+                children: [
+                  Expanded(
+                    child: Row(
+                      children: [
+                        Expanded(
+                          child: MiniBox(
+                            icon: _placeholderWardrobeIcon,
+                            imageUrl: hasItems ? imageSlots[0] : null,
+                          ),
                         ),
-                      ),
-                      SizedBox(width: 10),
-                      Expanded(
-                        child: MiniBox(
-                          icon: _placeholderWardrobeIcon,
-                          imageUrl: hasItems ? imageSlots[3] : null,
+                        SizedBox(width: 10),
+                        Expanded(
+                          child: MiniBox(
+                            icon: _placeholderWardrobeIcon,
+                            imageUrl: hasItems ? imageSlots[1] : null,
+                          ),
                         ),
-                      ),
-                    ],
+                      ],
+                    ),
                   ),
-                ),
-              ],
+                  const SizedBox(height: 10),
+                  Expanded(
+                    child: Row(
+                      children: [
+                        Expanded(
+                          child: MiniBox(
+                            icon: _placeholderWardrobeIcon,
+                            imageUrl: hasItems ? imageSlots[2] : null,
+                          ),
+                        ),
+                        SizedBox(width: 10),
+                        Expanded(
+                          child: MiniBox(
+                            icon: _placeholderWardrobeIcon,
+                            imageUrl: hasItems ? imageSlots[3] : null,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
             ),
           ),
         ),

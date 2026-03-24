@@ -2,6 +2,7 @@ import 'dart:io';
 
 import 'package:fit_app/models/WardrobeModel.dart';
 import 'package:fit_app/models/clothing_item_model.dart';
+import 'package:fit_app/models/clothing_option_model.dart';
 import 'package:fit_app/services/wardrobe_service.dart';
 import 'package:flutter/material.dart';
 
@@ -10,14 +11,38 @@ class WardrobeViewmodel extends ChangeNotifier {
   List<ClothingItemModel> clothingItems = [];
   List<ClothingItemModel> selectedWardrobeItems = [];
   Map<int, List<ClothingItemModel>> wardrobePreviewItems = {};
+  List<ClothingOptionModel> clothingOptions = [];
 
   bool isLoadingWardrobes = false;
   bool isLoadingClothingItems = false;
   bool isLoadingSelectedWardrobeItems = false;
   bool isLoadingWardrobePreviews = false;
+  bool isLoadingOptions = false;
   bool isSubmitting = false;
 
   String? error;
+
+  Future<void> fetchClothingOptions() async {
+    try {
+      isLoadingOptions = true;
+      error = null;
+      notifyListeners();
+
+      clothingOptions = await WardrobeService.fetchClothingOptions();
+    } catch (e) {
+      error = e.toString();
+    } finally {
+      isLoadingOptions = false;
+      notifyListeners();
+    }
+  }
+
+  List<String> getOptionsByType(String type) {
+    return clothingOptions
+        .where((o) => o.type == type)
+        .map((o) => o.name)
+        .toList();
+  }
 
   Future<void> fetchWardrobes() async {
     try {

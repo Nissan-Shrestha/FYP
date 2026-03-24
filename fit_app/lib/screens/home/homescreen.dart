@@ -76,8 +76,8 @@ class _HomescreenState extends State<Homescreen> {
             Consumer<WeatherViewmodel>(
               builder: (context, weatherVM, _) {
                 return Container(
-                  height: 105,
-                  width: double.maxFinite,
+                constraints: const BoxConstraints(minHeight: 105),
+                width: double.maxFinite,
                   padding: const EdgeInsets.symmetric(
                     horizontal: 14,
                     vertical: 12,
@@ -112,7 +112,7 @@ class _HomescreenState extends State<Homescreen> {
             ),
             SizedBox(height: 10),
             Container(
-              height: 200,
+              constraints: const BoxConstraints(minHeight: 180),
               width: double.maxFinite,
               decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(20),
@@ -163,7 +163,7 @@ class _HomescreenState extends State<Homescreen> {
                       width: 80,
                       decoration: BoxDecoration(
                         borderRadius: BorderRadius.circular(10),
-                        color: Colors.red,
+                        color: Colors.red.withOpacity(0.8),
                       ),
                     ),
                   );

@@ -45,7 +45,9 @@ class _EditClothingItemScreenState extends State<EditClothingItemScreen> {
     size = item.size;
     material = item.material;
     brand = item.brand;
-    _purchaseStore = item.purchaseStore.trim().isEmpty ? null : item.purchaseStore;
+    _purchaseStore = item.purchaseStore.trim().isEmpty
+        ? null
+        : item.purchaseStore;
     _purchasePrice = item.purchasePrice;
     _purchaseDate = item.purchaseDate;
     purchase = _purchaseSummaryText();
@@ -103,17 +105,28 @@ class _EditClothingItemScreenState extends State<EditClothingItemScreen> {
 
       final cropped = await ImageCropper().cropImage(
         sourcePath: picked.path,
+        maxWidth: 1000,
+        maxHeight: 1000,
         compressFormat: ImageCompressFormat.jpg,
         compressQuality: 90,
         uiSettings: [
           AndroidUiSettings(
-            toolbarTitle: "Crop Item Photo",
+            toolbarTitle: "Crop Item",
             toolbarColor: Colors.black,
+            statusBarColor: Colors.black,
             toolbarWidgetColor: Colors.white,
-            lockAspectRatio: false,
+            activeControlsWidgetColor: const Color(0xff0AAE00),
+            initAspectRatio: CropAspectRatioPreset.square,
+            lockAspectRatio: true,
+            aspectRatioPresets: [
+              CropAspectRatioPreset.square,
+            ],
           ),
           IOSUiSettings(
-            title: "Crop Item Photo",
+            title: "Crop Item",
+            aspectRatioPresets: [
+              CropAspectRatioPreset.square,
+            ],
           ),
         ],
       );
@@ -174,7 +187,9 @@ class _EditClothingItemScreenState extends State<EditClothingItemScreen> {
   }
 
   void _showMessage(String message) {
-    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(message)));
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(SnackBar(content: Text(message)));
   }
 
   String _purchaseSummaryText() {
@@ -204,7 +219,9 @@ class _EditClothingItemScreenState extends State<EditClothingItemScreen> {
     final wardrobeVM = context.watch<WardrobeViewmodel>();
     final existingImageUrl = widget.item.image == null
         ? null
-        : "${ApiConfig.serverBaseUrl}${widget.item.image}";
+        : widget.item.image!.startsWith("http")
+        ? widget.item.image!
+        : "${ApiConfig.serverBaseUrl}${widget.item.image!}";
 
     return Scaffold(
       backgroundColor: const Color(0xffF2F2F2),
@@ -249,7 +266,9 @@ class _EditClothingItemScreenState extends State<EditClothingItemScreen> {
                         : null,
                   ),
                   child: (_selectedImage == null && existingImageUrl == null)
-                      ? const Center(child: Icon(Icons.image_outlined, size: 40))
+                      ? const Center(
+                          child: Icon(Icons.image_outlined, size: 40),
+                        )
                       : Align(
                           alignment: Alignment.bottomRight,
                           child: Container(
@@ -298,7 +317,15 @@ class _EditClothingItemScreenState extends State<EditClothingItemScreen> {
                       value: season,
                       onTap: () => _openPickerSheet(
                         title: "Select Season",
-                        options: const ["Summer", "Winter", "Monsoon", "All Season"],
+                        options:
+                            wardrobeVM.getOptionsByType("season").isNotEmpty
+                            ? wardrobeVM.getOptionsByType("season")
+                            : const [
+                                "Summer",
+                                "Winter",
+                                "Monsoon",
+                                "All Season",
+                              ],
                         onSelected: (v) => setState(() => season = v),
                       ),
                     ),
@@ -307,7 +334,10 @@ class _EditClothingItemScreenState extends State<EditClothingItemScreen> {
                       value: occasion,
                       onTap: () => _openPickerSheet(
                         title: "Select Occasion",
-                        options: const ["Casual", "Office", "Party", "Workout"],
+                        options:
+                            wardrobeVM.getOptionsByType("occasion").isNotEmpty
+                            ? wardrobeVM.getOptionsByType("occasion")
+                            : const ["Casual", "Office", "Party", "Workout"],
                         onSelected: (v) => setState(() => occasion = v),
                       ),
                     ),
@@ -316,7 +346,10 @@ class _EditClothingItemScreenState extends State<EditClothingItemScreen> {
                       value: category,
                       onTap: () => _openPickerSheet(
                         title: "Select Category",
-                        options: const ["Top", "Bottom", "Outerwear", "Footwear"],
+                        options:
+                            wardrobeVM.getOptionsByType("category").isNotEmpty
+                            ? wardrobeVM.getOptionsByType("category")
+                            : const ["Top", "Bottom", "Outerwear", "Footwear"],
                         onSelected: (v) => setState(() => category = v),
                       ),
                     ),
@@ -325,7 +358,9 @@ class _EditClothingItemScreenState extends State<EditClothingItemScreen> {
                       value: size,
                       onTap: () => _openPickerSheet(
                         title: "Select Size",
-                        options: const ["XS", "S", "M", "L", "XL"],
+                        options: wardrobeVM.getOptionsByType("size").isNotEmpty
+                            ? wardrobeVM.getOptionsByType("size")
+                            : const ["XS", "S", "M", "L", "XL"],
                         onSelected: (v) => setState(() => size = v),
                       ),
                     ),
@@ -334,7 +369,10 @@ class _EditClothingItemScreenState extends State<EditClothingItemScreen> {
                       value: material,
                       onTap: () => _openPickerSheet(
                         title: "Select Material",
-                        options: const ["Cotton", "Linen", "Denim", "Polyester"],
+                        options:
+                            wardrobeVM.getOptionsByType("material").isNotEmpty
+                            ? wardrobeVM.getOptionsByType("material")
+                            : const ["Cotton", "Linen", "Denim", "Polyester"],
                         onSelected: (v) => setState(() => material = v),
                       ),
                     ),
@@ -358,7 +396,9 @@ class _EditClothingItemScreenState extends State<EditClothingItemScreen> {
                       width: double.infinity,
                       height: 46,
                       child: ElevatedButton(
-                        onPressed: wardrobeVM.isSubmitting ? null : _saveChanges,
+                        onPressed: wardrobeVM.isSubmitting
+                            ? null
+                            : _saveChanges,
                         style: ElevatedButton.styleFrom(
                           backgroundColor: const Color(0xff0AAE00),
                           foregroundColor: Colors.white,
@@ -367,7 +407,9 @@ class _EditClothingItemScreenState extends State<EditClothingItemScreen> {
                           ),
                         ),
                         child: Text(
-                          wardrobeVM.isSubmitting ? "Saving..." : "Save Changes",
+                          wardrobeVM.isSubmitting
+                              ? "Saving..."
+                              : "Save Changes",
                           style: GoogleFonts.caveat(
                             fontSize: 22,
                             fontWeight: FontWeight.bold,
@@ -404,7 +446,10 @@ class _EditClothingItemScreenState extends State<EditClothingItemScreen> {
             children: [
               Text(
                 title,
-                style: GoogleFonts.caveat(fontSize: 24, fontWeight: FontWeight.bold),
+                style: GoogleFonts.caveat(
+                  fontSize: 24,
+                  fontWeight: FontWeight.bold,
+                ),
               ),
               const SizedBox(height: 12),
               ...options.map(
@@ -451,7 +496,10 @@ class _EditClothingItemScreenState extends State<EditClothingItemScreen> {
           children: [
             Text(
               title,
-              style: GoogleFonts.caveat(fontSize: 24, fontWeight: FontWeight.bold),
+              style: GoogleFonts.caveat(
+                fontSize: 24,
+                fontWeight: FontWeight.bold,
+              ),
             ),
             const SizedBox(height: 10),
             TextField(
