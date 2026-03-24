@@ -27,12 +27,12 @@ class _HomescreenState extends State<Homescreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xffF2F2F2),
-      body: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 20),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            SizedBox(height: 50),
+      body: SafeArea(
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.fromLTRB(20, 10, 20, 30),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
 
             Row(
               spacing: 10,
@@ -130,14 +130,20 @@ class _HomescreenState extends State<Homescreen> {
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     Container(
-                      width: 160,
-                      height: 160,
+                      width: 140,
+                      height: 140,
                       decoration: BoxDecoration(
                         borderRadius: BorderRadius.circular(10),
                         color: Colors.white,
                       ),
                     ),
-                    Text("This is just a place holder"),
+                    const SizedBox(width: 10),
+                    const Expanded(
+                      child: Text(
+                        "This is just a place holder",
+                        style: TextStyle(fontSize: 13, color: Colors.white),
+                      ),
+                    ),
                   ],
                 ),
               ),
@@ -245,7 +251,7 @@ class _HomescreenState extends State<Homescreen> {
                   },
                 );
               },
-              child: Row(
+              child: const Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   Text("Hey its your stylist"),
@@ -256,8 +262,9 @@ class _HomescreenState extends State<Homescreen> {
           ],
         ),
       ),
-    );
-  }
+    ),
+  );
+}
 
   Widget _buildWeatherContent(WeatherViewmodel weatherVM) {
     if (weatherVM.isLoading && weatherVM.weather == null) {
