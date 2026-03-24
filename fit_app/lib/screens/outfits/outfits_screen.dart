@@ -2,6 +2,7 @@ import 'package:fit_app/constants.dart';
 import 'package:fit_app/models/outfit_model.dart';
 import 'package:fit_app/screens/notifications/notification_screen.dart';
 import 'package:fit_app/screens/outfits/create_outfit_screen.dart';
+import 'package:fit_app/screens/outfits/outfit_detail_screen.dart';
 import 'package:fit_app/screens/schedule/schedule_screen.dart';
 import 'package:fit_app/viewmodels/outfit_viewmodel.dart';
 import 'package:flutter/material.dart';
@@ -166,7 +167,7 @@ class _OutfitsScreenState extends State<OutfitsScreen> {
                       mainAxisSpacing: 20,
                       crossAxisSpacing: 18,
                       childAspectRatio:
-                          (MediaQuery.of(context).size.width / 2) / 280,
+                          (MediaQuery.of(context).size.width / 2) / 310,
                     ),
                     itemCount: outfits.length,
                     itemBuilder: (BuildContext context, int index) {
@@ -265,61 +266,75 @@ class _OutfitCard extends StatelessWidget {
       (index) => index < imageUrls.length ? imageUrls[index] : null,
     );
 
-    return Column(
-      children: [
-        AspectRatio(
-          aspectRatio: 1.0,
-          child: Container(
-            padding: const EdgeInsets.all(14),
-            decoration: BoxDecoration(
-              color: Colors.grey.shade300,
-              borderRadius: BorderRadius.circular(16),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withOpacity(0.08),
-                  blurRadius: 6,
-                  offset: const Offset(0, 3),
-                ),
-              ],
-            ),
-            child: Column(
-              children: [
-                Expanded(
-                  child: Row(
-                    children: [
-                      Expanded(child: _MiniPreviewBox(imageUrl: imageSlots[0])),
-                      const SizedBox(width: 10),
-                      Expanded(child: _MiniPreviewBox(imageUrl: imageSlots[1])),
-                    ],
+    return InkWell(
+      onTap: () async {
+        final result = await Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (_) => OutfitDetailScreen(outfit: outfit),
+          ),
+        );
+
+        if (result == true && context.mounted) {
+          context.read<OutfitViewmodel>().fetchOutfits();
+        }
+      },
+      child: Column(
+        children: [
+          AspectRatio(
+            aspectRatio: 1.0,
+            child: Container(
+              padding: const EdgeInsets.all(14),
+              decoration: BoxDecoration(
+                color: Colors.grey.shade300,
+                borderRadius: BorderRadius.circular(16),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.08),
+                    blurRadius: 6,
+                    offset: const Offset(0, 3),
                   ),
-                ),
-                const SizedBox(height: 10),
-                Expanded(
-                  child: Row(
-                    children: [
-                      Expanded(child: _MiniPreviewBox(imageUrl: imageSlots[2])),
-                      const SizedBox(width: 10),
-                      Expanded(child: _MiniPreviewBox(imageUrl: imageSlots[3])),
-                    ],
+                ],
+              ),
+              child: Column(
+                children: [
+                  Expanded(
+                    child: Row(
+                      children: [
+                        Expanded(child: _MiniPreviewBox(imageUrl: imageSlots[0])),
+                        const SizedBox(width: 10),
+                        Expanded(child: _MiniPreviewBox(imageUrl: imageSlots[1])),
+                      ],
+                    ),
                   ),
-                ),
-              ],
+                  const SizedBox(height: 10),
+                  Expanded(
+                    child: Row(
+                      children: [
+                        Expanded(child: _MiniPreviewBox(imageUrl: imageSlots[2])),
+                        const SizedBox(width: 10),
+                        Expanded(child: _MiniPreviewBox(imageUrl: imageSlots[3])),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
             ),
           ),
-        ),
-        const SizedBox(height: 10),
-        Text(
-          capitalize(outfit.name),
-          style: GoogleFonts.caveat(fontSize: 16, fontWeight: FontWeight.w600),
-          textAlign: TextAlign.center,
-          maxLines: 1,
-          overflow: TextOverflow.ellipsis,
-        ),
-        Text(
-          "${outfit.items.length} item${outfit.items.length == 1 ? "" : "s"}",
-          style: const TextStyle(fontSize: 11, color: Colors.black54),
-        ),
-      ],
+          const SizedBox(height: 10),
+          Text(
+            capitalize(outfit.name),
+            style: GoogleFonts.caveat(fontSize: 16, fontWeight: FontWeight.w600),
+            textAlign: TextAlign.center,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+          ),
+          Text(
+            "${outfit.items.length} item${outfit.items.length == 1 ? "" : "s"}",
+            style: const TextStyle(fontSize: 11, color: Colors.black54),
+          ),
+        ],
+      ),
     );
   }
 }
