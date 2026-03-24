@@ -104,7 +104,9 @@ class _OutfitsScreenState extends State<OutfitsScreen> {
                   onTap: () {
                     Navigator.push(
                       context,
-                      MaterialPageRoute(builder: (_) => const CreateOutfitScreen()),
+                      MaterialPageRoute(
+                        builder: (_) => const CreateOutfitScreen(),
+                      ),
                     );
                   },
                   child: Container(
@@ -159,11 +161,12 @@ class _OutfitsScreenState extends State<OutfitsScreen> {
                   GridView.builder(
                     shrinkWrap: true,
                     physics: const NeverScrollableScrollPhysics(),
-                    gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                    gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
                       crossAxisCount: 2,
-                      childAspectRatio: 0.8,
-                      mainAxisSpacing: 18,
-                      crossAxisSpacing: 20,
+                      mainAxisSpacing: 20,
+                      crossAxisSpacing: 18,
+                      childAspectRatio:
+                          (MediaQuery.of(context).size.width / 2) / 280,
                     ),
                     itemCount: outfits.length,
                     itemBuilder: (BuildContext context, int index) {
@@ -246,86 +249,105 @@ class _OutfitCard extends StatelessWidget {
   Widget build(BuildContext context) {
     // Get up to 4 preview images
     final previewItems = outfit.items.take(4).toList();
+    final imageUrls = previewItems
+        .map((item) => item.image)
+        .whereType<String>()
+        .map(
+          (path) => path.startsWith("http")
+              ? path
+              : "${ApiConfig.serverBaseUrl}$path",
+        )
+        .toList();
 
-    return InkWell(
-      onTap: () {
-        // TODO: View outfit details
-      },
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Expanded(
-            child: Container(
-              padding: const EdgeInsets.all(8),
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(12),
-                color: Colors.white,
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.05),
-                    blurRadius: 4,
-                    offset: const Offset(0, 2),
-                  ),
-                ],
-              ),
-              child: _buildGridPreview(previewItems),
-            ),
-          ),
-          const SizedBox(height: 8),
-          Text(
-            outfit.name,
-            style: GoogleFonts.caveat(
-              fontSize: 16,
-              fontWeight: FontWeight.bold,
-            ),
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-          ),
-          Text(
-            "${outfit.items.length} item${outfit.items.length == 1 ? "" : "s"}",
-            style: const TextStyle(fontSize: 12, color: Colors.grey),
-          ),
-        ],
-      ),
+    // Fill slots for 2x2 grid
+    final imageSlots = List<String?>.generate(
+      4,
+      (index) => index < imageUrls.length ? imageUrls[index] : null,
     );
-  }
 
-  Widget _buildGridPreview(List<dynamic> items) {
-    if (items.isEmpty) {
-      return const Center(child: Icon(Icons.checkroom, color: Colors.grey));
-    }
-
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        final boxSize = (constraints.maxWidth - 4) / 2;
-        return Wrap(
-          spacing: 4,
-          runSpacing: 4,
-          children: items.map((item) {
-            final imageUrl = item.image == null
-                ? null
-                : item.image!.startsWith("http")
-                    ? item.image!
-                    : "${ApiConfig.serverBaseUrl}${item.image!}";
-
-            return Container(
-              width: boxSize,
-              height: boxSize,
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(4),
-                color: Colors.grey.shade200,
-              ),
-              child: ClipRRect(
-                borderRadius: BorderRadius.circular(4),
-                child: imageUrl != null
-                    ? Image.network(imageUrl, fit: BoxFit.cover)
-                    : const Icon(Icons.checkroom, size: 16),
-              ),
-            );
-          }).toList(),
-        );
-      },
+    return Column(
+      children: [
+        AspectRatio(
+          aspectRatio: 1.0,
+          child: Container(
+            padding: const EdgeInsets.all(14),
+            decoration: BoxDecoration(
+              color: Colors.grey.shade300,
+              borderRadius: BorderRadius.circular(16),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.08),
+                  blurRadius: 6,
+                  offset: const Offset(0, 3),
+                ),
+              ],
+            ),
+            child: Column(
+              children: [
+                Expanded(
+                  child: Row(
+                    children: [
+                      Expanded(child: _MiniPreviewBox(imageUrl: imageSlots[0])),
+                      const SizedBox(width: 10),
+                      Expanded(child: _MiniPreviewBox(imageUrl: imageSlots[1])),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 10),
+                Expanded(
+                  child: Row(
+                    children: [
+                      Expanded(child: _MiniPreviewBox(imageUrl: imageSlots[2])),
+                      const SizedBox(width: 10),
+                      Expanded(child: _MiniPreviewBox(imageUrl: imageSlots[3])),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+        const SizedBox(height: 10),
+        Text(
+          capitalize(outfit.name),
+          style: GoogleFonts.caveat(fontSize: 16, fontWeight: FontWeight.w600),
+          textAlign: TextAlign.center,
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+        ),
+        Text(
+          "${outfit.items.length} item${outfit.items.length == 1 ? "" : "s"}",
+          style: const TextStyle(fontSize: 11, color: Colors.black54),
+        ),
+      ],
     );
   }
 }
 
+class _MiniPreviewBox extends StatelessWidget {
+  final String? imageUrl;
+  const _MiniPreviewBox({this.imageUrl});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.grey.shade400,
+        borderRadius: BorderRadius.circular(10),
+      ),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(10),
+        child: Container(
+          color: Colors.grey.shade300,
+          child: imageUrl == null
+              ? const SizedBox.shrink()
+              : Image.network(
+                  imageUrl!,
+                  fit: BoxFit.cover,
+                  errorBuilder: (_, __, ___) => const SizedBox.shrink(),
+                ),
+        ),
+      ),
+    );
+  }
+}

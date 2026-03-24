@@ -50,17 +50,20 @@ class _CreateOutfitScreenState extends State<CreateOutfitScreen> {
       return;
     }
 
+    if (_selectedOccasion == "Choose the occasion") {
+      _showMessage("Please select an occasion for the outfit.");
+      return;
+    }
+
     if (_selectedItemIds.isEmpty) {
       _showMessage("Please select at least one item for the outfit.");
       return;
     }
 
-    final occasionValue = _selectedOccasion == "Choose the occasion" ? null : _selectedOccasion;
-
     final outfitVM = context.read<OutfitViewmodel>();
     final result = await outfitVM.createOutfit(
       name: name,
-      occasion: occasionValue,
+      occasion: _selectedOccasion,
       itemIds: _selectedItemIds,
     );
 

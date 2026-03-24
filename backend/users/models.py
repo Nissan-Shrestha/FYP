@@ -160,7 +160,7 @@ class Outfit(models.Model):
         related_name="outfits",
     )
     name = models.CharField(max_length=150)
-    occasion = models.CharField(max_length=100, blank=True, default="")
+    occasion = models.CharField(max_length=100)
     items = models.ManyToManyField(
         ClothingItem,
         related_name="outfits",

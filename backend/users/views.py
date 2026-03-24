@@ -25,8 +25,13 @@ def outfits(request):
 
     # POST logic: Create a new outfit
     name = (request.data.get("name") or "").strip()
+    occasion = (request.data.get("occasion") or "").strip()
+
     if not name:
         return Response({"error": "Outfit name is required"}, status=400)
+
+    if not occasion:
+        return Response({"error": "Occasion is required"}, status=400)
 
     if Outfit.objects.filter(owner=profile, name__iexact=name).exists():
         return Response({"error": "Outfit with this name already exists"}, status=400)
