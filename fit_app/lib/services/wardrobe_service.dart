@@ -136,9 +136,7 @@ class WardrobeService {
     String size = "",
     String material = "",
     String brand = "",
-    String? purchaseStore,
     double? purchasePrice,
-    DateTime? purchaseDate,
     File? imageFile,
   }) async {
     final token = await _getIdToken();
@@ -155,14 +153,9 @@ class WardrobeService {
     request.fields["size"] = size;
     request.fields["material"] = material;
     request.fields["brand"] = brand;
-    if (purchaseStore != null && purchaseStore.trim().isNotEmpty) {
-      request.fields["purchase_store"] = purchaseStore.trim();
-    }
+
     if (purchasePrice != null) {
       request.fields["purchase_price"] = purchasePrice.toStringAsFixed(2);
-    }
-    if (purchaseDate != null) {
-      request.fields["purchase_date"] = _dateOnly(purchaseDate);
     }
 
     if (imageFile != null) {
@@ -229,9 +222,7 @@ class WardrobeService {
     required String size,
     required String material,
     required String brand,
-    String? purchaseStore,
     double? purchasePrice,
-    DateTime? purchaseDate,
     File? imageFile,
   }) async {
     final token = await _getIdToken();
@@ -248,11 +239,8 @@ class WardrobeService {
     request.fields["size"] = size;
     request.fields["material"] = material;
     request.fields["brand"] = brand;
-    request.fields["purchase_store"] = (purchaseStore ?? "").trim();
     request.fields["purchase_price"] =
         purchasePrice == null ? "" : purchasePrice.toStringAsFixed(2);
-    request.fields["purchase_date"] =
-        purchaseDate == null ? "" : _dateOnly(purchaseDate);
 
     if (imageFile != null) {
       request.files.add(
@@ -268,10 +256,4 @@ class WardrobeService {
     throw Exception("Failed to update clothing item");
   }
 
-  static String _dateOnly(DateTime date) {
-    final y = date.year.toString().padLeft(4, "0");
-    final m = date.month.toString().padLeft(2, "0");
-    final d = date.day.toString().padLeft(2, "0");
-    return "$y-$m-$d";
-  }
 }

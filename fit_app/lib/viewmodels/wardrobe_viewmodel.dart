@@ -210,9 +210,7 @@ class WardrobeViewmodel extends ChangeNotifier {
     String size = "",
     String material = "",
     String brand = "",
-    String? purchaseStore,
     double? purchasePrice,
-    DateTime? purchaseDate,
     File? imageFile,
   }) async {
     try {
@@ -228,9 +226,7 @@ class WardrobeViewmodel extends ChangeNotifier {
         size: size,
         material: material,
         brand: brand,
-        purchaseStore: purchaseStore,
         purchasePrice: purchasePrice,
-        purchaseDate: purchaseDate,
         imageFile: imageFile,
       );
 
@@ -356,9 +352,7 @@ class WardrobeViewmodel extends ChangeNotifier {
     required String size,
     required String material,
     required String brand,
-    String? purchaseStore,
     double? purchasePrice,
-    DateTime? purchaseDate,
     File? imageFile,
   }) async {
     try {
@@ -375,9 +369,7 @@ class WardrobeViewmodel extends ChangeNotifier {
         size: size,
         material: material,
         brand: brand,
-        purchaseStore: purchaseStore,
         purchasePrice: purchasePrice,
-        purchaseDate: purchaseDate,
         imageFile: imageFile,
       );
 

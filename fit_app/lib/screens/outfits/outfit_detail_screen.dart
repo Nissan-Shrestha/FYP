@@ -40,9 +40,14 @@ class OutfitDetailScreen extends StatelessWidget {
                 Navigator.pop(context); // Close dialog
 
                 if (result) {
-                  Navigator.pop(context, true); // Close details screen & suggest refresh
+                  Navigator.pop(
+                    context,
+                    true,
+                  ); // Close details screen & suggest refresh
                   ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text("Outfit deleted successfully")),
+                    const SnackBar(
+                      content: Text("Outfit deleted successfully"),
+                    ),
                   );
                 } else {
                   ScaffoldMessenger.of(context).showSnackBar(
@@ -118,11 +123,17 @@ class OutfitDetailScreen extends StatelessWidget {
             child: Row(
               children: [
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 14,
+                    vertical: 6,
+                  ),
                   decoration: BoxDecoration(
                     color: const Color(0xff0AAE00).withOpacity(0.12),
                     borderRadius: BorderRadius.circular(20),
-                    border: Border.all(color: const Color(0xff0AAE00), width: 1),
+                    border: Border.all(
+                      color: const Color(0xff0AAE00),
+                      width: 1,
+                    ),
                   ),
                   child: Text(
                     outfit.occasion,
@@ -163,7 +174,7 @@ class OutfitDetailScreen extends StatelessWidget {
                 crossAxisCount: 2,
                 mainAxisSpacing: 20,
                 crossAxisSpacing: 18,
-                childAspectRatio: (MediaQuery.of(context).size.width / 2) / 345,
+                childAspectRatio: (MediaQuery.of(context).size.width / 2) / 325,
               ),
               itemCount: outfit.items.length,
               itemBuilder: (context, index) {
@@ -171,8 +182,8 @@ class OutfitDetailScreen extends StatelessWidget {
                 final imageUrl = item.image == null
                     ? null
                     : item.image!.startsWith("http")
-                        ? item.image!
-                        : "${ApiConfig.serverBaseUrl}${item.image!}";
+                    ? item.image!
+                    : "${ApiConfig.serverBaseUrl}${item.image!}";
 
                 return Container(
                   decoration: BoxDecoration(
@@ -190,20 +201,29 @@ class OutfitDetailScreen extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       AspectRatio(
-                        aspectRatio: 0.8,
+                        aspectRatio: 1.0,
                         child: ClipRRect(
-                          borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
-                          child: imageUrl != null
-                              ? Image.network(
-                                  imageUrl,
-                                  fit: BoxFit.cover,
-                                  errorBuilder: (_, __, ___) => const Icon(Icons.error),
-                                )
-                              : const Icon(Icons.checkroom, size: 48),
+                          borderRadius: const BorderRadius.vertical(
+                            top: Radius.circular(16),
+                          ),
+                          child: Padding(
+                            padding: const EdgeInsets.all(8.0),
+                            child: imageUrl != null
+                                ? Image.network(
+                                    imageUrl,
+                                    fit: BoxFit.contain,
+                                    errorBuilder: (_, __, ___) =>
+                                        const Icon(Icons.error),
+                                  )
+                                : const Icon(Icons.checkroom, size: 48),
+                          ),
                         ),
                       ),
                       Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 10,
+                          vertical: 8,
+                        ),
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
@@ -234,6 +254,18 @@ class OutfitDetailScreen extends StatelessWidget {
                                 color: Colors.grey,
                               ),
                             ),
+                            if (item.purchasePrice != null)
+                              Padding(
+                                padding: const EdgeInsets.only(top: 4),
+                                child: Text(
+                                  "\$${item.purchasePrice!.toStringAsFixed(2)}",
+                                  style: const TextStyle(
+                                    fontSize: 12,
+                                    color: Color(0xff0AAE00),
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                              ),
                           ],
                         ),
                       ),

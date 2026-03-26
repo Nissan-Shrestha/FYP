@@ -29,10 +29,7 @@ class _EditClothingItemScreenState extends State<EditClothingItemScreen> {
   late String size;
   late String material;
   late String brand;
-  late String purchase;
-  String? _purchaseStore;
   double? _purchasePrice;
-  DateTime? _purchaseDate;
 
   @override
   void initState() {
@@ -45,12 +42,7 @@ class _EditClothingItemScreenState extends State<EditClothingItemScreen> {
     size = item.size;
     material = item.material;
     brand = item.brand;
-    _purchaseStore = item.purchaseStore.trim().isEmpty
-        ? null
-        : item.purchaseStore;
     _purchasePrice = item.purchasePrice;
-    _purchaseDate = item.purchaseDate;
-    purchase = _purchaseSummaryText();
   }
 
   Future<void> _saveChanges() async {
@@ -83,9 +75,7 @@ class _EditClothingItemScreenState extends State<EditClothingItemScreen> {
       size: values["Size"]!,
       material: values["Material"]!,
       brand: values["Brand"]!,
-      purchaseStore: _purchaseStore,
       purchasePrice: _purchasePrice,
-      purchaseDate: _purchaseDate,
       imageFile: _selectedImage,
     );
 
@@ -192,27 +182,6 @@ class _EditClothingItemScreenState extends State<EditClothingItemScreen> {
     ).showSnackBar(SnackBar(content: Text(message)));
   }
 
-  String _purchaseSummaryText() {
-    final parts = <String>[];
-    if ((_purchaseStore ?? "").trim().isNotEmpty) {
-      parts.add(_purchaseStore!.trim());
-    }
-    if (_purchasePrice != null) {
-      parts.add("\$${_purchasePrice!.toStringAsFixed(2)}");
-    }
-    if (_purchaseDate != null) {
-      parts.add(_formatDate(_purchaseDate!));
-    }
-    if (parts.isEmpty) return "Add purchase info (optional)";
-    return parts.join(" • ");
-  }
-
-  String _formatDate(DateTime date) {
-    final y = date.year.toString().padLeft(4, "0");
-    final m = date.month.toString().padLeft(2, "0");
-    final d = date.day.toString().padLeft(2, "0");
-    return "$y-$m-$d";
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -387,9 +356,14 @@ class _EditClothingItemScreenState extends State<EditClothingItemScreen> {
                       ),
                     ),
                     _EditableFieldRow(
-                      label: "Purchase",
-                      value: purchase,
-                      onTap: _openPurchaseSheet,
+                      label: "Price",
+                      value: _purchasePrice == null ? "Enter price" : _purchasePrice.toString(),
+                      onTap: () => _openInputSheet(
+                        title: "Price",
+                        hint: "e.g. 49.99",
+                        initialValue: _purchasePrice?.toString() ?? "",
+                        onApplied: (v) => setState(() => _purchasePrice = double.tryParse(v)),
+                      ),
                     ),
                     const SizedBox(height: 20),
                     SizedBox(
@@ -531,137 +505,6 @@ class _EditClothingItemScreenState extends State<EditClothingItemScreen> {
     );
   }
 
-  Future<void> _openPurchaseSheet() async {
-    final storeController = TextEditingController(text: _purchaseStore ?? "");
-    final priceController = TextEditingController(
-      text: _purchasePrice == null ? "" : _purchasePrice!.toStringAsFixed(2),
-    );
-    DateTime? selectedDate = _purchaseDate;
-
-    await showModalBottomSheet<void>(
-      context: context,
-      isScrollControlled: true,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(18)),
-      ),
-      builder: (context) {
-        return StatefulBuilder(
-          builder: (context, setSheetState) => Padding(
-            padding: EdgeInsets.only(
-              left: 18,
-              right: 18,
-              top: 14,
-              bottom: MediaQuery.of(context).viewInsets.bottom + 18,
-            ),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  "Purchase Info (Optional)",
-                  style: GoogleFonts.caveat(
-                    fontSize: 24,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                const SizedBox(height: 10),
-                TextField(
-                  controller: storeController,
-                  decoration: InputDecoration(
-                    hintText: "Store name",
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 10),
-                TextField(
-                  controller: priceController,
-                  keyboardType: const TextInputType.numberWithOptions(
-                    decimal: true,
-                  ),
-                  decoration: InputDecoration(
-                    hintText: "Price",
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 10),
-                OutlinedButton(
-                  onPressed: () async {
-                    final picked = await showDatePicker(
-                      context: context,
-                      initialDate: selectedDate ?? DateTime.now(),
-                      firstDate: DateTime(2000),
-                      lastDate: DateTime(2100),
-                    );
-                    if (picked != null) {
-                      setSheetState(() => selectedDate = picked);
-                    }
-                  },
-                  child: Text(
-                    selectedDate == null
-                        ? "Select purchase date"
-                        : "Purchase date: ${_formatDate(selectedDate!)}",
-                  ),
-                ),
-                if (selectedDate != null)
-                  TextButton(
-                    onPressed: () => setSheetState(() => selectedDate = null),
-                    child: const Text("Clear date"),
-                  ),
-                const SizedBox(height: 12),
-                Row(
-                  children: [
-                    Expanded(
-                      child: OutlinedButton(
-                        onPressed: () {
-                          setState(() {
-                            _purchaseStore = null;
-                            _purchasePrice = null;
-                            _purchaseDate = null;
-                            purchase = _purchaseSummaryText();
-                          });
-                          Navigator.pop(context);
-                        },
-                        child: const Text("Clear"),
-                      ),
-                    ),
-                    const SizedBox(width: 10),
-                    Expanded(
-                      child: ElevatedButton(
-                        onPressed: () {
-                          final rawPrice = priceController.text.trim();
-                          final parsedPrice = rawPrice.isEmpty
-                              ? null
-                              : double.tryParse(rawPrice);
-                          if (rawPrice.isNotEmpty && parsedPrice == null) {
-                            _showMessage("Enter a valid price");
-                            return;
-                          }
-
-                          setState(() {
-                            final store = storeController.text.trim();
-                            _purchaseStore = store.isEmpty ? null : store;
-                            _purchasePrice = parsedPrice;
-                            _purchaseDate = selectedDate;
-                            purchase = _purchaseSummaryText();
-                          });
-                          Navigator.pop(context);
-                        },
-                        child: const Text("Save"),
-                      ),
-                    ),
-                  ],
-                ),
-              ],
-            ),
-          ),
-        );
-      },
-    );
-  }
 }
 
 class _EditableFieldRow extends StatelessWidget {

@@ -33,10 +33,7 @@ class _AddItemScreenState extends State<AddItemScreen> {
   String size = "Choose the size";
   String material = "Choose the material";
   String brand = "Enter the brand";
-  String purchase = "Add purchase info (optional)";
-  String? _purchaseStore;
   double? _purchasePrice;
-  DateTime? _purchaseDate;
 
   Future<void> _saveItem() async {
     final wardrobeVM = context.read<WardrobeViewmodel>();
@@ -77,9 +74,7 @@ class _AddItemScreenState extends State<AddItemScreen> {
       size: _valueOrEmpty(size, "Choose the size"),
       material: _valueOrEmpty(material, "Choose the material"),
       brand: requiredSelections["Brand"]!,
-      purchaseStore: _purchaseStore,
       purchasePrice: _purchasePrice,
-      purchaseDate: _purchaseDate,
       imageFile: _selectedImage,
     );
 
@@ -104,27 +99,7 @@ class _AddItemScreenState extends State<AddItemScreen> {
     );
   }
 
-  String _purchaseSummaryText() {
-    final parts = <String>[];
-    if ((_purchaseStore ?? "").trim().isNotEmpty) {
-      parts.add(_purchaseStore!.trim());
-    }
-    if (_purchasePrice != null) {
-      parts.add("\$${_purchasePrice!.toStringAsFixed(2)}");
-    }
-    if (_purchaseDate != null) {
-      parts.add(_formatDate(_purchaseDate!));
-    }
-    if (parts.isEmpty) return "Add purchase info (optional)";
-    return parts.join(" • ");
-  }
 
-  String _formatDate(DateTime date) {
-    final y = date.year.toString().padLeft(4, "0");
-    final m = date.month.toString().padLeft(2, "0");
-    final d = date.day.toString().padLeft(2, "0");
-    return "$y-$m-$d";
-  }
 
   Future<void> _pickImage(ImageSource source) async {
     try {
@@ -432,9 +407,13 @@ class _AddItemScreenState extends State<AddItemScreen> {
                       ),
                     ),
                     _FieldRow(
-                      label: "Purchase",
-                      value: purchase,
-                      onTap: () => _openPurchaseSheet(),
+                      label: "Price",
+                      value: _purchasePrice == null ? "Enter price" : _purchasePrice.toString(),
+                      onTap: () => _openInputSheet(
+                        title: "Price",
+                        hint: "e.g. 49.99",
+                        onApplied: (val) => setState(() => _purchasePrice = double.tryParse(val)),
+                      ),
                     ),
                     const SizedBox(height: 28),
                     SizedBox(
@@ -579,148 +558,6 @@ class _AddItemScreenState extends State<AddItemScreen> {
     );
   }
 
-  Future<void> _openPurchaseSheet() async {
-    final storeController = TextEditingController(text: _purchaseStore ?? "");
-    final priceController = TextEditingController(
-      text: _purchasePrice == null ? "" : _purchasePrice!.toStringAsFixed(2),
-    );
-    DateTime? selectedDate = _purchaseDate;
-
-    await showModalBottomSheet<void>(
-      context: context,
-      isScrollControlled: true,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(18)),
-      ),
-      builder: (context) {
-        return StatefulBuilder(
-          builder: (context, setSheetState) {
-            return Padding(
-              padding: EdgeInsets.only(
-                left: 18,
-                right: 18,
-                top: 14,
-                bottom: MediaQuery.of(context).viewInsets.bottom + 18,
-              ),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    "Purchase Info (Optional)",
-                    style: GoogleFonts.caveat(
-                      fontSize: 24,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    "Add store, price or purchase date if you want to track it",
-                    style: TextStyle(color: Colors.grey.shade700, fontSize: 12),
-                  ),
-                  const SizedBox(height: 12),
-                  TextField(
-                    controller: storeController,
-                    decoration: InputDecoration(
-                      hintText: "Store name",
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 10),
-                  TextField(
-                    controller: priceController,
-                    keyboardType: const TextInputType.numberWithOptions(
-                      decimal: true,
-                    ),
-                    decoration: InputDecoration(
-                      hintText: "Price",
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 10),
-                  OutlinedButton(
-                    onPressed: () async {
-                      final picked = await showDatePicker(
-                        context: context,
-                        initialDate: selectedDate ?? DateTime.now(),
-                        firstDate: DateTime(2000),
-                        lastDate: DateTime(2100),
-                      );
-                      if (picked != null) {
-                        setSheetState(() => selectedDate = picked);
-                      }
-                    },
-                    child: Text(
-                      selectedDate == null
-                          ? "Select purchase date"
-                          : "Purchase date: ${_formatDate(selectedDate!)}",
-                    ),
-                  ),
-                  if (selectedDate != null)
-                    TextButton(
-                      onPressed: () => setSheetState(() => selectedDate = null),
-                      child: const Text("Clear date"),
-                    ),
-                  const SizedBox(height: 12),
-                  Row(
-                    children: [
-                      Expanded(
-                        child: OutlinedButton(
-                          onPressed: () {
-                            setState(() {
-                              _purchaseStore = null;
-                              _purchasePrice = null;
-                              _purchaseDate = null;
-                              purchase = _purchaseSummaryText();
-                            });
-                            Navigator.pop(context);
-                          },
-                          child: const Text("Clear"),
-                        ),
-                      ),
-                      const SizedBox(width: 10),
-                      Expanded(
-                        child: ElevatedButton(
-                          onPressed: () {
-                            final rawPrice = priceController.text.trim();
-                            final parsedPrice = rawPrice.isEmpty
-                                ? null
-                                : double.tryParse(rawPrice);
-                            if (rawPrice.isNotEmpty && parsedPrice == null) {
-                              ScaffoldMessenger.of(this.context).showSnackBar(
-                                const SnackBar(
-                                  content: Text("Enter a valid price"),
-                                ),
-                              );
-                              return;
-                            }
-
-                            setState(() {
-                              final store = storeController.text.trim();
-                              _purchaseStore = store.isEmpty ? null : store;
-                              _purchasePrice = parsedPrice;
-                              _purchaseDate = selectedDate;
-                              purchase = _purchaseSummaryText();
-                            });
-                            Navigator.pop(context);
-                          },
-                          child: const Text("Save"),
-                        ),
-                      ),
-                    ],
-                  ),
-                ],
-              ),
-            );
-          },
-        );
-      },
-    );
-  }
 }
 
 class _FieldRow extends StatelessWidget {

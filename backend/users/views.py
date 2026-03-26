@@ -258,9 +258,7 @@ def clothing_items(request):
         size=serializer.validated_data.get("size", ""),
         material=serializer.validated_data.get("material", ""),
         brand=serializer.validated_data.get("brand", ""),
-        purchase_store=(serializer.validated_data.get("purchase_store", "") or "").strip(),
         purchase_price=serializer.validated_data.get("purchase_price"),
-        purchase_date=serializer.validated_data.get("purchase_date"),
         image=_process_background_removal(request.FILES.get("image")),
     )
 
@@ -292,9 +290,6 @@ def clothing_item_detail(request, item_id):
                 if not value:
                     return Response({"error": f"{field} cannot be empty"}, status=400)
                 setattr(item, field, value)
-
-        if "purchase_store" in request.data:
-            item.purchase_store = str(request.data.get("purchase_store", "")).strip()
 
         if "purchase_price" in request.data:
             parsed_price, error_response = _parse_optional_decimal(
