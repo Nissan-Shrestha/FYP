@@ -208,6 +208,23 @@ def get_saved_outfits(request):
     outfits = profile.saved_outfits.all().order_by('-created_at')
     serializer = OutfitSerializer(outfits, many=True, context={"request": request})
     return Response(serializer.data, status=200)
+
+@api_view(["GET"])
+def get_explore_filters(request):
+    """
+    Returns all defined occasions for filtering.
+    """
+    from .models import ClothingOption
+    
+    firebase_uid, err = get_firebase_uid(request)
+    if err:
+        return err
+    profile, _ = _get_profile_by_firebase_uid(firebase_uid)
+    
+    # Get all 'occasion' type options
+    occasions = list(ClothingOption.objects.filter(type='occasion').values_list('name', flat=True).distinct())
+    
+    return Response({"occasions": sorted(occasions)}, status=200)
 from rembg import remove
 from django.core.files.base import ContentFile
 import io

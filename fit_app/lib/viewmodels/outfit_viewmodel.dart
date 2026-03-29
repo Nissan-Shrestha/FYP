@@ -18,6 +18,12 @@ class OutfitViewmodel extends ChangeNotifier {
 
   String? selectedOccasion;
   String? selectedSeason;
+  List<String> availableOccasions = [];
+
+  Future<void> fetchExploreFilters() async {
+    availableOccasions = await OutfitService.fetchExploreFilters();
+    notifyListeners();
+  }
 
   Future<void> fetchOutfits() async {
     try {

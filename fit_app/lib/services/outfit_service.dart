@@ -96,6 +96,22 @@ class OutfitService {
     return [];
   }
 
+  static Future<List<String>> fetchExploreFilters() async {
+    try {
+      final response = await http.get(
+        Uri.parse("$_baseApi/outfits/explore/filters/"),
+        headers: await _authHeaders(json: false),
+      );
+      if (response.statusCode == 200) {
+        final Map<String, dynamic> data = jsonDecode(response.body);
+        return List<String>.from(data["occasions"] ?? []);
+      }
+    } catch (_) {
+      return [];
+    }
+    return [];
+  }
+
   static Future<OutfitModel> createOutfit({
     required String name,
     String? occasion,

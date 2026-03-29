@@ -21,6 +21,7 @@ from .views import (
     explore_outfits,
     toggle_save_outfit,
     get_saved_outfits,
+    get_explore_filters,
 )
 
 urlpatterns = [
@@ -36,6 +37,7 @@ urlpatterns = [
     ),
     path("outfits/", outfits),
     path("outfits/explore/", explore_outfits),
+    path("outfits/explore/filters/", get_explore_filters),
     path("outfits/<int:outfit_id>/", outfit_detail),
     path("outfits/<int:outfit_id>/toggle_save/", toggle_save_outfit),
     path("outfits/saved/", get_saved_outfits),

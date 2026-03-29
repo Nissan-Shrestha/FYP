@@ -23,6 +23,7 @@ class _ExploreOutfitsScreenState extends State<ExploreOutfitsScreen> {
     _scrollController.addListener(_onScroll);
     WidgetsBinding.instance.addPostFrameCallback((_) {
       context.read<OutfitViewmodel>().fetchExploreOutfits(refresh: true);
+      context.read<OutfitViewmodel>().fetchExploreFilters();
     });
   }
 
@@ -74,34 +75,14 @@ class _ExploreOutfitsScreenState extends State<ExploreOutfitsScreen> {
               children: [
                 _FilterChip(
                   label: "All",
-                  isSelected: outfitVM.selectedOccasion == null && outfitVM.selectedSeason == null,
-                  onTap: () => outfitVM.setFilters(occasion: null, season: null),
+                  isSelected: outfitVM.selectedOccasion == null,
+                  onTap: () => outfitVM.setFilters(occasion: null),
                 ),
-                _FilterChip(
-                  label: "Casual",
-                  isSelected: outfitVM.selectedOccasion == "Casual",
-                  onTap: () => outfitVM.setFilters(occasion: "Casual"),
-                ),
-                _FilterChip(
-                  label: "Formals",
-                  isSelected: outfitVM.selectedOccasion == "Formals",
-                  onTap: () => outfitVM.setFilters(occasion: "Formals"),
-                ),
-                _FilterChip(
-                  label: "Casual Formals",
-                  isSelected: outfitVM.selectedOccasion == "Casual Formals",
-                  onTap: () => outfitVM.setFilters(occasion: "Casual Formals"),
-                ),
-                _FilterChip(
-                  label: "Winter",
-                  isSelected: outfitVM.selectedSeason == "Winter",
-                  onTap: () => outfitVM.setFilters(season: "Winter"),
-                ),
-                _FilterChip(
-                  label: "Summer",
-                  isSelected: outfitVM.selectedSeason == "Summer",
-                  onTap: () => outfitVM.setFilters(season: "Summer"),
-                ),
+                ...outfitVM.availableOccasions.map((occ) => _FilterChip(
+                      label: occ,
+                      isSelected: outfitVM.selectedOccasion == occ,
+                      onTap: () => outfitVM.setFilters(occasion: occ),
+                    )),
               ],
             ),
           ),
