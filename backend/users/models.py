@@ -159,9 +159,15 @@ class Outfit(models.Model):
     )
     name = models.CharField(max_length=150)
     occasion = models.CharField(max_length=100)
+    is_public = models.BooleanField(default=False)
     items = models.ManyToManyField(
         ClothingItem,
         related_name="outfits",
+        blank=True,
+    )
+    saved_by = models.ManyToManyField(
+        Profile,
+        related_name="saved_outfits",
         blank=True,
     )
     created_at = models.DateTimeField(auto_now_add=True)

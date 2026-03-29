@@ -22,7 +22,6 @@ class OutfitService {
   }
 
   static Future<List<OutfitModel>> fetchOutfits() async {
-    // Return empty list for now until backend is implemented
     try {
       final response = await http.get(
         Uri.parse("$_baseApi/outfits/"),
@@ -33,7 +32,65 @@ class OutfitService {
         return data.map((json) => OutfitModel.fromJson(json)).toList();
       }
     } catch (_) {
-      // If endpoint doesn't exist yet, just return empty
+      return [];
+    }
+    return [];
+  }
+
+  static Future<Map<String, dynamic>> fetchExploreOutfits({
+    int page = 1,
+    String? occasion,
+    String? season,
+  }) async {
+    try {
+      String url = "$_baseApi/outfits/explore/?page=$page";
+      if (occasion != null && occasion.isNotEmpty) url += "&occasion=$occasion";
+      if (season != null && season.isNotEmpty) url += "&season=$season";
+
+      final response = await http.get(
+        Uri.parse(url),
+        headers: await _authHeaders(json: false),
+      );
+      if (response.statusCode == 200) {
+        final Map<String, dynamic> data = jsonDecode(response.body);
+        final List<dynamic> results = data["results"];
+        return {
+          "results": results.map((json) => OutfitModel.fromJson(json)).toList(),
+          "has_more": data["has_more"] as bool? ?? false,
+        };
+      }
+    } catch (_) {
+      return {"results": <OutfitModel>[], "has_more": false};
+    }
+    return {"results": <OutfitModel>[], "has_more": false};
+  }
+
+  static Future<Map<String, dynamic>?> toggleSaveOutfit(int outfitId) async {
+    try {
+      final response = await http.post(
+        Uri.parse("$_baseApi/outfits/$outfitId/toggle_save/"),
+        headers: await _authHeaders(json: false),
+      );
+      if (response.statusCode == 200) {
+        return jsonDecode(response.body);
+      }
+    } catch (_) {
+      return null;
+    }
+    return null;
+  }
+
+  static Future<List<OutfitModel>> fetchSavedOutfits() async {
+    try {
+      final response = await http.get(
+        Uri.parse("$_baseApi/outfits/saved/"),
+        headers: await _authHeaders(json: false),
+      );
+      if (response.statusCode == 200) {
+        final List<dynamic> data = jsonDecode(response.body);
+        return data.map((json) => OutfitModel.fromJson(json)).toList();
+      }
+    } catch (_) {
       return [];
     }
     return [];
@@ -43,6 +100,7 @@ class OutfitService {
     required String name,
     String? occasion,
     required List<int> itemIds,
+    bool isPublic = false,
   }) async {
     final response = await http.post(
       Uri.parse("$_baseApi/outfits/"),
@@ -51,6 +109,7 @@ class OutfitService {
         "name": name,
         "occasion": occasion,
         "item_ids": itemIds,
+        "is_public": isPublic,
       }),
     );
     if (response.statusCode == 201) {
@@ -64,11 +123,13 @@ class OutfitService {
     String? name,
     String? occasion,
     List<int>? itemIds,
+    bool? isPublic,
   }) async {
     final Map<String, dynamic> body = {};
     if (name != null) body["name"] = name;
     if (occasion != null) body["occasion"] = occasion;
     if (itemIds != null) body["item_ids"] = itemIds;
+    if (isPublic != null) body["is_public"] = isPublic;
 
     final response = await http.patch(
       Uri.parse("$_baseApi/outfits/$outfitId/"),

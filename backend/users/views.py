@@ -46,11 +46,14 @@ def outfits(request):
     if len(item_ids) > 8:
         return Response({"error": "An outfit cannot have more than 8 items"}, status=400)
 
+    is_public = str(request.data.get("is_public", "false")).lower() == "true"
+    
     # Create the outfit
     outfit = Outfit.objects.create(
         owner=profile,
         name=name,
         occasion=(request.data.get("occasion") or "").strip(),
+        is_public=is_public,
     )
 
     # Add items that belong to the user
@@ -93,6 +96,9 @@ def outfit_detail(request, outfit_id):
                 return Response({"error": "Occasion cannot be empty"}, status=400)
             outfit.occasion = occasion_stripped
 
+        if "is_public" in request.data:
+            outfit.is_public = str(request.data.get("is_public", "false")).lower() == "true"
+
         item_ids = request.data.get("item_ids")
         if item_ids is not None:
             if not isinstance(item_ids, list) or not item_ids:
@@ -115,6 +121,93 @@ def outfit_detail(request, outfit_id):
 
     outfit.delete()
     return Response(status=204)
+
+@api_view(["GET"])
+def explore_outfits(request):
+    """
+    Returns all public outfits from all users with pagination and optional filtering. 
+    """
+    from .models import Outfit
+    from .serializers import OutfitSerializer
+    from django.core.paginator import Paginator
+    
+    auth_header = request.headers.get("Authorization")
+    if not auth_header or not auth_header.startswith("Bearer "):
+        return Response({"error": "Unauthorized"}, status=401)
+        
+    outfits = Outfit.objects.filter(is_public=True).order_by('-created_at')
+    
+    # Apply Filters
+    occasion = request.GET.get("occasion")
+    season = request.GET.get("season")
+    if occasion:
+        outfits = outfits.filter(occasion__iexact=occasion)
+    if season:
+        outfits = outfits.filter(season__iexact=season)
+    
+    page_num = request.GET.get("page", 1)
+    page_size = 10
+    paginator = Paginator(outfits, page_size)
+    
+    try:
+        page = paginator.get_page(page_num)
+        serializer = OutfitSerializer(page.object_list, many=True, context={"request": request})
+        return Response({
+            "results": serializer.data,
+            "page": page.number,
+            "has_more": page.has_next()
+        }, status=200)
+    except Exception as e:
+        return Response({"error": str(e)}, status=400)
+
+@api_view(["POST"])
+def toggle_save_outfit(request, outfit_id):
+    """
+    Toggles whether the current user has saved this outfit.
+    """
+    from .models import Outfit
+    
+    firebase_uid, err = get_firebase_uid(request)
+    if err:
+        return err
+    profile, error_response = _get_profile_by_firebase_uid(firebase_uid)
+    if error_response:
+        return error_response
+        
+    try:
+        outfit = Outfit.objects.get(id=outfit_id)
+        
+        if profile in outfit.saved_by.all():
+            outfit.saved_by.remove(profile)
+            is_saved = False
+        else:
+            outfit.saved_by.add(profile)
+            is_saved = True
+            
+        return Response({
+            "is_saved": is_saved,
+            "saves_count": outfit.saved_by.count()
+        }, status=200)
+    except Outfit.DoesNotExist:
+        return Response({"error": "Outfit not found"}, status=404)
+
+@api_view(["GET"])
+def get_saved_outfits(request):
+    """
+    Returns outfits saved by the current user.
+    """
+    from .serializers import OutfitSerializer
+    
+    firebase_uid, err = get_firebase_uid(request)
+    if err:
+        return err
+    profile, error_response = _get_profile_by_firebase_uid(firebase_uid)
+    if error_response:
+        return error_response
+        
+    outfits = profile.saved_outfits.all().order_by('-created_at')
+    serializer = OutfitSerializer(outfits, many=True, context={"request": request})
+    return Response(serializer.data, status=200)
 from rembg import remove
 from django.core.files.base import ContentFile
 import io

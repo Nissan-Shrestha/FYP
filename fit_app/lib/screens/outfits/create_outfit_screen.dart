@@ -17,6 +17,7 @@ class _CreateOutfitScreenState extends State<CreateOutfitScreen> {
   final TextEditingController _nameController = TextEditingController();
   String _selectedOccasion = "Choose the occasion";
   final List<int> _selectedItemIds = [];
+  bool _isPublic = false;
 
   @override
   void initState() {
@@ -69,6 +70,7 @@ class _CreateOutfitScreenState extends State<CreateOutfitScreen> {
       name: name,
       occasion: _selectedOccasion,
       itemIds: _selectedItemIds,
+      isPublic: _isPublic,
     );
 
     if (!mounted) return;
@@ -214,6 +216,24 @@ class _CreateOutfitScreenState extends State<CreateOutfitScreen> {
                         ],
                       ),
                     ),
+                  ),
+                  const Divider(height: 8),
+                  SwitchListTile(
+                    contentPadding: EdgeInsets.zero,
+                    title: Text(
+                      "Make Outfit Public",
+                      style: GoogleFonts.caveat(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    subtitle: Text(
+                      "Visible to everyone on Explore",
+                      style: TextStyle(fontSize: 12, color: Colors.grey.shade600),
+                    ),
+                    value: _isPublic,
+                    activeColor: const Color(0xff0AAE00),
+                    onChanged: (val) => setState(() => _isPublic = val),
                   ),
                 ],
               ),

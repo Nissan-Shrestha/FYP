@@ -1,4 +1,5 @@
 import 'package:fit_app/screens/home/homescreen.dart';
+import 'package:fit_app/screens/outfits/explore_outfits_screen.dart';
 import 'package:fit_app/screens/outfits/outfits_screen.dart';
 import 'package:fit_app/screens/profile/profile_screen.dart';
 import 'package:fit_app/screens/stylist/stylist_screen.dart';
@@ -21,6 +22,7 @@ class _NavigationScreenState extends State<NavigationScreen> {
     WardrobeScreen(),
     StylistScreen(),
     OutfitsScreen(),
+    ExploreOutfitsScreen(),
     ProfileScreen(),
   ];
 
@@ -65,6 +67,10 @@ class _NavigationScreenState extends State<NavigationScreen> {
             BottomNavigationBarItem(
               icon: Icon(Icons.view_module),
               label: "Outfits",
+            ),
+            BottomNavigationBarItem(
+              icon: Icon(Icons.explore_outlined),
+              label: "Explore",
             ),
             BottomNavigationBarItem(icon: Icon(Icons.person), label: "Profile"),
           ],

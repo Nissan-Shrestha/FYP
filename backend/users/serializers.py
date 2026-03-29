@@ -59,6 +59,19 @@ class OutfitSerializer(serializers.ModelSerializer):
         write_only=True,
         required=False,
     )
+    owner_username = serializers.CharField(source="owner.username", read_only=True)
+    owner_profile_picture = serializers.ImageField(source="owner.profile_picture", read_only=True)
+    saves_count = serializers.SerializerMethodField()
+    is_saved = serializers.SerializerMethodField()
+
+    def get_saves_count(self, obj):
+        return obj.saved_by.count()
+
+    def get_is_saved(self, obj):
+        request = self.context.get("request")
+        if request and hasattr(request, "user_profile"):
+            return obj.saved_by.filter(id=request.user_profile.id).exists()
+        return False
 
     class Meta:
         model = Outfit

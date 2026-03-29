@@ -26,6 +26,7 @@ class _OutfitsScreenState extends State<OutfitsScreen> {
       _loaded = true;
       WidgetsBinding.instance.addPostFrameCallback((_) {
         context.read<OutfitViewmodel>().fetchOutfits();
+        context.read<OutfitViewmodel>().fetchSavedOutfits();
       });
     }
   }
@@ -174,7 +175,47 @@ class _OutfitsScreenState extends State<OutfitsScreen> {
                       return _OutfitCard(outfit: outfits[index]);
                     },
                   ),
-                const SizedBox(height: 20),
+                const SizedBox(height: 30),
+                Text(
+                  "Saved Outfits",
+                  style: GoogleFonts.caveat(
+                    fontSize: 22,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                const SizedBox(height: 10),
+                if (outfitVM.isLoadingSaved && outfitVM.savedOutfits.isEmpty)
+                  const Center(child: CircularProgressIndicator())
+                else if (outfitVM.savedOutfits.isEmpty)
+                  Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 20),
+                    child: Center(
+                      child: Text(
+                        "No saved outfits yet",
+                        style: GoogleFonts.caveat(fontSize: 18, color: Colors.grey),
+                      ),
+                    ),
+                  )
+                else
+                  GridView.builder(
+                    shrinkWrap: true,
+                    physics: const NeverScrollableScrollPhysics(),
+                    gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                      crossAxisCount: 2,
+                      mainAxisSpacing: 20,
+                      crossAxisSpacing: 18,
+                      childAspectRatio:
+                          (MediaQuery.of(context).size.width / 2) / 310,
+                    ),
+                    itemCount: outfitVM.savedOutfits.length,
+                    itemBuilder: (BuildContext context, int index) {
+                      return _OutfitCard(
+                        outfit: outfitVM.savedOutfits[index],
+                        readOnly: true,
+                      );
+                    },
+                  ),
+                const SizedBox(height: 40),
               ],
             ),
           ),
@@ -243,8 +284,9 @@ class _OutfitsScreenState extends State<OutfitsScreen> {
 
 class _OutfitCard extends StatelessWidget {
   final OutfitModel outfit;
+  final bool readOnly;
 
-  const _OutfitCard({required this.outfit});
+  const _OutfitCard({required this.outfit, this.readOnly = false});
 
   @override
   Widget build(BuildContext context) {
@@ -271,7 +313,7 @@ class _OutfitCard extends StatelessWidget {
         final result = await Navigator.push(
           context,
           MaterialPageRoute(
-            builder: (_) => OutfitDetailScreen(outfit: outfit),
+            builder: (_) => OutfitDetailScreen(outfit: outfit, readOnly: readOnly),
           ),
         );
 

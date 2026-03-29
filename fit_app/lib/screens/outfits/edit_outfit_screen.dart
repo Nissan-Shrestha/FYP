@@ -20,6 +20,7 @@ class _EditOutfitScreenState extends State<EditOutfitScreen> {
   late final TextEditingController _nameController;
   late String _selectedOccasion;
   late final List<int> _selectedItemIds;
+  late bool _isPublic;
 
   @override
   void initState() {
@@ -27,6 +28,7 @@ class _EditOutfitScreenState extends State<EditOutfitScreen> {
     _nameController = TextEditingController(text: widget.outfit.name);
     _selectedOccasion = widget.outfit.occasion;
     _selectedItemIds = widget.outfit.items.map((item) => item.id).toList();
+    _isPublic = widget.outfit.isPublic;
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
       context.read<WardrobeViewmodel>().fetchClothingItems();
@@ -77,6 +79,7 @@ class _EditOutfitScreenState extends State<EditOutfitScreen> {
       name: name,
       occasion: _selectedOccasion,
       itemIds: _selectedItemIds,
+      isPublic: _isPublic,
     );
 
     if (!mounted) return;
@@ -222,6 +225,24 @@ class _EditOutfitScreenState extends State<EditOutfitScreen> {
                         ],
                       ),
                     ),
+                  ),
+                  const Divider(height: 8),
+                  SwitchListTile(
+                    contentPadding: EdgeInsets.zero,
+                    title: Text(
+                      "Make Outfit Public",
+                      style: GoogleFonts.caveat(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    subtitle: Text(
+                      "Visible to everyone on Explore",
+                      style: TextStyle(fontSize: 12, color: Colors.grey.shade600),
+                    ),
+                    value: _isPublic,
+                    activeColor: const Color(0xff0AAE00),
+                    onChanged: (val) => setState(() => _isPublic = val),
                   ),
                 ],
               ),

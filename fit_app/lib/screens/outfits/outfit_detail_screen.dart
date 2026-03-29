@@ -1,6 +1,7 @@
 import 'package:fit_app/constants.dart';
 import 'package:fit_app/models/outfit_model.dart';
 import 'package:fit_app/viewmodels/outfit_viewmodel.dart';
+import 'package:fit_app/screens/wardrobe/clothing_item_detail_screen.dart'; // Add this line
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
@@ -9,8 +10,9 @@ import 'package:fit_app/screens/outfits/edit_outfit_screen.dart';
 
 class OutfitDetailScreen extends StatefulWidget {
   final OutfitModel outfit;
+  final bool readOnly;
 
-  const OutfitDetailScreen({super.key, required this.outfit});
+  const OutfitDetailScreen({super.key, required this.outfit, this.readOnly = false});
 
   @override
   State<OutfitDetailScreen> createState() => _OutfitDetailScreenState();
@@ -114,26 +116,28 @@ class _OutfitDetailScreenState extends State<OutfitDetailScreen> {
           ),
         ),
         actions: [
-          IconButton(
-            onPressed: () async {
-              final result = await Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (context) => EditOutfitScreen(outfit: outfit),
-                ),
-              );
-              if (result != null && result is OutfitModel) {
-                setState(() {
-                  outfit = result;
-                });
-              }
-            },
-            icon: const Icon(Icons.edit_outlined, color: Colors.blue),
-          ),
-          IconButton(
-            onPressed: () => _confirmDelete(context),
-            icon: const Icon(Icons.delete_outline, color: Colors.red),
-          ),
+          if (!widget.readOnly) ...[  
+            IconButton(
+              onPressed: () async {
+                final result = await Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => EditOutfitScreen(outfit: outfit),
+                  ),
+                );
+                if (result != null && result is OutfitModel) {
+                  setState(() {
+                    outfit = result;
+                  });
+                }
+              },
+              icon: const Icon(Icons.edit_outlined, color: Colors.blue),
+            ),
+            IconButton(
+              onPressed: () => _confirmDelete(context),
+              icon: const Icon(Icons.delete_outline, color: Colors.red),
+            ),
+          ],
           const SizedBox(width: 8),
         ],
         centerTitle: true,
@@ -216,19 +220,28 @@ class _OutfitDetailScreenState extends State<OutfitDetailScreen> {
                     ? item.image!
                     : "${ApiConfig.serverBaseUrl}${item.image!}";
 
-                return Container(
-                  decoration: BoxDecoration(
-                    color: Colors.grey.shade300,
-                    borderRadius: BorderRadius.circular(16),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withOpacity(0.08),
-                        blurRadius: 6,
-                        offset: const Offset(0, 3),
+                return GestureDetector(
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => ClothingItemDetailScreen(item: item),
                       ),
-                    ],
-                  ),
-                  child: Column(
+                    );
+                  },
+                  child: Container(
+                    decoration: BoxDecoration(
+                      color: Colors.white, // Changed background color to white to distinguish it
+                      borderRadius: BorderRadius.circular(16),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withOpacity(0.08),
+                          blurRadius: 6,
+                          offset: const Offset(0, 3),
+                        ),
+                      ],
+                    ),
+                    child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       AspectRatio(
@@ -237,17 +250,17 @@ class _OutfitDetailScreenState extends State<OutfitDetailScreen> {
                           borderRadius: const BorderRadius.vertical(
                             top: Radius.circular(16),
                           ),
-                          child: Padding(
-                            padding: const EdgeInsets.all(8.0),
-                            child: imageUrl != null
-                                ? Image.network(
-                                    imageUrl,
-                                    fit: BoxFit.contain,
-                                    errorBuilder: (_, __, ___) =>
-                                        const Icon(Icons.error),
-                                  )
-                                : const Icon(Icons.checkroom, size: 48),
-                          ),
+                            child: Padding(
+                              padding: const EdgeInsets.all(8.0),
+                              child: imageUrl != null
+                                  ? Image.network(
+                                      imageUrl,
+                                      fit: BoxFit.contain,
+                                      errorBuilder: (_, __, ___) =>
+                                          const Icon(Icons.error),
+                                    )
+                                  : const Icon(Icons.checkroom, size: 48),
+                            ),
                         ),
                       ),
                       Padding(
@@ -302,12 +315,13 @@ class _OutfitDetailScreenState extends State<OutfitDetailScreen> {
                       ),
                     ],
                   ),
-                );
-              },
-            ),
+                ),
+              );
+            },
           ),
-        ],
-      ),
-    );
-  }
+        ),
+      ],
+    ),
+  );
+}
 }

@@ -18,6 +18,9 @@ from .views import (
     wardrobes,
     outfits,
     outfit_detail,
+    explore_outfits,
+    toggle_save_outfit,
+    get_saved_outfits,
 )
 
 urlpatterns = [
@@ -32,7 +35,10 @@ urlpatterns = [
         remove_item_from_wardrobe,
     ),
     path("outfits/", outfits),
+    path("outfits/explore/", explore_outfits),
     path("outfits/<int:outfit_id>/", outfit_detail),
+    path("outfits/<int:outfit_id>/toggle_save/", toggle_save_outfit),
+    path("outfits/saved/", get_saved_outfits),
     path("admin/dashboard-data/", admin_dashboard_data),
     path("admin/me/", admin_me),
     path("admin/categories/", admin_categories),
