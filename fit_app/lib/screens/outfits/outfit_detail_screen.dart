@@ -5,10 +5,25 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 
-class OutfitDetailScreen extends StatelessWidget {
+import 'package:fit_app/screens/outfits/edit_outfit_screen.dart';
+
+class OutfitDetailScreen extends StatefulWidget {
   final OutfitModel outfit;
 
   const OutfitDetailScreen({super.key, required this.outfit});
+
+  @override
+  State<OutfitDetailScreen> createState() => _OutfitDetailScreenState();
+}
+
+class _OutfitDetailScreenState extends State<OutfitDetailScreen> {
+  late OutfitModel outfit;
+
+  @override
+  void initState() {
+    super.initState();
+    outfit = widget.outfit;
+  }
 
   void _confirmDelete(BuildContext context) {
     showDialog(
@@ -99,6 +114,22 @@ class OutfitDetailScreen extends StatelessWidget {
           ),
         ),
         actions: [
+          IconButton(
+            onPressed: () async {
+              final result = await Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => EditOutfitScreen(outfit: outfit),
+                ),
+              );
+              if (result != null && result is OutfitModel) {
+                setState(() {
+                  outfit = result;
+                });
+              }
+            },
+            icon: const Icon(Icons.edit_outlined, color: Colors.blue),
+          ),
           IconButton(
             onPressed: () => _confirmDelete(context),
             icon: const Icon(Icons.delete_outline, color: Colors.red),

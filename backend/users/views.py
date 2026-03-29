@@ -55,7 +55,7 @@ def outfits(request):
     return Response(serializer.data, status=201)
 
 
-@api_view(["DELETE"])
+@api_view(["PATCH", "DELETE"])
 def outfit_detail(request, outfit_id):
     firebase_uid, err = get_firebase_uid(request)
     if err:
@@ -69,6 +69,36 @@ def outfit_detail(request, outfit_id):
         outfit = Outfit.objects.get(id=outfit_id, owner=profile)
     except Outfit.DoesNotExist:
         return Response({"error": "Outfit not found"}, status=404)
+
+    if request.method == "PATCH":
+        name = request.data.get("name")
+        if name is not None:
+            name_stripped = str(name).strip()
+            if not name_stripped:
+                return Response({"error": "Outfit name cannot be empty"}, status=400)
+            if Outfit.objects.filter(owner=profile, name__iexact=name_stripped).exclude(id=outfit.id).exists():
+                return Response({"error": "Outfit with this name already exists"}, status=400)
+            outfit.name = name_stripped
+
+        occasion = request.data.get("occasion")
+        if occasion is not None:
+            occasion_stripped = str(occasion).strip()
+            if not occasion_stripped:
+                return Response({"error": "Occasion cannot be empty"}, status=400)
+            outfit.occasion = occasion_stripped
+
+        item_ids = request.data.get("item_ids")
+        if item_ids is not None:
+            if not isinstance(item_ids, list) or not item_ids:
+                return Response({"error": "At least one item_id is required"}, status=400)
+            valid_items = ClothingItem.objects.filter(id__in=item_ids, owner=profile)
+            if not valid_items.exists():
+                return Response({"error": "Invalid item_ids provided"}, status=400)
+            outfit.items.set(valid_items)
+
+        outfit.save()
+        serializer = OutfitSerializer(outfit, context={"request": request})
+        return Response(serializer.data, status=200)
 
     outfit.delete()
     return Response(status=204)

@@ -50,6 +50,38 @@ class OutfitViewmodel extends ChangeNotifier {
     }
   }
 
+  Future<OutfitModel?> updateOutfit(
+    int outfitId, {
+    String? name,
+    String? occasion,
+    List<int>? itemIds,
+  }) async {
+    try {
+      isSubmitting = true;
+      error = null;
+      notifyListeners();
+
+      final updatedOutfit = await OutfitService.updateOutfit(
+        outfitId,
+        name: name,
+        occasion: occasion,
+        itemIds: itemIds,
+      );
+
+      final index = outfits.indexWhere((o) => o.id == outfitId);
+      if (index != -1) {
+        outfits[index] = updatedOutfit;
+      }
+      return updatedOutfit;
+    } catch (e) {
+      error = e.toString();
+      return null;
+    } finally {
+      isSubmitting = false;
+      notifyListeners();
+    }
+  }
+
   Future<bool> deleteOutfit(int outfitId) async {
     try {
       isSubmitting = true;

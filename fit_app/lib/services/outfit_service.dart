@@ -59,6 +59,28 @@ class OutfitService {
     throw Exception("Failed to create outfit");
   }
 
+  static Future<OutfitModel> updateOutfit(
+    int outfitId, {
+    String? name,
+    String? occasion,
+    List<int>? itemIds,
+  }) async {
+    final Map<String, dynamic> body = {};
+    if (name != null) body["name"] = name;
+    if (occasion != null) body["occasion"] = occasion;
+    if (itemIds != null) body["item_ids"] = itemIds;
+
+    final response = await http.patch(
+      Uri.parse("$_baseApi/outfits/$outfitId/"),
+      headers: await _authHeaders(),
+      body: jsonEncode(body),
+    );
+    if (response.statusCode == 200) {
+      return OutfitModel.fromJson(jsonDecode(response.body));
+    }
+    throw Exception("Failed to update outfit");
+  }
+
   static Future<void> deleteOutfit(int outfitId) async {
     final response = await http.delete(
       Uri.parse("$_baseApi/outfits/$outfitId/"),

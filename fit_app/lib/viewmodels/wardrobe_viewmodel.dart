@@ -209,8 +209,7 @@ class WardrobeViewmodel extends ChangeNotifier {
     String occasion = "",
     String size = "",
     String material = "",
-    String brand = "",
-    double? purchasePrice,
+    String brand = "",    double? purchasePrice,
     File? imageFile,
   }) async {
     try {
