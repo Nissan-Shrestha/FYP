@@ -38,6 +38,10 @@ class _CreateOutfitScreenState extends State<CreateOutfitScreen> {
       if (_selectedItemIds.contains(itemId)) {
         _selectedItemIds.remove(itemId);
       } else {
+        if (_selectedItemIds.length >= 8) {
+          _showMessage("You can only add up to 8 items per outfit!");
+          return;
+        }
         _selectedItemIds.add(itemId);
       }
     });
@@ -55,8 +59,8 @@ class _CreateOutfitScreenState extends State<CreateOutfitScreen> {
       return;
     }
 
-    if (_selectedItemIds.isEmpty) {
-      _showMessage("Please select at least one item for the outfit.");
+    if (_selectedItemIds.length < 2) {
+      _showMessage("Please select at least 2 items to form an outfit.");
       return;
     }
 

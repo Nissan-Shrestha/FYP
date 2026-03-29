@@ -40,6 +40,12 @@ def outfits(request):
     if not isinstance(item_ids, list) or not item_ids:
         return Response({"error": "At least one item_id is required"}, status=400)
 
+    if len(item_ids) < 2:
+        return Response({"error": "An outfit must have at least 2 items"}, status=400)
+
+    if len(item_ids) > 8:
+        return Response({"error": "An outfit cannot have more than 8 items"}, status=400)
+
     # Create the outfit
     outfit = Outfit.objects.create(
         owner=profile,
@@ -91,6 +97,13 @@ def outfit_detail(request, outfit_id):
         if item_ids is not None:
             if not isinstance(item_ids, list) or not item_ids:
                 return Response({"error": "At least one item_id is required"}, status=400)
+            
+            if len(item_ids) < 2:
+                return Response({"error": "An outfit must have at least 2 items"}, status=400)
+
+            if len(item_ids) > 8:
+                return Response({"error": "An outfit cannot have more than 8 items"}, status=400)
+
             valid_items = ClothingItem.objects.filter(id__in=item_ids, owner=profile)
             if not valid_items.exists():
                 return Response({"error": "Invalid item_ids provided"}, status=400)
