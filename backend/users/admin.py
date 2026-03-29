@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import Profile, ClothingItem, Wardrobe
+from .models import Profile, ClothingItem, Wardrobe, ClothingOption, Outfit
 
 @admin.register(Profile)
 class ProfileAdmin(admin.ModelAdmin):
@@ -17,4 +17,16 @@ class ClothingItemAdmin(admin.ModelAdmin):
 class WardrobeAdmin(admin.ModelAdmin):
     list_display = ("name", "owner", "is_default", "created_at")
     list_filter = ("is_default",)
+    search_fields = ("name", "owner__username")
+
+@admin.register(ClothingOption)
+class ClothingOptionAdmin(admin.ModelAdmin):
+    list_display = ("type", "name")
+    list_filter = ("type",)
+    search_fields = ("name",)
+
+@admin.register(Outfit)
+class OutfitAdmin(admin.ModelAdmin):
+    list_display = ("name", "owner", "occasion", "created_at")
+    list_filter = ("occasion",)
     search_fields = ("name", "owner__username")

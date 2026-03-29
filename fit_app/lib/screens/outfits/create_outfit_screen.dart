@@ -82,9 +82,9 @@ class _CreateOutfitScreenState extends State<CreateOutfitScreen> {
   }
 
   void _showMessage(String message) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(message)),
-    );
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(SnackBar(content: Text(message)));
   }
 
   @override
@@ -238,31 +238,32 @@ class _CreateOutfitScreenState extends State<CreateOutfitScreen> {
             child: wardrobeVM.isLoadingClothingItems
                 ? const Center(child: CircularProgressIndicator())
                 : wardrobeVM.clothingItems.isEmpty
-                    ? Center(
-                        child: Text(
-                          "No items in your wardrobe yet.",
-                          style: GoogleFonts.caveat(fontSize: 18),
-                        ),
-                      )
-                    : GridView.builder(
-                        padding: const EdgeInsets.all(16),
-                        gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                ? Center(
+                    child: Text(
+                      "No items in your wardrobe yet.",
+                      style: GoogleFonts.caveat(fontSize: 18),
+                    ),
+                  )
+                : GridView.builder(
+                    padding: const EdgeInsets.all(16),
+                    gridDelegate:
+                        const SliverGridDelegateWithFixedCrossAxisCount(
                           crossAxisCount: 3,
                           crossAxisSpacing: 12,
                           mainAxisSpacing: 12,
                           childAspectRatio: 0.8,
                         ),
-                        itemCount: wardrobeVM.clothingItems.length,
-                        itemBuilder: (context, index) {
-                          final item = wardrobeVM.clothingItems[index];
-                          final isSelected = _selectedItemIds.contains(item.id);
-                          return _ClothingItemSelectionTile(
-                            item: item,
-                            isSelected: isSelected,
-                            onTap: () => _toggleItemSelection(item.id),
-                          );
-                        },
-                      ),
+                    itemCount: wardrobeVM.clothingItems.length,
+                    itemBuilder: (context, index) {
+                      final item = wardrobeVM.clothingItems[index];
+                      final isSelected = _selectedItemIds.contains(item.id);
+                      return _ClothingItemSelectionTile(
+                        item: item,
+                        isSelected: isSelected,
+                        onTap: () => _toggleItemSelection(item.id),
+                      );
+                    },
+                  ),
           ),
         ],
       ),
@@ -276,36 +277,47 @@ class _CreateOutfitScreenState extends State<CreateOutfitScreen> {
 
     await showModalBottomSheet<void>(
       context: context,
+      isScrollControlled: true,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(18)),
       ),
       builder: (context) {
-        return SafeArea(
-          child: Padding(
-            padding: const EdgeInsets.fromLTRB(18, 14, 18, 20),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  "Select Occasion",
-                  style: GoogleFonts.caveat(
-                    fontSize: 24,
-                    fontWeight: FontWeight.bold,
+        return Container(
+          constraints: BoxConstraints(
+            maxHeight: MediaQuery.of(context).size.height * 0.8,
+          ),
+          child: SafeArea(
+            child: SingleChildScrollView(
+              padding: EdgeInsets.fromLTRB(
+                18,
+                14,
+                18,
+                MediaQuery.of(context).viewInsets.bottom + 20,
+              ),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    "Select Occasion",
+                    style: GoogleFonts.caveat(
+                      fontSize: 24,
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
-                ),
-                const SizedBox(height: 14),
-                ...occasions.map(
-                  (opt) => ListTile(
-                    contentPadding: EdgeInsets.zero,
-                    title: Text(opt),
-                    onTap: () {
-                      setState(() => _selectedOccasion = opt);
-                      Navigator.pop(context);
-                    },
+                  const SizedBox(height: 14),
+                  ...occasions.map(
+                    (opt) => ListTile(
+                      contentPadding: EdgeInsets.zero,
+                      title: Text(opt),
+                      onTap: () {
+                        setState(() => _selectedOccasion = opt);
+                        Navigator.pop(context);
+                      },
+                    ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
           ),
         );
@@ -330,8 +342,8 @@ class _ClothingItemSelectionTile extends StatelessWidget {
     final imageUrl = item.image == null
         ? null
         : item.image!.startsWith("http")
-            ? item.image!
-            : "${ApiConfig.serverBaseUrl}${item.image!}";
+        ? item.image!
+        : "${ApiConfig.serverBaseUrl}${item.image!}";
 
     return GestureDetector(
       onTap: onTap,
@@ -342,7 +354,9 @@ class _ClothingItemSelectionTile extends StatelessWidget {
               color: Colors.white,
               borderRadius: BorderRadius.circular(12),
               border: Border.all(
-                color: isSelected ? const Color(0xff0AAE00) : Colors.transparent,
+                color: isSelected
+                    ? const Color(0xff0AAE00)
+                    : Colors.transparent,
                 width: 2,
               ),
               boxShadow: [
@@ -363,7 +377,8 @@ class _ClothingItemSelectionTile extends StatelessWidget {
                         ? Image.network(
                             imageUrl,
                             fit: BoxFit.cover,
-                            errorBuilder: (_, __, ___) => const Icon(Icons.error),
+                            errorBuilder: (_, __, ___) =>
+                                const Icon(Icons.error),
                           )
                         : const Icon(Icons.checkroom, size: 32),
                   ),

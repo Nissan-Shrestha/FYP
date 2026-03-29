@@ -284,36 +284,44 @@ class _EditOutfitScreenState extends State<EditOutfitScreen> {
 
     await showModalBottomSheet<void>(
       context: context,
+      isScrollControlled: true,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(18)),
       ),
       builder: (context) {
-        return SafeArea(
-          child: Padding(
-            padding: const EdgeInsets.fromLTRB(18, 14, 18, 20),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  "Select Occasion",
-                  style: GoogleFonts.caveat(
-                    fontSize: 24,
-                    fontWeight: FontWeight.bold,
+        return Container(
+          constraints: BoxConstraints(
+            maxHeight: MediaQuery.of(context).size.height * 0.8,
+          ),
+          child: SafeArea(
+            child: SingleChildScrollView(
+              padding: EdgeInsets.fromLTRB(
+                18, 14, 18, MediaQuery.of(context).viewInsets.bottom + 20
+              ),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    "Select Occasion",
+                    style: GoogleFonts.caveat(
+                      fontSize: 24,
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
-                ),
-                const SizedBox(height: 14),
-                ...occasions.map(
-                  (opt) => ListTile(
-                    contentPadding: EdgeInsets.zero,
-                    title: Text(opt),
-                    onTap: () {
-                      setState(() => _selectedOccasion = opt);
-                      Navigator.pop(context);
-                    },
+                  const SizedBox(height: 14),
+                  ...occasions.map(
+                    (opt) => ListTile(
+                      contentPadding: EdgeInsets.zero,
+                      title: Text(opt),
+                      onTap: () {
+                        setState(() => _selectedOccasion = opt);
+                        Navigator.pop(context);
+                      },
+                    ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
           ),
         );

@@ -408,36 +408,44 @@ class _EditClothingItemScreenState extends State<EditClothingItemScreen> {
   }) async {
     await showModalBottomSheet<void>(
       context: context,
+      isScrollControlled: true,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(18)),
       ),
-      builder: (context) => SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.fromLTRB(18, 14, 18, 20),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                title,
-                style: GoogleFonts.caveat(
-                  fontSize: 24,
-                  fontWeight: FontWeight.bold,
+      builder: (context) => Container(
+        constraints: BoxConstraints(
+          maxHeight: MediaQuery.of(context).size.height * 0.8,
+        ),
+        child: SafeArea(
+          child: SingleChildScrollView(
+            padding: EdgeInsets.fromLTRB(
+              18, 14, 18, MediaQuery.of(context).viewInsets.bottom + 20
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  title,
+                  style: GoogleFonts.caveat(
+                    fontSize: 24,
+                    fontWeight: FontWeight.bold,
+                  ),
                 ),
-              ),
-              const SizedBox(height: 12),
-              ...options.map(
-                (option) => ListTile(
-                  contentPadding: EdgeInsets.zero,
-                  title: Text(option),
-                  trailing: const Icon(Icons.chevron_right),
-                  onTap: () {
-                    onSelected(option);
-                    Navigator.pop(context);
-                  },
+                const SizedBox(height: 12),
+                ...options.map(
+                  (option) => ListTile(
+                    contentPadding: EdgeInsets.zero,
+                    title: Text(option),
+                    trailing: const Icon(Icons.chevron_right),
+                    onTap: () {
+                      onSelected(option);
+                      Navigator.pop(context);
+                    },
+                  ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
         ),
       ),
