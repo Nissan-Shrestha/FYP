@@ -1,6 +1,7 @@
 import 'package:fit_app/constants.dart';
 import 'package:fit_app/models/outfit_model.dart';
 import 'package:fit_app/viewmodels/outfit_viewmodel.dart';
+import 'package:fit_app/viewmodels/schedule_viewmodel.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
@@ -34,7 +35,7 @@ class _ScheduleCreationScreenState extends State<ScheduleCreationScreen> {
       lastDate: DateTime.now().add(const Duration(days: 365)),
       builder: (context, child) {
         return Theme(
-          data: Theme.of(context).copyWith(
+          data: ThemeData.light().copyWith(
             colorScheme: const ColorScheme.light(
               primary: Color(0xFF10A8F5),
               onPrimary: Colors.white,
@@ -60,9 +61,47 @@ class _ScheduleCreationScreenState extends State<ScheduleCreationScreen> {
     }
   }
 
+  Future<void> _onSave() async {
+    final title = _titleController.text.trim();
+    if (title.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("Please enter an event title")),
+      );
+      return;
+    }
+    if (_selectedOutfit == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("Please select an outfit")),
+      );
+      return;
+    }
+
+    final success = await context.read<ScheduleViewmodel>().scheduleOutfit(
+          eventTitle: title,
+          date: _selectedDate,
+          time: _selectedTime,
+          outfitId: _selectedOutfit!.id,
+        );
+
+    if (mounted) {
+      if (success) {
+        Navigator.pop(context, true);
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text("Outfit scheduled successfully")),
+        );
+      } else {
+        final error = context.read<ScheduleViewmodel>().error;
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(error ?? "Failed to schedule outfit")),
+        );
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final outfitVM = context.watch<OutfitViewmodel>();
+    final scheduleVM = context.watch<ScheduleViewmodel>();
     final outfits = outfitVM.outfits;
 
     return Scaffold(
@@ -162,10 +201,7 @@ class _ScheduleCreationScreenState extends State<ScheduleCreationScreen> {
               width: double.infinity,
               height: 54,
               child: ElevatedButton(
-                onPressed: _selectedOutfit == null ? null : () {
-                  // Logic to save schedule (coming soon)
-                  Navigator.pop(context);
-                },
+                onPressed: scheduleVM.isLoading ? null : _onSave,
                 style: ElevatedButton.styleFrom(
                   backgroundColor: const Color(0xFF10A8F5),
                   disabledBackgroundColor: Colors.grey.shade300,
@@ -175,13 +211,19 @@ class _ScheduleCreationScreenState extends State<ScheduleCreationScreen> {
                     borderRadius: BorderRadius.circular(16),
                   ),
                 ),
-                child: Text(
-                  "Confirm Selection",
-                  style: GoogleFonts.caveat(
-                    fontSize: 20,
-                    fontWeight: FontWeight.w700,
-                  ),
-                ),
+                child: scheduleVM.isLoading
+                    ? const SizedBox(
+                        height: 20,
+                        width: 20,
+                        child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2),
+                      )
+                    : Text(
+                        "Confirm Selection",
+                        style: GoogleFonts.caveat(
+                          fontSize: 20,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
               ),
             ),
           ],
@@ -274,72 +316,85 @@ class _ScheduleCreationScreenState extends State<ScheduleCreationScreen> {
 
   Widget _buildOutfitSelector(List<OutfitModel> outfits) {
     return SizedBox(
-      height: 200,
+      height: 240,
       child: ListView.builder(
         scrollDirection: Axis.horizontal,
         itemCount: outfits.length,
+        padding: const EdgeInsets.symmetric(horizontal: 4),
         itemBuilder: (context, index) {
           final outfit = outfits[index];
           final isSelected = _selectedOutfit?.id == outfit.id;
+
+          // Process preview images
+          final previewItems = outfit.items.take(4).toList();
+          final imageUrls = previewItems
+              .map((item) => item.image)
+              .whereType<String>()
+              .map(
+                (path) => path.startsWith("http")
+                    ? path
+                    : "${ApiConfig.serverBaseUrl}$path",
+              )
+              .toList();
+
+          final imageSlots = List<String?>.generate(
+            4,
+            (index) => index < imageUrls.length ? imageUrls[index] : null,
+          );
 
           return GestureDetector(
             onTap: () => setState(() => _selectedOutfit = outfit),
             child: AnimatedContainer(
               duration: const Duration(milliseconds: 200),
-              width: 150,
-              margin: const EdgeInsets.only(right: 16, bottom: 8, top: 4, left: 4),
+              width: 160,
+              margin: const EdgeInsets.only(right: 20, bottom: 8, top: 4),
               decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(20),
+                color: Colors.transparent,
+                borderRadius: BorderRadius.circular(24),
                 border: Border.all(
                   color: isSelected ? const Color(0xFF10A8F5) : Colors.transparent,
-                  width: 2,
+                  width: 2.5,
                 ),
-                boxShadow: [
-                  BoxShadow(
-                    color: isSelected
-                        ? const Color(0xFF10A8F5).withOpacity(0.2)
-                        : Colors.black.withOpacity(0.05),
-                    blurRadius: 8,
-                    offset: const Offset(0, 4),
-                  ),
-                ],
               ),
               child: Column(
                 children: [
                   Expanded(
-                    child: ClipRRect(
-                      borderRadius: const BorderRadius.vertical(top: Radius.circular(18)),
-                      child: Stack(
-                        children: [
-                          _buildOutfitPreview(outfit),
-                          if (isSelected)
-                            Positioned(
-                              top: 8,
-                              right: 8,
-                              child: Container(
-                                padding: const EdgeInsets.all(4),
-                                decoration: const BoxDecoration(
-                                  color: Color(0xFF10A8F5),
-                                  shape: BoxShape.circle,
-                                ),
-                                child: const Icon(Icons.check, color: Colors.white, size: 14),
+                    child: Stack(
+                      children: [
+                        _buildGridPreview(imageSlots, isSelected),
+                        if (isSelected)
+                          Positioned(
+                            top: 6,
+                            right: 6,
+                            child: Container(
+                              padding: const EdgeInsets.all(4),
+                              decoration: const BoxDecoration(
+                                color: Color(0xFF10A8F5),
+                                shape: BoxShape.circle,
                               ),
+                              child: const Icon(Icons.check, color: Colors.white, size: 14),
                             ),
-                        ],
-                      ),
+                          ),
+                      ],
                     ),
                   ),
-                  Padding(
-                    padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 12),
-                    child: Text(
-                      capitalize(outfit.name),
-                      style: GoogleFonts.caveat(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w600,
-                      ),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
+                  const SizedBox(height: 12),
+                  Text(
+                    capitalize(outfit.name),
+                    style: GoogleFonts.caveat(
+                      fontSize: 18,
+                      fontWeight: FontWeight.w700,
+                      color: Colors.black87,
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  Text(
+                    "${outfit.items.length} Items",
+                    style: const TextStyle(
+                      fontSize: 12,
+                      color: Colors.black54,
+                      fontWeight: FontWeight.w500,
                     ),
                   ),
                 ],
@@ -351,19 +406,46 @@ class _ScheduleCreationScreenState extends State<ScheduleCreationScreen> {
     );
   }
 
-  Widget _buildOutfitPreview(OutfitModel outfit) {
-    if (outfit.items.isEmpty) {
-      return Container(color: Colors.grey.shade200);
-    }
-    
-    final imageUrl = outfit.items[0].image;
-    final fullImageUrl = imageUrl != null
-        ? (imageUrl.startsWith("http") ? imageUrl : "${ApiConfig.serverBaseUrl}$imageUrl")
-        : null;
-
-    return fullImageUrl != null
-        ? Image.network(fullImageUrl, fit: BoxFit.cover, width: double.infinity)
-        : Container(color: Colors.grey.shade200);
+  Widget _buildGridPreview(List<String?> imageSlots, bool isSelected) {
+    return Container(
+      padding: const EdgeInsets.all(8),
+      decoration: BoxDecoration(
+        color: Colors.grey.shade300,
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: isSelected
+                ? const Color(0xFF10A8F5).withOpacity(0.3)
+                : Colors.black.withOpacity(0.08),
+            blurRadius: isSelected ? 12 : 6,
+            offset: Offset(0, isSelected ? 6 : 3),
+          ),
+        ],
+      ),
+      child: Column(
+        children: [
+          Expanded(
+            child: Row(
+              children: [
+                Expanded(child: _MiniPreviewBox(imageUrl: imageSlots[0])),
+                const SizedBox(width: 8),
+                Expanded(child: _MiniPreviewBox(imageUrl: imageSlots[1])),
+              ],
+            ),
+          ),
+          const SizedBox(height: 8),
+          Expanded(
+            child: Row(
+              children: [
+                Expanded(child: _MiniPreviewBox(imageUrl: imageSlots[2])),
+                const SizedBox(width: 8),
+                Expanded(child: _MiniPreviewBox(imageUrl: imageSlots[3])),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
   }
 
   Widget _buildEmptyOutfits() {
@@ -390,6 +472,36 @@ class _ScheduleCreationScreenState extends State<ScheduleCreationScreen> {
             style: GoogleFonts.caveat(fontSize: 16, color: Colors.grey),
           ),
         ],
+      ),
+    );
+  }
+}
+
+class _MiniPreviewBox extends StatelessWidget {
+  final String? imageUrl;
+  const _MiniPreviewBox({this.imageUrl});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.grey.shade400,
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(12),
+        child: Container(
+          color: Colors.grey.shade300,
+          child: imageUrl == null
+              ? const SizedBox.shrink()
+              : Image.network(
+                  imageUrl!,
+                  fit: BoxFit.cover,
+                  width: double.infinity,
+                  height: double.infinity,
+                  errorBuilder: (_, __, ___) => const Icon(Icons.error_outline, size: 16),
+                ),
+        ),
       ),
     );
   }

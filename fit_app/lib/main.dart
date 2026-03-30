@@ -5,6 +5,7 @@ import 'package:fit_app/viewmodels/auth_viewmodel.dart';
 import 'package:fit_app/viewmodels/wardrobe_viewmodel.dart';
 import 'package:fit_app/viewmodels/weather_viewmodel.dart';
 import 'package:fit_app/viewmodels/outfit_viewmodel.dart';
+import 'package:fit_app/viewmodels/schedule_viewmodel.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
@@ -26,6 +27,7 @@ class MyApp extends StatelessWidget {
         ChangeNotifierProvider(create: (_) => WeatherViewmodel()),
         ChangeNotifierProvider(create: (_) => WardrobeViewmodel()),
         ChangeNotifierProvider(create: (_) => OutfitViewmodel()),
+        ChangeNotifierProvider(create: (_) => ScheduleViewmodel()),
       ],
       child: MaterialApp(
         title: 'Flutter Demo',
