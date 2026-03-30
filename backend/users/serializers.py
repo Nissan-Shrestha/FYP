@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import ClothingItem, Profile, Wardrobe, ClothingOption, Outfit, Report
+from .models import ClothingItem, Profile, Wardrobe, ClothingOption, Outfit, Report, Schedule
 
 class ClothingOptionSerializer(serializers.ModelSerializer):
     class Meta:
@@ -91,3 +91,12 @@ class ReportSerializer(serializers.ModelSerializer):
         model = Report
         fields = "__all__"
         read_only_fields = ("id", "reporter", "created_at", "updated_at")
+
+
+class ScheduleSerializer(serializers.ModelSerializer):
+    outfit_details = OutfitSerializer(source="outfit", read_only=True)
+    
+    class Meta:
+        model = Schedule
+        fields = "__all__"
+        read_only_fields = ("id", "owner", "created_at", "updated_at")

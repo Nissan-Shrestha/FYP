@@ -27,6 +27,8 @@ from .views import (
     admin_report_view,
     admin_report_action,
     admin_moderation_reset,
+    schedules,
+    schedule_detail,
 )
 
 urlpatterns = [
@@ -47,6 +49,8 @@ urlpatterns = [
     path("outfits/report/", create_report),
     path("outfits/<int:outfit_id>/toggle_save/", toggle_save_outfit),
     path("outfits/saved/", get_saved_outfits),
+    path("schedules/", schedules),
+    path("schedules/<int:schedule_id>/", schedule_detail),
     path("admin/dashboard-data/", admin_dashboard_data),
     path("admin/me/", admin_me),
     path("admin/categories/", admin_categories),

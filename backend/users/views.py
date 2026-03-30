@@ -4,8 +4,84 @@ from decimal import Decimal, InvalidOperation
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
 from .firebase_auth import get_firebase_uid
-from .models import ClothingItem, Profile, Wardrobe, ClothingOption, Outfit
-from .serializers import ClothingItemSerializer, ProfileSerializer, WardrobeSerializer, ClothingOptionSerializer, OutfitSerializer
+from .models import ClothingItem, Profile, Wardrobe, ClothingOption, Outfit, Schedule
+from .serializers import ClothingItemSerializer, ProfileSerializer, WardrobeSerializer, ClothingOptionSerializer, OutfitSerializer, ScheduleSerializer
+
+@api_view(["GET", "POST"])
+def schedules(request):
+    firebase_uid, err = get_firebase_uid(request)
+    if err:
+        return err
+
+    profile, error_response = _get_profile_by_firebase_uid(firebase_uid)
+    if error_response:
+        return error_response
+
+    if request.method == "GET":
+        date_str = request.GET.get("date")
+        queryset = Schedule.objects.filter(owner=profile)
+        
+        if date_str:
+            try:
+                target_date = date.fromisoformat(date_str)
+                queryset = queryset.filter(date_time__date=target_date)
+            except ValueError:
+                return Response({"error": "Invalid date format. Use YYYY-MM-DD"}, status=400)
+                
+        serializer = ScheduleSerializer(queryset, many=True, context={"request": request})
+        return Response(serializer.data)
+
+    # POST: Create a new schedule
+    event_title = (request.data.get("event_title") or "").strip()
+    date_time_str = request.data.get("date_time")
+    outfit_id = request.data.get("outfit_id")
+
+    if not event_title:
+        return Response({"error": "Event title is required"}, status=400)
+    if not date_time_str:
+        return Response({"error": "Date and time are required"}, status=400)
+    if not outfit_id:
+        return Response({"error": "Outfit ID is required"}, status=400)
+
+    try:
+        outfit = Outfit.objects.get(id=outfit_id, owner=profile)
+    except Outfit.DoesNotExist:
+        return Response({"error": "Outfit not found"}, status=404)
+
+    from django.utils.dateparse import parse_datetime
+    date_time = parse_datetime(date_time_str)
+    if not date_time:
+        return Response({"error": "Invalid date_time format"}, status=400)
+
+    schedule = Schedule.objects.create(
+        owner=profile,
+        event_title=event_title,
+        date_time=date_time,
+        outfit=outfit
+    )
+
+    serializer = ScheduleSerializer(schedule, context={"request": request})
+    return Response(serializer.data, status=201)
+
+
+@api_view(["DELETE"])
+def schedule_detail(request, schedule_id):
+    firebase_uid, err = get_firebase_uid(request)
+    if err:
+        return err
+
+    profile, error_response = _get_profile_by_firebase_uid(firebase_uid)
+    if error_response:
+        return error_response
+
+    try:
+        schedule = Schedule.objects.get(id=schedule_id, owner=profile)
+    except Schedule.DoesNotExist:
+        return Response({"error": "Schedule not found"}, status=404)
+
+    schedule.delete()
+    return Response(status=204)
+
 
 
 @api_view(["GET", "POST"])
