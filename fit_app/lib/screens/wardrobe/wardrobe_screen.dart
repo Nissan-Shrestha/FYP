@@ -1,5 +1,5 @@
 import 'package:fit_app/constants.dart';
-import 'package:fit_app/screens/notifications/notification_screen.dart';
+
 import 'package:fit_app/screens/schedule/schedule_screen.dart';
 import 'package:fit_app/screens/wardrobe/add_item_screen.dart';
 import 'package:fit_app/screens/wardrobe/create_wardrobe_screen.dart';
@@ -229,16 +229,6 @@ class _WardrobeScreenState extends State<WardrobeScreen> {
           style: GoogleFonts.caveat(fontSize: 32, fontWeight: FontWeight.bold),
         ),
         actions: [
-          IconButton(
-            onPressed: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (_) => const NotificationScreen()),
-              );
-            },
-            icon: const Icon(Icons.notifications_none, color: Colors.black),
-          ),
-          const SizedBox(width: 4),
           IconButton(
             onPressed: () {
               Navigator.push(

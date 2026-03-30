@@ -1,6 +1,6 @@
 import 'package:fit_app/constants.dart';
 import 'package:fit_app/models/outfit_model.dart';
-import 'package:fit_app/screens/notifications/notification_screen.dart';
+
 import 'package:fit_app/screens/outfits/create_outfit_screen.dart';
 import 'package:fit_app/screens/outfits/edit_outfit_screen.dart';
 import 'package:fit_app/screens/outfits/outfit_detail_screen.dart';
@@ -50,16 +50,6 @@ class _OutfitsScreenState extends State<OutfitsScreen> {
           style: GoogleFonts.caveat(fontSize: 32, fontWeight: FontWeight.bold),
         ),
         actions: [
-          IconButton(
-            onPressed: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (_) => const NotificationScreen()),
-              );
-            },
-            icon: const Icon(Icons.notifications_none, color: Colors.black),
-          ),
-          const SizedBox(width: 4),
           IconButton(
             onPressed: () {
               Navigator.push(
