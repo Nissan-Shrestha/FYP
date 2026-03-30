@@ -2,6 +2,7 @@ import 'package:fit_app/constants.dart';
 import 'package:fit_app/models/outfit_model.dart';
 import 'package:fit_app/screens/notifications/notification_screen.dart';
 import 'package:fit_app/screens/outfits/create_outfit_screen.dart';
+import 'package:fit_app/screens/outfits/edit_outfit_screen.dart';
 import 'package:fit_app/screens/outfits/outfit_detail_screen.dart';
 import 'package:fit_app/screens/schedule/schedule_screen.dart';
 import 'package:fit_app/viewmodels/outfit_viewmodel.dart';
@@ -119,7 +120,7 @@ class _OutfitsScreenState extends State<OutfitsScreen> {
                       borderRadius: BorderRadius.circular(16),
                       boxShadow: [
                         BoxShadow(
-                          color: Colors.black.withValues(alpha: 0.08),
+                          color: Colors.black.withOpacity(0.08),
                           blurRadius: 6,
                           offset: const Offset(0, 3),
                         ),
@@ -233,7 +234,7 @@ class _OutfitsScreenState extends State<OutfitsScreen> {
         color: Colors.grey.shade400,
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.1),
+            color: Colors.black.withOpacity(0.1),
             blurRadius: 6,
             offset: const Offset(0, 4),
           ),
@@ -288,6 +289,141 @@ class _OutfitCard extends StatelessWidget {
 
   const _OutfitCard({required this.outfit, this.readOnly = false});
 
+  void _showOptions(BuildContext context) {
+    final outfitVM = context.read<OutfitViewmodel>();
+
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.white,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (context) {
+        return Padding(
+          padding: const EdgeInsets.symmetric(vertical: 20),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                width: 40,
+                height: 4,
+                margin: const EdgeInsets.only(bottom: 20),
+                decoration: BoxDecoration(
+                  color: Colors.grey[300],
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              ),
+              if (readOnly) ...[
+                ListTile(
+                  leading: const Icon(Icons.bookmark_remove, color: Colors.red),
+                  title: Text(
+                    "Unsave Outfit",
+                    style: GoogleFonts.caveat(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.red,
+                    ),
+                  ),
+                  onTap: () async {
+                    Navigator.pop(context);
+                    final confirm = await showDialog<bool>(
+                      context: context,
+                      builder: (ctx) => AlertDialog(
+                        title: const Text("Unsave Outfit"),
+                        content: const Text(
+                            "Are you sure you want to remove this outfit from your saved list?"),
+                        actions: [
+                          TextButton(
+                            onPressed: () => Navigator.pop(ctx, false),
+                            child: const Text("Cancel"),
+                          ),
+                          TextButton(
+                            onPressed: () => Navigator.pop(ctx, true),
+                            child: const Text("Unsave",
+                                style: TextStyle(color: Colors.red)),
+                          ),
+                        ],
+                      ),
+                    );
+
+                    if (confirm == true) {
+                      await outfitVM.toggleSaveOutfit(outfit);
+                      if (context.mounted) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(content: Text("Outfit unsaved")),
+                        );
+                      }
+                    }
+                  },
+                ),
+              ] else ...[
+                ListTile(
+                  leading: const Icon(Icons.edit, color: Colors.blue),
+                  title: Text(
+                    "Edit Outfit",
+                    style: GoogleFonts.caveat(
+                        fontSize: 18, fontWeight: FontWeight.bold),
+                  ),
+                  onTap: () {
+                    Navigator.pop(context);
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => EditOutfitScreen(outfit: outfit),
+                      ),
+                    );
+                  },
+                ),
+                ListTile(
+                  leading: const Icon(Icons.delete, color: Colors.red),
+                  title: Text(
+                    "Delete Outfit",
+                    style: GoogleFonts.caveat(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.red,
+                    ),
+                  ),
+                  onTap: () async {
+                    Navigator.pop(context);
+                    final confirm = await showDialog<bool>(
+                      context: context,
+                      builder: (ctx) => AlertDialog(
+                        title: const Text("Delete Outfit"),
+                        content: const Text(
+                            "Are you sure you want to delete this outfit? This action cannot be undone."),
+                        actions: [
+                          TextButton(
+                            onPressed: () => Navigator.pop(ctx, false),
+                            child: const Text("Cancel"),
+                          ),
+                          TextButton(
+                            onPressed: () => Navigator.pop(ctx, true),
+                            child: const Text("Delete",
+                                style: TextStyle(color: Colors.red)),
+                          ),
+                        ],
+                      ),
+                    );
+
+                    if (confirm == true) {
+                      await outfitVM.deleteOutfit(outfit.id);
+                      if (context.mounted) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(content: Text("Outfit deleted")),
+                        );
+                      }
+                    }
+                  },
+                ),
+              ],
+            ],
+          ),
+        );
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     // Get up to 4 preview images
@@ -321,6 +457,7 @@ class _OutfitCard extends StatelessWidget {
           context.read<OutfitViewmodel>().fetchOutfits();
         }
       },
+      onLongPress: () => _showOptions(context),
       child: Column(
         children: [
           AspectRatio(
