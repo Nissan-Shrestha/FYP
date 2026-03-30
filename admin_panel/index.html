@@ -31,6 +31,9 @@
                         <a class="nav-link" href="users.html">Users</a>
                     </li>
                     <li class="nav-item">
+                        <a class="nav-link" id="nav-reports" href="reports.html">Reports</a>
+                    </li>
+                    <li class="nav-item">
                         <a class="nav-link" href="categories.html">App Options</a>
                     </li>
                 </ul>
@@ -54,29 +57,98 @@
         </div>
 
         <div class="row g-4 mb-5">
-            <div class="col-md-6">
+            <div class="col-md">
                 <div class="card bg-primary text-white h-100 shadow-sm border-0">
                     <div class="card-body py-4">
-                        <div class="d-flex justify-content-between align-items-center">
-                            <div>
-                                <h6 class="card-title text-uppercase mb-1">Total Users</h6>
-                                <h3 id="total-users-count" class="mb-0 fw-bold fs-1">...</h3>
-                            </div>
-                            <i class="bi bi-people-fill fs-1 opacity-50"></i>
+                        <div class="d-flex justify-content-between align-items-center mb-1">
+                            <h6 class="card-title text-uppercase mb-0" style="font-size: 0.75rem;">Total Users</h6>
+                            <i class="bi bi-people-fill opacity-50"></i>
                         </div>
+                        <h3 id="total-users-count" class="mb-0 fw-bold">...</h3>
                     </div>
                 </div>
             </div>
             
-            <div class="col-md-6">
+            <div class="col-md">
                 <div class="card bg-info text-dark h-100 shadow-sm border-0">
                     <div class="card-body py-4">
-                        <div class="d-flex justify-content-between align-items-center">
-                            <div>
-                                <h6 class="card-title text-uppercase mb-1">Premium Users</h6>
-                                <h3 id="premium-users-count" class="mb-0 fw-bold fs-1">...</h3>
+                        <div class="d-flex justify-content-between align-items-center mb-1">
+                            <h6 class="card-title text-uppercase mb-0" style="font-size: 0.75rem;">Premium Users</h6>
+                            <i class="bi bi-star-fill opacity-50"></i>
+                        </div>
+                        <h3 id="premium-users-count" class="mb-0 fw-bold">...</h3>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md">
+                <div class="card border-0 bg-success text-white h-100 shadow-sm">
+                    <div class="card-body py-4">
+                        <div class="d-flex justify-content-between align-items-center mb-1">
+                            <h6 class="card-title text-uppercase mb-0" style="font-size: 0.75rem;">Public Outfits</h6>
+                            <i class="bi bi-share-fill opacity-50"></i>
+                        </div>
+                        <h3 id="total-outfits-count" class="mb-0 fw-bold">...</h3>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md">
+                <div class="card border-0 bg-warning text-dark h-100 shadow-sm">
+                    <div class="card-body py-4">
+                        <div class="d-flex justify-content-between align-items-center mb-1">
+                            <h6 class="card-title text-uppercase mb-0" style="font-size: 0.75rem;">Total Saves</h6>
+                            <i class="bi bi-bookmark-heart-fill opacity-50"></i>
+                        </div>
+                        <h3 id="total-saves-count" class="mb-0 fw-bold">...</h3>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md">
+                <div class="card border-0 bg-danger text-white h-100 shadow-sm">
+                    <div class="card-body py-4">
+                        <div class="d-flex justify-content-between align-items-center mb-1">
+                            <h6 class="card-title text-uppercase mb-0" style="font-size: 0.75rem;">Reports</h6>
+                            <i class="bi bi-flag-fill opacity-50"></i>
+                        </div>
+                        <div class="d-flex align-items-center justify-content-between">
+                            <div class="d-flex align-items-center">
+                                <h3 id="pending-reports-count" class="mb-0 fw-bold me-2">...</h3>
+                                <span class="badge bg-white text-danger border-0">Pending</span>
                             </div>
-                            <i class="bi bi-star-fill fs-1 opacity-50"></i>
+                            <a href="reports.html" class="btn btn-sm btn-outline-light border-0 p-1" title="Manage Reports">
+                                <i class="bi bi-arrow-right-circle fs-5"></i>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="row mb-5">
+            <div class="col-12">
+                <div class="card shadow-sm border-0">
+                    <div class="card-header bg-white py-3">
+                        <h5 class="mb-0 fw-bold">Popular Outfits (Top 5)</h5>
+                    </div>
+                    <div class="card-body p-0">
+                        <div class="table-responsive">
+                            <table class="table table-hover align-middle mb-0">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th>Creator</th>
+                                        <th>Outfit Name</th>
+                                        <th>Occasion</th>
+                                        <th class="text-center">Saves</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="popular-outfits-table-body">
+                                    <tr>
+                                        <td colspan="4" class="text-center py-4">Loading outfits...</td>
+                                    </tr>
+                                </tbody>
+                            </table>
                         </div>
                     </div>
                 </div>

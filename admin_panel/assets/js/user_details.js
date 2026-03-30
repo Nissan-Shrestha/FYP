@@ -13,7 +13,6 @@ document.addEventListener("DOMContentLoaded", () => {
 });
 
 async function fetchUserDetails(uid) {
-    // ... no change to fetch line
     let url = `${API_BASE_URL}/admin/users/${uid}/details/`;
 
     try {
@@ -30,6 +29,7 @@ async function fetchUserDetails(uid) {
         renderHeader(data.profile);
         renderWardrobes(data.wardrobes);
         renderClothingItems(data.items);
+        renderOutfits(data.outfits);
     } catch (error) {
         console.error("Error fetching user details:", error);
     }
@@ -75,7 +75,6 @@ async function deleteAvatar() {
     }
 }
 
-
 function renderWardrobes(wardrobes) {
     const list = document.getElementById("wardrobe-list");
     list.innerHTML = "";
@@ -103,7 +102,7 @@ function renderClothingItems(items) {
     const grid = document.getElementById("clothing-items-grid");
     const countBadge = document.getElementById("item-count-badge");
     grid.innerHTML = "";
-    countBadge.innerText = `${items.length} items`;
+    countBadge.innerText = items.length;
 
     if (items.length === 0) {
         grid.innerHTML = '<div class="col-12 text-center py-5 text-muted">User has no clothing items uploaded.</div>';
@@ -122,6 +121,69 @@ function renderClothingItems(items) {
                     <div class="small text-muted mb-2">${item.category} | ${item.season}</div>
                     <div class="d-flex justify-content-between align-items-center mt-auto">
                         <span class="badge bg-light text-dark border">${item.brand || 'Generic'}</span>
+                    </div>
+                </div>
+            </div>
+        `;
+        grid.appendChild(col);
+    });
+}
+
+function renderOutfits(outfits) {
+    const grid = document.getElementById("outfits-grid");
+    const countBadge = document.getElementById("outfit-count-badge");
+    grid.innerHTML = "";
+    
+    if (!outfits) {
+        countBadge.innerText = "0";
+        grid.innerHTML = '<div class="col-12 text-center py-5 text-muted">User has no outfits created.</div>';
+        return;
+    }
+    
+    countBadge.innerText = outfits.length;
+
+    if (outfits.length === 0) {
+        grid.innerHTML = '<div class="col-12 text-center py-5 text-muted">User has no outfits created.</div>';
+        return;
+    }
+
+    outfits.forEach(outfit => {
+        const col = document.createElement("div");
+        col.className = "col-md-4 col-sm-6";
+        
+        // Visibility badge
+        const visibilityBadge = outfit.is_public 
+            ? '<span class="badge bg-success opacity-75"><i class="bi bi-eye-fill me-1"></i>Public</span>' 
+            : '<span class="badge bg-secondary opacity-75"><i class="bi bi-eye-slash-fill me-1"></i>Private</span>';
+
+        // Get up to 4 images for preview
+        const previewItems = (outfit.items || []).slice(0, 4);
+        const imageUrls = previewItems.map(item => item.image || "https://via.placeholder.com/80");
+        
+        // Fill slots for 2x2 grid if fewer than 4 items
+        while (imageUrls.length < 4) {
+            imageUrls.push(null);
+        }
+
+        col.innerHTML = `
+            <div class="card h-100 item-card border-0 shadow-sm overflow-hidden">
+                <div class="card-img-top p-2 bg-white d-flex flex-wrap" style="height: 180px; overflow: hidden;">
+                    ${imageUrls.map((url, idx) => `
+                        <div class="p-1" style="width: 50%; height: 50%;">
+                            <div class="w-100 h-100 rounded bg-light border d-flex align-items-center justify-content-center overflow-hidden" style="min-height: 80px;">
+                                ${url ? `<img src="${url}" class="w-100 h-100" style="object-fit: cover;">` : '<i class="bi bi-plus text-muted opacity-25"></i>'}
+                            </div>
+                        </div>
+                    `).join('')}
+                </div>
+                <div class="card-body p-3 d-flex flex-column">
+                    <div class="d-flex justify-content-between align-items-start mb-2">
+                        <h6 class="fw-bold mb-0 text-truncate" style="max-width: 120px;">${outfit.name}</h6>
+                        ${visibilityBadge}
+                    </div>
+                    <div class="small text-muted mt-auto">
+                        <i class="bi bi-box-seam me-1"></i>${outfit.items?.length || 0} items
+                        <i class="bi bi-bookmark-heart-fill ms-2 me-1"></i>${outfit.saves_count || 0} saves
                     </div>
                 </div>
             </div>

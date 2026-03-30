@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import ClothingItem, Profile, Wardrobe, ClothingOption, Outfit
+from .models import ClothingItem, Profile, Wardrobe, ClothingOption, Outfit, Report
 
 class ClothingOptionSerializer(serializers.ModelSerializer):
     class Meta:
@@ -60,6 +60,7 @@ class OutfitSerializer(serializers.ModelSerializer):
         required=False,
     )
     owner_username = serializers.CharField(source="owner.username", read_only=True)
+    owner_firebase_uid = serializers.CharField(source="owner.firebase_uid", read_only=True)
     owner_profile_picture = serializers.ImageField(source="owner.profile_picture", read_only=True)
     saves_count = serializers.SerializerMethodField()
     is_saved = serializers.SerializerMethodField()
@@ -77,3 +78,16 @@ class OutfitSerializer(serializers.ModelSerializer):
         model = Outfit
         fields = "__all__"
         read_only_fields = ("id", "owner", "created_at", "updated_at")
+
+
+class ReportSerializer(serializers.ModelSerializer):
+    reporter_username = serializers.CharField(source="reporter.username", read_only=True)
+    outfit_name = serializers.CharField(source="outfit.name", read_only=True)
+    outfit_owner_username = serializers.CharField(source="outfit.owner.username", read_only=True)
+    outfit_owner_firebase_uid = serializers.CharField(source="outfit.owner.firebase_uid", read_only=True)
+    outfit_details = OutfitSerializer(source="outfit", read_only=True)
+
+    class Meta:
+        model = Report
+        fields = "__all__"
+        read_only_fields = ("id", "reporter", "created_at", "updated_at")

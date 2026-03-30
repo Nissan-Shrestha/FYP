@@ -183,3 +183,47 @@ class Outfit(models.Model):
 
     def __str__(self):
         return f"{self.name} ({self.owner.username})"
+
+
+# Signals
+from django.db.models.signals import post_delete
+from django.dispatch import receiver
+
+@receiver(post_delete, sender=Outfit)
+def resolve_reports_on_outfit_delete(sender, instance, **kwargs):
+    """
+    When an outfit is deleted, mark any pending reports as 'resolved' automatically.
+    """
+    from .models import Report
+    Report.objects.filter(outfit=instance, status='pending').update(status='resolved')
+
+
+class Report(models.Model):
+    STATUS_CHOICES = [
+        ('pending', 'Pending'),
+        ('resolved', 'Resolved'),
+        ('ignored', 'Ignored'),
+    ]
+
+    reporter = models.ForeignKey(
+        Profile,
+        on_delete=models.CASCADE,
+        related_name="reports_made",
+    )
+    outfit = models.ForeignKey(
+        Outfit,
+        on_delete=models.SET_NULL,
+        related_name="reports",
+        null=True,
+    )
+    reason = models.CharField(max_length=255)
+    status = models.CharField(
+        max_length=20,
+        choices=STATUS_CHOICES,
+        default='pending',
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return f"Report by {self.reporter.username} on {self.outfit.name if self.outfit else 'Deleted Outfit'}"

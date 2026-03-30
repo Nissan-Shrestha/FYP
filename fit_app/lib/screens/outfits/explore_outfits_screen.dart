@@ -236,6 +236,65 @@ class _ExploreOutfitCard extends StatelessWidget {
                           ),
                         ),
                       ),
+                      PopupMenuButton<String>(
+                        icon: const Icon(Icons.more_vert, size: 18, color: Colors.grey),
+                        padding: EdgeInsets.zero,
+                        onSelected: (value) async {
+                          if (value == 'report') {
+                            final reason = await showDialog<String>(
+                              context: context,
+                              builder: (context) => AlertDialog(
+                                title: const Text("Report Outfit"),
+                                content: Column(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    "Inappropriate Content",
+                                    "Spam",
+                                    "Harassment",
+                                    "Other"
+                                  ].map((r) => ListTile(
+                                        title: Text(r),
+                                        onTap: () => Navigator.pop(context, r),
+                                      )).toList(),
+                                ),
+                                actions: [
+                                  TextButton(
+                                    onPressed: () => Navigator.pop(context),
+                                    child: const Text("Cancel"),
+                                  ),
+                                ],
+                              ),
+                            );
+
+                            if (reason != null) {
+                              final vm = Provider.of<OutfitViewmodel>(context, listen: false);
+                              final success = await vm.reportOutfit(outfit.id, reason);
+                              if (context.mounted) {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(
+                                    content: Text(success 
+                                      ? "Report submitted. Thank you for helping our community!" 
+                                      : "Failed to submit report. Please try again."),
+                                    backgroundColor: success ? Colors.green : Colors.red,
+                                  ),
+                                );
+                              }
+                            }
+                          }
+                        },
+                        itemBuilder: (context) => [
+                          PopupMenuItem(
+                            value: 'report',
+                            child: Row(
+                              children: const [
+                                Icon(Icons.report_gmailerrorred, size: 18, color: Colors.red),
+                                SizedBox(width: 8),
+                                Text("Report"),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
                     ],
                   ),
                 ),

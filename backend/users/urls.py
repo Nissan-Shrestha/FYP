@@ -22,6 +22,11 @@ from .views import (
     toggle_save_outfit,
     get_saved_outfits,
     get_explore_filters,
+    create_report,
+    admin_report_list,
+    admin_report_view,
+    admin_report_action,
+    admin_moderation_reset,
 )
 
 urlpatterns = [
@@ -39,6 +44,7 @@ urlpatterns = [
     path("outfits/explore/", explore_outfits),
     path("outfits/explore/filters/", get_explore_filters),
     path("outfits/<int:outfit_id>/", outfit_detail),
+    path("outfits/report/", create_report),
     path("outfits/<int:outfit_id>/toggle_save/", toggle_save_outfit),
     path("outfits/saved/", get_saved_outfits),
     path("admin/dashboard-data/", admin_dashboard_data),
@@ -47,8 +53,12 @@ urlpatterns = [
     path("admin/options/", admin_options_list),
     path("admin/options/manage/", admin_options_manage),
     path("admin/options/manage/<int:option_id>/", admin_options_manage),
+    path("admin/reports/", admin_report_list),
+    path("admin/reports/<int:report_id>/", admin_report_view),
+    path("admin/reports/<int:report_id>/action/", admin_report_action),
     path("admin/users/", admin_user_list),
     path("admin/users/<str:firebase_uid>/", admin_user_update),
     path("admin/users/<str:firebase_uid>/avatar/", admin_user_avatar_delete),
     path("admin/users/<str:firebase_uid>/details/", admin_user_view),
+    path("admin/users/<str:firebase_uid>/moderation-reset/", admin_moderation_reset),
 ]

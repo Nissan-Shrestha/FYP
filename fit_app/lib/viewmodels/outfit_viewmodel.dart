@@ -217,4 +217,15 @@ class OutfitViewmodel extends ChangeNotifier {
       notifyListeners();
     }
   }
+
+  Future<bool> reportOutfit(int outfitId, String reason) async {
+    try {
+      final success = await OutfitService.reportOutfit(outfitId, reason);
+      return success;
+    } catch (e) {
+      error = e.toString();
+      notifyListeners();
+      return false;
+    }
+  }
 }

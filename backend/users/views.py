@@ -313,17 +313,22 @@ def _process_background_removal(image_file):
         return image_file
 
 
-@api_view(["POST", "PATCH"])
+@api_view(["GET", "POST", "PATCH"])
 def get_or_create_profile(request):
+    print(f"\n--- LOG: Profile Request Received [{request.method}] ---", flush=True)
     firebase_uid, err = get_firebase_uid(request)
     if err:
+        print(f"--- LOG: Auth Error: {err.data} ---", flush=True)
         return err
+
+    print(f"--- LOG: UID verified: {firebase_uid} ---", flush=True)
 
     # Use defaults to prevent IntegrityError on fresh signup
     # We use data from request if available, otherwise placeholders
     initial_email = request.data.get("email", f"{firebase_uid[:10]}@example.com")
     initial_username = request.data.get("username", f"user_{firebase_uid[:8]}")
 
+    print(f"--- LOG: Attempting get_or_create for {firebase_uid}... ---", flush=True)
     profile, created = Profile.objects.get_or_create(
         firebase_uid=firebase_uid,
         defaults={
@@ -336,7 +341,7 @@ def get_or_create_profile(request):
     _ensure_default_wardrobe(profile)
 
     # Update fields based on request method
-    if request.method == "POST":
+    if request.method in ["POST", "PATCH"]:
         email = request.data.get("email")
         username = request.data.get("username")
         if email:
@@ -344,19 +349,11 @@ def get_or_create_profile(request):
         if username:
             profile.username = username
 
-    elif request.method == "PATCH":
-        email = request.data.get("email")
-        username = request.data.get("username")
-        if email:
-            profile.email = email
-        if username:
-            profile.username = username
+        # HANDLE IMAGE UPLOAD (works for both)
+        if request.FILES.get("profile_picture"):
+            profile.profile_picture = request.FILES["profile_picture"]
 
-    # HANDLE IMAGE UPLOAD (works for both)
-    if request.FILES.get("profile_picture"):
-        profile.profile_picture = request.FILES["profile_picture"]
-
-    profile.save()
+        profile.save()
 
     serializer = ProfileSerializer(profile, context={"request": request})
     return Response(serializer.data)
@@ -628,20 +625,33 @@ def admin_dashboard_data(request):
     if not profile.is_admin:
         return Response({"error": "Admin access required"}, status=403)
 
+    from django.db.models import Count
+    from .models import Outfit, Report
+    
     stats = {
         "total_users": Profile.objects.count(),
         "total_clothing_items": ClothingItem.objects.count(),
         "total_wardrobes": Wardrobe.objects.count(),
         "premium_users": Profile.objects.filter(plan__iexact="Premium").count(),
+        "total_public_outfits": Outfit.objects.filter(is_public=True).count(),
+        "total_saves": Outfit.objects.filter(is_public=True).aggregate(total=Count('saved_by'))['total'] or 0,
+        "pending_reports": Report.objects.filter(status='pending').count(),
     }
 
     # Get the 10 most recent profiles based on ID (as proxy for signup time)
     recent_users_qs = Profile.objects.all().order_by("-id")[:10]
     users_data = ProfileSerializer(recent_users_qs, many=True, context={"request": request}).data
 
+    # Get top 5 popular public outfits
+    top_outfits_qs = Outfit.objects.filter(is_public=True).annotate(
+        saves=Count('saved_by')
+    ).order_by('-saves')[:5]
+    top_outfits_data = OutfitSerializer(top_outfits_qs, many=True, context={"request": request}).data
+
     return Response({
         "stats": stats,
         "recent_users": users_data,
+        "top_outfits": top_outfits_data,
         "admin": ProfileSerializer(profile, context={"request": request}).data
     })
 
@@ -844,14 +854,170 @@ def admin_user_view(request, firebase_uid):
     except Profile.DoesNotExist:
         return Response({"error": "User not found"}, status=404)
 
+    from .models import Outfit
+    from .serializers import OutfitSerializer
+    
     wardrobes_qs = Wardrobe.objects.filter(owner=target_profile)
     items_qs = ClothingItem.objects.filter(owner=target_profile)
+    outfits_qs = Outfit.objects.filter(owner=target_profile)
 
     return Response({
         "profile": ProfileSerializer(target_profile, context={"request": request}).data,
         "wardrobes": WardrobeSerializer(wardrobes_qs, many=True, context={"request": request}).data,
         "items": ClothingItemSerializer(items_qs, many=True, context={"request": request}).data,
+        "outfits": OutfitSerializer(outfits_qs, many=True, context={"request": request}).data,
     })
+
+
+@api_view(["POST"])
+def create_report(request):
+    """
+    Creates a new report for an outfit.
+    """
+    from .models import Report, Outfit
+    
+    firebase_uid, err = get_firebase_uid(request)
+    if err:
+        return err
+    profile, _ = _get_profile_by_firebase_uid(firebase_uid)
+    
+    outfit_id = request.data.get("outfit_id")
+    reason = request.data.get("reason")
+    
+    if not outfit_id or not reason:
+        return Response({"error": "outfit_id and reason are required"}, status=400)
+        
+    try:
+        outfit = Outfit.objects.get(id=outfit_id)
+        report = Report.objects.create(
+            reporter=profile,
+            outfit=outfit,
+            reason=reason
+        )
+        return Response({"message": "Report submitted successfully"}, status=201)
+    except Outfit.DoesNotExist:
+        return Response({"error": "Outfit not found"}, status=404)
+
+
+@api_view(["GET"])
+def admin_report_list(request):
+    """
+    Lists all reports. Admin only.
+    """
+    from .models import Report
+    from .serializers import ReportSerializer
+    
+    firebase_uid, err = get_firebase_uid(request)
+    if err:
+        return err
+    profile, _ = _get_profile_by_firebase_uid(firebase_uid)
+    
+    if not profile.is_admin:
+        return Response({"error": "Admin access required"}, status=403)
+        
+    reports = Report.objects.all().order_by("-created_at")
+    serializer = ReportSerializer(reports, many=True, context={"request": request})
+    return Response(serializer.data, status=200)
+
+
+@api_view(["POST"])
+def admin_report_action(request, report_id):
+    """
+    Takes an action on a report. Admin only.
+    Actions: 'ignore', 'resolve', 'delete_outfit'
+    """
+    from .models import Report
+    
+    firebase_uid, err = get_firebase_uid(request)
+    if err:
+        return err
+    profile, _ = _get_profile_by_firebase_uid(firebase_uid)
+    
+    if not profile.is_admin:
+        return Response({"error": "Admin access required"}, status=403)
+        
+    try:
+        report = Report.objects.get(id=report_id)
+        action = request.data.get("action")
+        
+        if action == "ignore":
+            report.status = "ignored"
+            report.save()
+        elif action == "resolve":
+            report.status = "resolved"
+            report.save()
+        elif action == "delete_outfit":
+            if report.outfit:
+                report.outfit.delete()
+            report.status = "resolved"
+            report.save()
+        else:
+            return Response({"error": "Invalid action"}, status=400)
+            
+        return Response({
+            "message": f"Report {action} successfully",
+            "status": report.status
+        })
+    except Report.DoesNotExist:
+        return Response({"error": "Report not found"}, status=404)
+
+
+@api_view(["GET"])
+def admin_report_view(request, report_id):
+    """
+    Returns single report details. Admin only.
+    """
+    from .models import Report
+    from .serializers import ReportSerializer
+    
+    firebase_uid, err = get_firebase_uid(request)
+    if err:
+        return err
+    profile, _ = _get_profile_by_firebase_uid(firebase_uid)
+    
+    if not profile.is_admin:
+        return Response({"error": "Admin access required"}, status=403)
+        
+    try:
+        report = Report.objects.get(id=report_id)
+        serializer = ReportSerializer(report, context={"request": request})
+        return Response(serializer.data, status=200)
+    except Report.DoesNotExist:
+        return Response({"error": "Report not found"}, status=404)
+
+
+@api_view(["POST"])
+def admin_moderation_reset(request, firebase_uid):
+    """
+    Resets a user's data for moderation purposes.
+    Targets: 'username', 'avatar'
+    """
+    firebase_uid_req, err = get_firebase_uid(request)
+    if err:
+        return err
+    profile_req, _ = _get_profile_by_firebase_uid(firebase_uid_req)
+    
+    if not profile_req.is_admin:
+        return Response({"error": "Admin access required"}, status=403)
+        
+    try:
+        target_profile = Profile.objects.get(firebase_uid=firebase_uid)
+        target = request.data.get("target")
+        
+        if target == "username":
+            target_profile.username = f"User_{target_profile.id}"
+            target_profile.save()
+        elif target == "avatar":
+            if target_profile.profile_picture:
+                target_profile.profile_picture.delete(save=False)
+                target_profile.profile_picture = None
+                target_profile.save()
+        else:
+            return Response({"error": "Invalid target"}, status=400)
+            
+        return Response({"message": f"User {target} reset successfully"})
+    except Profile.DoesNotExist:
+        return Response({"error": "User not found"}, status=404)
 
 
 

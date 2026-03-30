@@ -167,4 +167,16 @@ class OutfitService {
       throw Exception("Failed to delete outfit");
     }
   }
+
+  static Future<bool> reportOutfit(int outfitId, String reason) async {
+    final response = await http.post(
+      Uri.parse("$_baseApi/outfits/report/"),
+      headers: await _authHeaders(),
+      body: jsonEncode({
+        "outfit_id": outfitId,
+        "reason": reason,
+      }),
+    );
+    return response.statusCode == 201;
+  }
 }
