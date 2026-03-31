@@ -76,7 +76,7 @@ class _ScheduleCreationScreenState extends State<ScheduleCreationScreen> {
       return;
     }
 
-    final success = await context.read<ScheduleViewmodel>().scheduleOutfit(
+    final schedule = await context.read<ScheduleViewmodel>().scheduleOutfit(
           eventTitle: title,
           date: _selectedDate,
           time: _selectedTime,
@@ -84,7 +84,7 @@ class _ScheduleCreationScreenState extends State<ScheduleCreationScreen> {
         );
 
     if (mounted) {
-      if (success) {
+      if (schedule != null) {
         Navigator.pop(context, true);
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text("Outfit scheduled successfully")),

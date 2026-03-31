@@ -67,7 +67,7 @@ class ScheduleViewmodel extends ChangeNotifier {
   }
 
   // Helper for creating from view
-  Future<bool> scheduleOutfit({
+  Future<ScheduleModel?> scheduleOutfit({
     required String eventTitle,
     required DateTime date,
     required TimeOfDay time,
@@ -81,13 +81,11 @@ class ScheduleViewmodel extends ChangeNotifier {
       time.minute,
     );
 
-    final result = await createSchedule(
+    return await createSchedule(
       eventTitle: eventTitle,
       dateTime: dateTime,
       outfitId: outfitId,
     );
-
-    return result != null;
   }
 
   Future<bool> deleteSchedule(int scheduleId) async {
