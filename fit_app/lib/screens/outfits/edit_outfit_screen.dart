@@ -121,7 +121,7 @@ class _EditOutfitScreenState extends State<EditOutfitScreen> {
                 shape: BoxShape.circle,
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withOpacity(0.08),
+                    color: Colors.black.withValues(alpha: 0.08),
                     blurRadius: 4,
                     offset: const Offset(0, 2),
                   ),
@@ -182,7 +182,7 @@ class _EditOutfitScreenState extends State<EditOutfitScreen> {
                 borderRadius: BorderRadius.circular(16),
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withOpacity(0.05),
+                    color: Colors.black.withValues(alpha: 0.05),
                     blurRadius: 6,
                     offset: const Offset(0, 3),
                   ),
@@ -241,7 +241,7 @@ class _EditOutfitScreenState extends State<EditOutfitScreen> {
                       style: TextStyle(fontSize: 12, color: Colors.grey.shade600),
                     ),
                     value: _isPublic,
-                    activeColor: const Color(0xff0AAE00),
+                    activeThumbColor: const Color(0xff0AAE00),
                     onChanged: (val) => setState(() => _isPublic = val),
                   ),
                 ],
@@ -384,7 +384,7 @@ class _ClothingItemSelectionTile extends StatelessWidget {
               ),
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withOpacity(0.05),
+                  color: Colors.black.withValues(alpha: 0.05),
                   blurRadius: 4,
                   offset: const Offset(0, 2),
                 ),

@@ -100,7 +100,7 @@ class _OutfitDetailScreenState extends State<OutfitDetailScreen> {
                 shape: BoxShape.circle,
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withOpacity(0.08),
+                    color: Colors.black.withValues(alpha: 0.08),
                     blurRadius: 4,
                     offset: const Offset(0, 2),
                   ),
@@ -163,7 +163,7 @@ class _OutfitDetailScreenState extends State<OutfitDetailScreen> {
                     vertical: 6,
                   ),
                   decoration: BoxDecoration(
-                    color: const Color(0xff0AAE00).withOpacity(0.12),
+                    color: const Color(0xff0AAE00).withValues(alpha: 0.12),
                     borderRadius: BorderRadius.circular(20),
                     border: Border.all(
                       color: const Color(0xff0AAE00),
@@ -235,7 +235,7 @@ class _OutfitDetailScreenState extends State<OutfitDetailScreen> {
                       borderRadius: BorderRadius.circular(16),
                       boxShadow: [
                         BoxShadow(
-                          color: Colors.black.withOpacity(0.08),
+                          color: Colors.black.withValues(alpha: 0.08),
                           blurRadius: 6,
                           offset: const Offset(0, 3),
                         ),

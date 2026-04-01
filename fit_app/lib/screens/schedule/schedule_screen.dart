@@ -47,7 +47,7 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
                 shape: BoxShape.circle,
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withOpacity(0.05),
+                    color: Colors.black.withValues(alpha: 0.05),
                     blurRadius: 8,
                     offset: const Offset(0, 2),
                   ),
@@ -142,9 +142,8 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
             context,
             MaterialPageRoute(builder: (_) => const ScheduleCreationScreen()),
           );
-          if (mounted) {
-            context.read<ScheduleViewmodel>().fetchSchedules();
-          }
+          if (!context.mounted) return;
+          context.read<ScheduleViewmodel>().fetchSchedules();
         },
         backgroundColor: const Color(0xFF10A8F5),
         elevation: 4,
@@ -188,14 +187,14 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
                 boxShadow: isSelected
                     ? [
                         BoxShadow(
-                          color: const Color(0xFF10A8F5).withOpacity(0.3),
+                          color: const Color(0xFF10A8F5).withValues(alpha: 0.3),
                           blurRadius: 10,
                           offset: const Offset(0, 4),
                         )
                       ]
                     : [
                         BoxShadow(
-                          color: Colors.black.withOpacity(0.04),
+                          color: Colors.black.withValues(alpha: 0.04),
                           blurRadius: 6,
                           offset: const Offset(0, 2),
                         )
@@ -289,7 +288,7 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
             borderRadius: BorderRadius.circular(24),
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withOpacity(0.04),
+                color: Colors.black.withValues(alpha: 0.04),
                 blurRadius: 12,
                 offset: const Offset(0, 6),
               ),
@@ -317,7 +316,7 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
                                 Container(
                                   padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                                   decoration: BoxDecoration(
-                                    color: const Color(0xFF10A8F5).withOpacity(0.1),
+                                    color: const Color(0xFF10A8F5).withValues(alpha: 0.1),
                                     borderRadius: BorderRadius.circular(8),
                                   ),
                                   child: Text(

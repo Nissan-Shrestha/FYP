@@ -153,7 +153,7 @@ class _ExploreOutfitCard extends StatelessWidget {
         borderRadius: BorderRadius.circular(18),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.06),
+            color: Colors.black.withValues(alpha: 0.06),
             blurRadius: 8,
             offset: const Offset(0, 3),
           ),
@@ -179,7 +179,7 @@ class _ExploreOutfitCard extends StatelessWidget {
                     children: [
                       CircleAvatar(
                         radius: 18,
-                        backgroundColor: const Color(0xff0AAE00).withOpacity(0.15),
+                        backgroundColor: const Color(0xff0AAE00).withValues(alpha: 0.15),
                         backgroundImage: outfit.ownerProfilePicture != null
                             ? NetworkImage(
                                 outfit.ownerProfilePicture!.startsWith("http")
@@ -225,7 +225,7 @@ class _ExploreOutfitCard extends StatelessWidget {
                         decoration: BoxDecoration(
                           color: const Color(0xffEDF7ED),
                           borderRadius: BorderRadius.circular(20),
-                          border: Border.all(color: const Color(0xff0AAE00).withOpacity(0.3)),
+                          border: Border.all(color: const Color(0xff0AAE00).withValues(alpha: 0.3)),
                         ),
                         child: Text(
                           outfit.occasion,
@@ -267,7 +267,8 @@ class _ExploreOutfitCard extends StatelessWidget {
                             );
 
                             if (reason != null) {
-                              final vm = Provider.of<OutfitViewmodel>(context, listen: false);
+                              if (!context.mounted) return;
+                              final vm = context.read<OutfitViewmodel>();
                               final success = await vm.reportOutfit(outfit.id, reason);
                               if (context.mounted) {
                                 ScaffoldMessenger.of(context).showSnackBar(
@@ -413,7 +414,7 @@ class _FilterChip extends StatelessWidget {
         label: Text(label),
         selected: isSelected,
         onSelected: (_) => onTap(),
-        selectedColor: const Color(0xff0AAE00).withOpacity(0.2),
+        selectedColor: const Color(0xff0AAE00).withValues(alpha: 0.2),
         checkmarkColor: const Color(0xff0AAE00),
         labelStyle: TextStyle(
           color: isSelected ? const Color(0xff0AAE00) : Colors.black87,

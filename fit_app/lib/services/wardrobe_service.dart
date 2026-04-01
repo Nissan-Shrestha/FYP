@@ -3,7 +3,7 @@ import 'dart:io';
 
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:fit_app/constants.dart';
-import 'package:fit_app/models/WardrobeModel.dart';
+import 'package:fit_app/models/wardrobe_model.dart';
 import 'package:fit_app/models/clothing_item_model.dart';
 import 'package:fit_app/models/clothing_option_model.dart';
 import 'package:http/http.dart' as http;

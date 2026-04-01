@@ -32,10 +32,11 @@ class _CreateWardrobeScreenState extends State<CreateWardrobeScreen> {
       name: name,
     );
 
-    if (!mounted) return;
+    if (!context.mounted) return;
 
     if (result != null) {
       _showMessage(context, "Wardrobe created");
+      if (!context.mounted) return;
       Navigator.pop(context);
       return;
     }

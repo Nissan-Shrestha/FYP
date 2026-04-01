@@ -121,7 +121,7 @@ class _StylistScreenState extends State<StylistScreen> {
             Switch(
               value: useAutoWeather,
               onChanged: (val) => setState(() => useAutoWeather = val),
-              activeColor: Colors.black,
+              activeThumbColor: Colors.black,
             ),
           ],
         ),
@@ -181,7 +181,7 @@ class _StylistScreenState extends State<StylistScreen> {
         ),
         boxShadow: [
           BoxShadow(
-            color: const Color(0xFF764ba2).withOpacity(0.3),
+            color: const Color(0xFF764ba2).withValues(alpha: 0.3),
             blurRadius: 15,
             offset: const Offset(0, 8),
           ),
@@ -326,7 +326,7 @@ class _StylistScreenState extends State<StylistScreen> {
           decoration: BoxDecoration(
             color: Colors.white,
             borderRadius: BorderRadius.circular(20),
-            border: Border.all(color: Colors.amber.withOpacity(0.3)),
+            border: Border.all(color: Colors.amber.withValues(alpha: 0.3)),
           ),
           child: Row(
             children: [
@@ -363,7 +363,7 @@ class _StylistScreenState extends State<StylistScreen> {
                 borderRadius: BorderRadius.circular(15),
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withOpacity(0.05),
+                    color: Colors.black.withValues(alpha: 0.05),
                     blurRadius: 10,
                   ),
                 ],

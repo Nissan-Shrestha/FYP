@@ -77,8 +77,8 @@ class _WardrobeViewScreenState extends State<WardrobeViewScreen> {
       ),
       builder: (sheetContext) {
         return StatefulBuilder(
-          builder: (context, setSheetState) {
-            final vm = context.watch<WardrobeViewmodel>();
+          builder: (modalContext, setSheetState) {
+            final vm = modalContext.watch<WardrobeViewmodel>();
             final allItems = vm.clothingItems;
             final availableItems = allItems
                 .where((item) => !selectedIds.contains(item.id))
@@ -204,7 +204,8 @@ class _WardrobeViewScreenState extends State<WardrobeViewScreen> {
                                 : () async {
                                     int successCount = 0;
                                     for (final itemId in selectedToAdd.toList()) {
-                                       final ok = await context
+                                      if (!modalContext.mounted) return;
+                                       final ok = await modalContext
                                           .read<WardrobeViewmodel>()
                                           .addItemToWardrobe(
                                             wardrobeId: widget.wardrobeId,
@@ -214,17 +215,17 @@ class _WardrobeViewScreenState extends State<WardrobeViewScreen> {
                                         successCount++;
                                       }
                                     }
-
-                                    if (!mounted) return;
-
-                                    await context
+                                    if (!modalContext.mounted) return;
+                                    await modalContext
                                         .read<WardrobeViewmodel>()
                                         .fetchItemsForWardrobe(
                                           wardrobeId: widget.wardrobeId,
                                         );
-                                    if (!mounted) return;
-
+                                    
+                                    if (!sheetContext.mounted) return;
                                     Navigator.pop(sheetContext);
+
+                                    if (!mounted) return;
                                     if (successCount > 0) {
                                       ScaffoldMessenger.of(context).showSnackBar(
                                         SnackBar(
@@ -494,7 +495,7 @@ class _WardrobeViewScreenState extends State<WardrobeViewScreen> {
                           shape: BoxShape.circle,
                           boxShadow: [
                             BoxShadow(
-                              color: Colors.black.withOpacity(0.1),
+                              color: Colors.black.withValues(alpha: 0.1),
                               blurRadius: 4,
                               offset: const Offset(0, 2),
                             ),

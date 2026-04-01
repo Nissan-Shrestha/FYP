@@ -13,6 +13,7 @@ class ProfileScreen extends StatelessWidget {
 
   Future<void> _logout(BuildContext context, AuthViewmodel authVM) async {
     await authVM.signOut();
+    if (!context.mounted) return;
     Navigator.pushAndRemoveUntil(
       context,
       MaterialPageRoute(builder: (_) => const LoginScreen()),
@@ -73,6 +74,7 @@ class ProfileScreen extends StatelessWidget {
                       await authVM.updateUsername(newName);
                     }
 
+                    if (!context.mounted) return;
                     Navigator.pop(context);
                   },
                   child: Container(

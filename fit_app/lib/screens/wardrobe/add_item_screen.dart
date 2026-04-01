@@ -82,9 +82,9 @@ class _AddItemScreenState extends State<AddItemScreen> {
     );
 
     if (!mounted) return;
-
     if (result != null) {
       _showMessage("Item saved");
+      if (!mounted) return;
       Navigator.pop(context);
       return;
     }
@@ -119,7 +119,7 @@ class _AddItemScreenState extends State<AddItemScreen> {
           AndroidUiSettings(
             toolbarTitle: "Crop Item",
             toolbarColor: Colors.black,
-            statusBarColor: Colors.black,
+            statusBarLight: false,
             toolbarWidgetColor: Colors.white,
             activeControlsWidgetColor: const Color(0xff0AAE00),
             initAspectRatio: CropAspectRatioPreset.square,
@@ -141,7 +141,8 @@ class _AddItemScreenState extends State<AddItemScreen> {
       setState(() {
         _selectedImage = File(cropped.path);
       });
-    } catch (e) {
+    } catch (_) {
+      if (!context.mounted) return;
       _showMessage("Failed to pick image");
     }
   }

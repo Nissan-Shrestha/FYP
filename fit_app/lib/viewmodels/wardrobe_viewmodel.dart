@@ -1,6 +1,6 @@
 import 'dart:io';
 
-import 'package:fit_app/models/WardrobeModel.dart';
+import 'package:fit_app/models/wardrobe_model.dart';
 import 'package:fit_app/models/clothing_item_model.dart';
 import 'package:fit_app/models/clothing_option_model.dart';
 import 'package:fit_app/services/wardrobe_service.dart';

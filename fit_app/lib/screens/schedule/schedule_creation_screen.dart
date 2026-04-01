@@ -83,18 +83,17 @@ class _ScheduleCreationScreenState extends State<ScheduleCreationScreen> {
           outfitId: _selectedOutfit!.id,
         );
 
-    if (mounted) {
-      if (schedule != null) {
-        Navigator.pop(context, true);
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text("Outfit scheduled successfully")),
-        );
-      } else {
-        final error = context.read<ScheduleViewmodel>().error;
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(error ?? "Failed to schedule outfit")),
-        );
-      }
+    if (!mounted) return;
+    if (schedule != null) {
+      Navigator.pop(context, true);
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("Outfit scheduled successfully")),
+      );
+    } else {
+      final error = context.read<ScheduleViewmodel>().error;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(error ?? "Failed to schedule outfit")),
+      );
     }
   }
 
@@ -122,7 +121,7 @@ class _ScheduleCreationScreenState extends State<ScheduleCreationScreen> {
                 shape: BoxShape.circle,
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withOpacity(0.05),
+                    color: Colors.black.withValues(alpha: 0.05),
                     blurRadius: 8,
                     offset: const Offset(0, 2),
                   ),
@@ -243,7 +242,7 @@ class _ScheduleCreationScreenState extends State<ScheduleCreationScreen> {
         borderRadius: BorderRadius.circular(18),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.03),
+            color: Colors.black.withValues(alpha: 0.03),
             blurRadius: 10,
             offset: const Offset(0, 4),
           ),
@@ -287,7 +286,7 @@ class _ScheduleCreationScreenState extends State<ScheduleCreationScreen> {
               border: Border.all(color: Colors.transparent),
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withOpacity(0.03),
+                  color: Colors.black.withValues(alpha: 0.03),
                   blurRadius: 10,
                   offset: const Offset(0, 4),
                 ),
@@ -415,8 +414,8 @@ class _ScheduleCreationScreenState extends State<ScheduleCreationScreen> {
         boxShadow: [
           BoxShadow(
             color: isSelected
-                ? const Color(0xFF10A8F5).withOpacity(0.3)
-                : Colors.black.withOpacity(0.08),
+                ? const Color(0xFF10A8F5).withValues(alpha: 0.3)
+                : Colors.black.withValues(alpha: 0.08),
             blurRadius: isSelected ? 12 : 6,
             offset: Offset(0, isSelected ? 6 : 3),
           ),

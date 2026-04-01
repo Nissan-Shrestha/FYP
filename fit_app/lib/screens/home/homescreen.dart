@@ -173,7 +173,7 @@ class _HomescreenState extends State<Homescreen> {
                         width: 80,
                         decoration: BoxDecoration(
                           borderRadius: BorderRadius.circular(10),
-                          color: Colors.red.withOpacity(0.8),
+                          color: Colors.red.withValues(alpha: 0.8),
                         ),
                       ),
                     );

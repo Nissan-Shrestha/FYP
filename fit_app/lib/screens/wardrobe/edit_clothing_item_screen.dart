@@ -86,6 +86,7 @@ class _EditClothingItemScreenState extends State<EditClothingItemScreen> {
     if (!mounted) return;
     if (result != null) {
       _showMessage("Item updated");
+      if (!mounted) return;
       Navigator.pop(context, result);
       return;
     }
@@ -107,7 +108,7 @@ class _EditClothingItemScreenState extends State<EditClothingItemScreen> {
           AndroidUiSettings(
             toolbarTitle: "Crop Item",
             toolbarColor: Colors.black,
-            statusBarColor: Colors.black,
+            statusBarLight: false,
             toolbarWidgetColor: Colors.white,
             activeControlsWidgetColor: const Color(0xff0AAE00),
             initAspectRatio: CropAspectRatioPreset.square,
@@ -128,6 +129,7 @@ class _EditClothingItemScreenState extends State<EditClothingItemScreen> {
 
       setState(() => _selectedImage = File(cropped.path));
     } catch (_) {
+      if (!context.mounted) return;
       _showMessage("Failed to pick image");
     }
   }
