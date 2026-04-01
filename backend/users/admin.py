@@ -9,8 +9,8 @@ class ProfileAdmin(admin.ModelAdmin):
 
 @admin.register(ClothingItem)
 class ClothingItemAdmin(admin.ModelAdmin):
-    list_display = ("name", "owner", "category", "created_at")
-    list_filter = ("category", "season", "occasion")
+    list_display = ("name", "owner", "item_type", "category", "layer_level", "created_at")
+    list_filter = ("item_type", "category", "season", "occasion")
     search_fields = ("name", "owner__username")
 
 @admin.register(Wardrobe)
@@ -21,8 +21,8 @@ class WardrobeAdmin(admin.ModelAdmin):
 
 @admin.register(ClothingOption)
 class ClothingOptionAdmin(admin.ModelAdmin):
-    list_display = ("type", "name")
-    list_filter = ("type",)
+    list_display = ("type", "name", "item_type", "layer_level")
+    list_filter = ("type", "item_type")
     search_fields = ("name",)
 
 @admin.register(Outfit)

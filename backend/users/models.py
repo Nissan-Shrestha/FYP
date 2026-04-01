@@ -30,15 +30,38 @@ class ClothingOption(models.Model):
         ('occasion', 'Occasion'),
         ('size', 'Size'),
         ('material', 'Material'),
+        ('color', 'Color'),
+        ('weather', 'Weather'),
+    ]
+    ITEM_TYPES = [
+        ("Top", "Top"),
+        ("Bottom", "Bottom"),
+        ("Shoes", "Shoes"),
+        ("Accessory", "Accessory"),
+        ("Bag", "Bag"),
+        ("Undergarment", "Undergarment"),
     ]
     type = models.CharField(max_length=20, choices=OPTION_TYPES)
     name = models.CharField(max_length=50)
+    
+    # New fields for 'category' type only
+    item_type = models.CharField(
+        max_length=50, 
+        choices=ITEM_TYPES, 
+        null=True, 
+        blank=True, 
+        help_text="Required for Category type"
+    )
+    layer_level = models.IntegerField(
+        default=0, 
+        help_text="0: Base, 1: Mid, 2: Outer. For Tops."
+    )
 
     class Meta:
         unique_together = ('type', 'name')
 
     def __str__(self):
-        return f"[{self.type}] {self.name}"
+        return f"[{self.type}] {self.name} - {self.item_type if self.item_type else ''}"
 
 
 class ClothingItem(models.Model):
@@ -47,7 +70,16 @@ class ClothingItem(models.Model):
         on_delete=models.CASCADE,
         related_name="clothing_items",
     )
+    ITEM_TYPES = [
+        ("Top", "Top"),
+        ("Bottom", "Bottom"),
+        ("Shoes", "Shoes"),
+        ("Accessory", "Accessory"),
+        ("Bag", "Bag"),
+        ("Undergarment", "Undergarment"),
+    ]
     name = models.CharField(max_length=150)
+    item_type = models.CharField(max_length=50, choices=ITEM_TYPES, default="Top")
     category = models.CharField(max_length=100)
     season = models.CharField(max_length=50)
     occasion = models.CharField(max_length=100)
@@ -61,6 +93,8 @@ class ClothingItem(models.Model):
         blank=True,
     )
     image = models.ImageField(upload_to="clothing_items/", null=True, blank=True)
+    color = models.CharField(max_length=50, default="Black")
+    layer_level = models.IntegerField(default=0)  # 0: Base, 1: Mid, 2: Outer
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:

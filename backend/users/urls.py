@@ -29,6 +29,7 @@ from .views import (
     admin_moderation_reset,
     schedules,
     schedule_detail,
+    stylist_recommend,
 )
 
 urlpatterns = [
@@ -45,6 +46,7 @@ urlpatterns = [
     path("outfits/", outfits),
     path("outfits/explore/", explore_outfits),
     path("outfits/explore/filters/", get_explore_filters),
+    path("outfits/stylist/recommend/", stylist_recommend),
     path("outfits/<int:outfit_id>/", outfit_detail),
     path("outfits/report/", create_report),
     path("outfits/<int:outfit_id>/toggle_save/", toggle_save_outfit),

@@ -32,6 +32,7 @@ class _AddItemScreenState extends State<AddItemScreen> {
   String category = "Choose the category";
   String size = "Choose the size";
   String material = "Choose the material";
+  String color = "Choose the color";
   String brand = "Enter the brand";
   double? _purchasePrice;
 
@@ -50,6 +51,7 @@ class _AddItemScreenState extends State<AddItemScreen> {
       "Occasion": _valueOrEmpty(occasion, "Choose the occasion"),
       "Size": _valueOrEmpty(size, "Choose the size"),
       "Material": _valueOrEmpty(material, "Choose the material"),
+      "Color": _valueOrEmpty(color, "Choose the color"),
       "Brand": _valueOrEmpty(brand, "Enter the brand"),
     };
     final missing = requiredSelections.entries
@@ -73,6 +75,7 @@ class _AddItemScreenState extends State<AddItemScreen> {
       occasion: _valueOrEmpty(occasion, "Choose the occasion"),
       size: _valueOrEmpty(size, "Choose the size"),
       material: _valueOrEmpty(material, "Choose the material"),
+      color: _valueOrEmpty(color, "Choose the color"),
       brand: requiredSelections["Brand"]!,
       purchasePrice: _purchasePrice,
       imageFile: _selectedImage,
@@ -393,6 +396,18 @@ class _AddItemScreenState extends State<AddItemScreen> {
                           ? wardrobeVM.getOptionsByType("material") 
                           : const ["Cotton", "Linen", "Denim", "Polyester"],
                         onSelected: (value) => setState(() => material = value),
+                      ),
+                    ),
+                    _FieldRow(
+                      label: "Color",
+                      value: color,
+                      onTap: () => _openPickerSheet(
+                        title: "Select Color",
+                        subtitle: "High-quality clothing colors",
+                        options: wardrobeVM.getOptionsByType("color").isNotEmpty 
+                          ? wardrobeVM.getOptionsByType("color") 
+                          : const ["Black", "White", "Navy Blue", "Red"],
+                        onSelected: (value) => setState(() => color = value),
                       ),
                     ),
                     _FieldRow(

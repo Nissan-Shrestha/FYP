@@ -1,11 +1,49 @@
 from datetime import date
 from decimal import Decimal, InvalidOperation
+from PIL import Image
+import io
+import json
+import re
+from google import genai
+import os
 
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
 from .firebase_auth import get_firebase_uid
 from .models import ClothingItem, Profile, Wardrobe, ClothingOption, Outfit, Schedule
 from .serializers import ClothingItemSerializer, ProfileSerializer, WardrobeSerializer, ClothingOptionSerializer, OutfitSerializer, ScheduleSerializer
+
+def _map_category_to_item_type(category_name):
+    """
+    Groups sub-categories into high-level Types (Top, Bottom, Shoes, etc.).
+    Relies 100% on the Admin-managed ClothingOption database.
+    """
+    cat = category_name.strip()
+    
+    # 1. Search in Database (ClothingOption)
+    option = ClothingOption.objects.filter(name__iexact=cat, type='category').first()
+    
+    if option and option.item_type:
+        return option.item_type
+
+    # Safe default for unrecognized categories
+    return "Top"
+
+def _map_category_to_layer(category_name):
+    """
+    Maps category name to a layering level (0: Base, 1: Mid, 2: Outer).
+    Relies 100% on the Admin-managed ClothingOption database.
+    """
+    cat = category_name.strip()
+    
+    # 1. Search in Database (ClothingOption)
+    option = ClothingOption.objects.filter(name__iexact=cat, type='category').first()
+    
+    if option and option.layer_level is not None:
+        return option.layer_level
+    
+    # Default to base layer if not specified
+    return 0
 
 @api_view(["GET", "POST"])
 def schedules(request):
@@ -122,22 +160,173 @@ def outfits(request):
     if len(item_ids) > 8:
         return Response({"error": "An outfit cannot have more than 8 items"}, status=400)
 
+    # Validate Outfit Composition using Type
+    valid_items = ClothingItem.objects.filter(id__in=item_ids, owner=profile)
+    
+    has_top = any(it.item_type == "Top" for it in valid_items)
+    has_bottom = any(it.item_type == "Bottom" for it in valid_items)
+    
+    if not has_top:
+        return Response({"error": "An outfit must include at least one Top."}, status=400)
+    if not has_bottom:
+        return Response({"error": "An outfit must include at least one Bottom."}, status=400)
+
+    # Optional: Layering validation (Only 1 base layer top)
+    base_layer_tops = sum(1 for it in valid_items if it.item_type == "Top" and it.layer_level == 0)
+    if base_layer_tops > 1:
+        return Response({"error": "You should only wear one base layer shirt at a time."}, status=400)
+
     is_public = str(request.data.get("is_public", "false")).lower() == "true"
     
     # Create the outfit
     outfit = Outfit.objects.create(
         owner=profile,
         name=name,
-        occasion=(request.data.get("occasion") or "").strip(),
+        occasion=occasion,
         is_public=is_public,
     )
 
-    # Add items that belong to the user
-    valid_items = ClothingItem.objects.filter(id__in=item_ids, owner=profile)
     outfit.items.set(valid_items)
 
     serializer = OutfitSerializer(outfit, context={"request": request})
     return Response(serializer.data, status=201)
+
+import json
+@api_view(["POST"])
+def stylist_recommend(request):
+    """
+    The "Stylist Brain": Uses Gemini 1.5 Flash to recommend an outfit
+    based on current weather, occasion, and user's wardrobe.
+    """
+    firebase_uid, err = get_firebase_uid(request)
+    if err:
+        return err
+
+    profile, error_response = _get_profile_by_firebase_uid(firebase_uid)
+    if error_response:
+        return error_response
+
+    # 1. Get Context from Request
+    occasion = request.data.get("occasion", "Casual")
+    weather = request.data.get("weather", "Moderate") # e.g. "15°C, Sunny"
+    
+    # 2. Fetch User Wardrobe
+    items = ClothingItem.objects.filter(owner=profile)
+    if not items.exists():
+        return Response({"error": "Your wardrobe is empty. Add some clothes first!"}, status=400)
+    
+    # 2.5 Wardrobe Completeness Check using Types
+    has_top = items.filter(item_type="Top").exists()
+    has_bottom = items.filter(item_type="Bottom").exists()
+    has_shoes = items.filter(item_type="Shoes").exists()
+    
+    missing = []
+    if not has_top: missing.append("a Top")
+    if not has_bottom: missing.append("a Bottom")
+    if not has_shoes: missing.append("Shoes")
+    
+    if missing:
+        msg = f"Your wardrobe is incomplete for styling. You need: {', '.join(missing)}."
+        return Response({"error": msg}, status=400)
+
+    # 3. Format Wardrobe for AI
+    wardrobe_data = []
+    for it in items:
+        wardrobe_data.append({
+            "id": it.id,
+            "type": it.item_type,
+            "category": it.category,
+            "color": it.color,
+            "material": it.material,
+            "layer": it.layer_level,
+            "season": it.season,
+            "occasion": it.occasion
+        })
+        
+    # 4. Construct the Prompt
+    api_key = os.getenv("GEMINI_API_KEY")
+    if not api_key:
+        return Response({"error": "Stylist is currently unavailable (API Key missing)."}, status=500)
+    
+    try:
+        import re
+        # 4.5 MODERN SDK CLIENT INITIALIZATION (Forcing v1 Production API)
+        client = genai.Client(
+            api_key=api_key, 
+            http_options={'api_version': 'v1'}
+        )
+        
+        # 5. CONSTRUCT THE PROMPT
+        prompt = f"""
+        Act as a professional fashion stylist. 
+        Context: The user is going to a '{occasion}' event. The current weather is '{weather}'.
+        
+        Available Wardrobe:
+        {json.dumps(wardrobe_data)}
+        
+        Mandatory Styling Rules:
+        1. Select a functional and stylish outfit from the available items.
+        2. A complete outfit MUST have at least one Top and one Bottom.
+        3. A complete outfit MUST have at least one pair of Shoes.
+        4. LAYERING: If the weather is cool (below 18°C), try to layer a Mid-Layer (1) or Outer-Layer (2) on top of the Base Top (0).
+        5. ACCESSORIES: Always look for a matching Accessory (Watch, Belt, Bag, Hat, etc.) that complements the event type and colors.
+        6. COLOR HARMONY: Use classic color theory (e.g. complementary, analogous, or monochromatic) to make the user look high-end.
+        7. MATERIAL INTELLIGENCE: Prioritize breathable natural fabrics (Linen/Cotton) for hot weather (>24°C) and insulating fabrics (Wool/Denim) for cold weather (<12°C). 
+        8. PRACTICALITY & PROTECTION: DO NOT recommend Leather or Suede for 'Heavy Rain' or 'Snowy' conditions; they will be damaged! Instead, favor Synthetics (Polyester/Nylon) or Canvas for wet weather. Avoid 'Linen' in the cold – it's too thin.
+        9. If NO GOOD OUTFIT can be formed, return an empty list for "item_ids" and a tip.
+        
+        Respond ONLY with a valid JSON in this format:
+        {{
+            "look_name": "A creative 2-3 word name for this look (e.g. 'Midnight Date', 'Corporate Power')",
+            "item_ids": [list of item IDs or empty],
+            "stylist_tip": "A short (1-2 sentence) tip on why this look is trendy for this specific context."
+        }}
+        """
+        
+        # 6. Run Gemini Flash
+        response = client.models.generate_content(
+            model='gemini-2.5-flash',
+            contents=prompt,
+        )
+        
+        # Clean response string
+        if not response.text:
+            print(f"Stylist AI Warning: Received EMPTY response from {model}. Feedback: {response.prompt_feedback}")
+            return Response({"error": "The stylist is feeling shy right now. Try again!"}, status=500)
+            
+        raw_text = response.text.replace("```json", "").replace("```", "").strip()
+        print(f"DEBUG: RAW AI RESPONSE -> {raw_text}")
+        
+        # SCRIPTED JSON EXTRACTION (The "JSON Hunter")
+        try:
+             # Find the first '{' and the last '}'
+             start_idx = raw_text.find('{')
+             end_idx = raw_text.rfind('}')
+             
+             if start_idx == -1 or end_idx == -1:
+                 raise ValueError("No JSON block found in response")
+                 
+             json_str = raw_text[start_idx:end_idx+1]
+             result = json.loads(json_str)
+        except Exception as e:
+             print(f"Stylist AI JSON Parse Error: {e}")
+             return Response({"error": "The stylist got a bit confused. Try again!"}, status=500)
+        
+        suggested_ids = result.get("item_ids", [])
+        
+        # Security: Filter items to only those belonging to user
+        final_items_qs = ClothingItem.objects.filter(id__in=suggested_ids, owner=profile)
+        
+        return Response({
+            "look_name": result.get("look_name", "Curated Look"),
+            "items": ClothingItemSerializer(final_items_qs, many=True, context={"request": request}).data,
+            "stylist_tip": result.get("stylist_tip", "Stay stylish!")
+        })
+        
+    except Exception as e:
+        print(f"Stylist AI Error: {e}")
+        return Response({"error": "The stylist is having trouble deciding. Try again later!"}, status=500)
+
 
 
 @api_view(["PATCH", "DELETE"])
@@ -462,6 +651,7 @@ def clothing_items(request):
         "occasion",
         "size",
         "material",
+        "color",
         "brand",
     ]
     missing_fields = [
@@ -475,17 +665,34 @@ def clothing_items(request):
             status=400,
         )
 
+    # Extract core fields and determine type/layering
+    category = serializer.validated_data.get("category", "")
+    item_type = _map_category_to_item_type(category)
+    layer_level = _map_category_to_layer(category)
+    
+    # Process image (Background removal)
+    processed_image = _process_background_removal(request.FILES.get("image"))
+    
+    # NEW: Prioritize user-selected color from Flutter app. 
+    # detection is now just a fallback if needed for legacy/testing.
+    color = serializer.validated_data.get("color")
+    if not color:
+        color = "Black" # Safe Default
+
     item = ClothingItem.objects.create(
         owner=profile,
         name=serializer.validated_data.get("name"),
-        category=serializer.validated_data.get("category", ""),
+        item_type=item_type,
+        category=category,
         season=serializer.validated_data.get("season", ""),
         occasion=serializer.validated_data.get("occasion", ""),
         size=serializer.validated_data.get("size", ""),
         material=serializer.validated_data.get("material", ""),
+        color=color,
         brand=serializer.validated_data.get("brand", ""),
         purchase_price=serializer.validated_data.get("purchase_price"),
-        image=_process_background_removal(request.FILES.get("image")),
+        image=processed_image,
+        layer_level=layer_level,
     )
 
     default_wardrobe.items.add(item)
@@ -509,7 +716,7 @@ def clothing_item_detail(request, item_id):
         return Response({"error": "Clothing item not found"}, status=404)
 
     if request.method == "PATCH":
-        fields = ["name", "category", "season", "occasion", "size", "material", "brand"]
+        fields = ["name", "category", "season", "occasion", "size", "material", "color", "brand"]
         for field in fields:
             if field in request.data:
                 value = str(request.data.get(field, "")).strip()
@@ -759,9 +966,9 @@ def admin_options_list(request):
     return Response(ClothingOptionSerializer(options, many=True).data)
 
 
-@api_view(["POST", "DELETE"])
+@api_view(["POST", "PATCH", "DELETE"])
 def admin_options_manage(request, option_id=None):
-    """Create or Delete clothing options. Admin only."""
+    """Create, Update, or Delete clothing options. Admin only."""
     firebase_uid, err = get_firebase_uid(request)
     if err:
         return err
@@ -779,6 +986,19 @@ def admin_options_manage(request, option_id=None):
             serializer.save()
             return Response(serializer.data, status=201)
         return Response(serializer.errors, status=400)
+
+    elif request.method == "PATCH":
+        if not option_id:
+            return Response({"error": "Option ID required"}, status=400)
+        try:
+            optionTarget = ClothingOption.objects.get(id=option_id)
+            serializer = ClothingOptionSerializer(optionTarget, data=request.data, partial=True)
+            if serializer.is_valid():
+                serializer.save()
+                return Response(serializer.data)
+            return Response(serializer.errors, status=400)
+        except ClothingOption.DoesNotExist:
+            return Response({"error": "Option not found"}, status=404)
 
     elif request.method == "DELETE":
         if not option_id:

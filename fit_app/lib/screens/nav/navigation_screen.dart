@@ -2,7 +2,6 @@ import 'package:fit_app/screens/home/homescreen.dart';
 import 'package:fit_app/screens/outfits/explore_outfits_screen.dart';
 import 'package:fit_app/screens/outfits/outfits_screen.dart';
 import 'package:fit_app/screens/profile/profile_screen.dart';
-import 'package:fit_app/screens/stylist/stylist_screen.dart';
 import 'package:fit_app/screens/wardrobe/wardrobe_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -20,7 +19,6 @@ class _NavigationScreenState extends State<NavigationScreen> {
   final List<Widget> _pages = [
     Homescreen(),
     WardrobeScreen(),
-    StylistScreen(),
     OutfitsScreen(),
     ExploreOutfitsScreen(),
     ProfileScreen(),
@@ -59,10 +57,6 @@ class _NavigationScreenState extends State<NavigationScreen> {
             BottomNavigationBarItem(
               icon: Icon(Icons.checkroom),
               label: "Wardrobe",
-            ),
-            BottomNavigationBarItem(
-              icon: Icon(Icons.auto_awesome),
-              label: "Stylist",
             ),
             BottomNavigationBarItem(
               icon: Icon(Icons.view_module),

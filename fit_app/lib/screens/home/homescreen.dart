@@ -1,6 +1,7 @@
 import 'package:fit_app/constants.dart';
 
 import 'package:fit_app/screens/schedule/schedule_screen.dart';
+import 'package:fit_app/screens/stylist/stylist_screen.dart';
 import 'package:fit_app/viewmodels/weather_viewmodel.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -50,6 +51,17 @@ class _HomescreenState extends State<Homescreen> {
                         );
                       },
                     ),
+                  ),
+                  GestureDetector(
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => const StylistScreen(),
+                        ),
+                      );
+                    },
+                    child: const Icon(Icons.auto_awesome_outlined),
                   ),
                   GestureDetector(
                     onTap: () {

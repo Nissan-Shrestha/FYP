@@ -10,6 +10,9 @@ class ClothingItemModel {
   final String brand;
   final double? purchasePrice;
   final String? image;
+  final String itemType;
+  final String color;
+  final int layerLevel;
   final DateTime createdAt;
 
   const ClothingItemModel({
@@ -24,6 +27,9 @@ class ClothingItemModel {
     required this.brand,
     required this.purchasePrice,
     required this.image,
+    required this.itemType,
+    required this.color,
+    required this.layerLevel,
     required this.createdAt,
   });
 
@@ -31,7 +37,8 @@ class ClothingItemModel {
     return ClothingItemModel(
       id: json["id"] as int,
       owner: json["owner"] as int,
-      name: json["name"] as String,
+      name: (json["name"] as String?) ?? "",
+      itemType: (json["item_type"] as String?) ?? "Top",
       category: (json["category"] as String?) ?? "",
       season: (json["season"] as String?) ?? "",
       occasion: (json["occasion"] as String?) ?? "",
@@ -40,6 +47,8 @@ class ClothingItemModel {
       brand: (json["brand"] as String?) ?? "",
       purchasePrice: _parsePurchasePrice(json["purchase_price"]),
       image: json["image"] as String?,
+      color: json["color"] as String? ?? "Black",
+      layerLevel: json["layer_level"] as int? ?? 0,
       createdAt: DateTime.parse(json["created_at"] as String),
     );
   }
@@ -49,6 +58,7 @@ class ClothingItemModel {
       "id": id,
       "owner": owner,
       "name": name,
+      "item_type": itemType,
       "category": category,
       "season": season,
       "occasion": occasion,
@@ -57,6 +67,8 @@ class ClothingItemModel {
       "brand": brand,
       "purchase_price": purchasePrice,
       "image": image,
+      "color": color,
+      "layer_level": layerLevel,
       "created_at": createdAt.toIso8601String(),
     };
   }

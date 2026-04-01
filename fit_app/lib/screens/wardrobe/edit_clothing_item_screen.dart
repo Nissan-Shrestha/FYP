@@ -28,6 +28,7 @@ class _EditClothingItemScreenState extends State<EditClothingItemScreen> {
   late String category;
   late String size;
   late String material;
+  late String color;
   late String brand;
   double? _purchasePrice;
 
@@ -41,6 +42,7 @@ class _EditClothingItemScreenState extends State<EditClothingItemScreen> {
     category = item.category;
     size = item.size;
     material = item.material;
+    color = item.color;
     brand = item.brand;
     _purchasePrice = item.purchasePrice;
   }
@@ -55,6 +57,7 @@ class _EditClothingItemScreenState extends State<EditClothingItemScreen> {
       "Occasion": occasion.trim(),
       "Size": size.trim(),
       "Material": material.trim(),
+      "Color": color.trim(),
       "Brand": brand.trim(),
     };
     final missing = values.entries
@@ -74,6 +77,7 @@ class _EditClothingItemScreenState extends State<EditClothingItemScreen> {
       occasion: values["Occasion"]!,
       size: values["Size"]!,
       material: values["Material"]!,
+      color: values["Color"]!,
       brand: values["Brand"]!,
       purchasePrice: _purchasePrice,
       imageFile: _selectedImage,
@@ -343,6 +347,17 @@ class _EditClothingItemScreenState extends State<EditClothingItemScreen> {
                             ? wardrobeVM.getOptionsByType("material")
                             : const ["Cotton", "Linen", "Denim", "Polyester"],
                         onSelected: (v) => setState(() => material = v),
+                      ),
+                    ),
+                    _EditableFieldRow(
+                      label: "Color",
+                      value: color,
+                      onTap: () => _openPickerSheet(
+                        title: "Select Color",
+                        options: wardrobeVM.getOptionsByType("color").isNotEmpty 
+                          ? wardrobeVM.getOptionsByType("color") 
+                          : const ["Black", "White", "Navy Blue", "Red"],
+                        onSelected: (v) => setState(() => color = v),
                       ),
                     ),
                     _EditableFieldRow(

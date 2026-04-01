@@ -135,6 +135,7 @@ class WardrobeService {
     String occasion = "",
     String size = "",
     String material = "",
+    String color = "",
     String brand = "",
     double? purchasePrice,
     File? imageFile,
@@ -152,6 +153,7 @@ class WardrobeService {
     request.fields["occasion"] = occasion;
     request.fields["size"] = size;
     request.fields["material"] = material;
+    request.fields["color"] = color;
     request.fields["brand"] = brand;
 
     if (purchasePrice != null) {
@@ -216,12 +218,13 @@ class WardrobeService {
   static Future<ClothingItemModel> updateClothingItem({
     required int itemId,
     required String name,
-    required String category,
-    required String season,
-    required String occasion,
-    required String size,
-    required String material,
-    required String brand,
+    String category = "",
+    String season = "",
+    String occasion = "",
+    String size = "",
+    String material = "",
+    String color = "",
+    String brand = "",
     double? purchasePrice,
     File? imageFile,
   }) async {
@@ -238,6 +241,7 @@ class WardrobeService {
     request.fields["occasion"] = occasion;
     request.fields["size"] = size;
     request.fields["material"] = material;
+    request.fields["color"] = color;
     request.fields["brand"] = brand;
     request.fields["purchase_price"] =
         purchasePrice == null ? "" : purchasePrice.toStringAsFixed(2);

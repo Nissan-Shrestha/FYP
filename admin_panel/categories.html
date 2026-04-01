@@ -91,23 +91,26 @@
                     <li class="nav-item">
                         <a class="nav-link" onclick="switchType('material')">Materials</a>
                     </li>
+                    <li class="nav-item">
+                        <a class="nav-link" onclick="switchType('color')">Colors</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" onclick="switchType('weather')">Weather</a>
+                    </li>
                 </ul>
 
                 <div class="table-responsive">
                     <table class="table table-hover align-middle">
                         <thead class="table-light">
-                            <tr>
+                            <tr id="table-head-row">
                                 <th>Name</th>
+                                <th id="type-header" style="display:none">Item Type</th>
+                                <th id="layer-header" style="display:none">Layer</th>
                                 <th>Action</th>
                             </tr>
                         </thead>
                         <tbody id="options-table-body">
                             <!-- Options will be loaded here -->
-                            <tr>
-                                <td colspan="2" class="text-center py-4">
-                                    <div class="spinner-border spinner-border-sm text-primary"></div> Loading...
-                                </td>
-                            </tr>
                         </tbody>
                     </table>
                 </div>
@@ -115,33 +118,54 @@
         </div>
     </div>
 
-    <!-- Add Option Modal -->
-    <div class="modal fade" id="addOptionModal" tabindex="-1">
+    <!-- Modal for Add/Edit -->
+    <div class="modal fade" id="optionModal" tabindex="-1">
         <div class="modal-dialog">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h5 class="modal-title fw-bold">Add New Option</h5>
+                    <h5 class="modal-title fw-bold" id="modalTitle">Add New Option</h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                 </div>
                 <div class="modal-body">
-                    <form id="addOptionForm">
+                    <form id="optionForm">
+                        <input type="hidden" id="editOptionId">
                         <div class="mb-3">
                             <label class="form-label">Type</label>
-                            <select class="form-select" id="optionType" disabled>
-                                <option value="category">Category</option>
-                                <option value="season">Season</option>
-                                <option value="occasion">Occasion</option>
-                                <option value="size">Size</option>
-                                <option value="material">Material</option>
-                            </select>
+                            <input type="text" class="form-control" id="optionTypeDisplay" readonly disabled>
                         </div>
                         <div class="mb-3">
                             <label class="form-label">Value Name</label>
                             <input type="text" class="form-control" id="optionName" placeholder="e.g. Winter, Formal, Denim..." required>
                         </div>
-                        <div class="text-end">
+                        
+                        <!-- Category Specific Fields -->
+                        <div id="categorySpecificFields" style="display: none;">
+                            <div class="mb-3">
+                                <label class="form-label">Styling Item Type</label>
+                                <select class="form-select" id="itemType">
+                                    <option value="Top">Top</option>
+                                    <option value="Bottom">Bottom</option>
+                                    <option value="Shoes">Shoes</option>
+                                    <option value="Accessory">Accessory</option>
+                                    <option value="Bag">Bag</option>
+                                    <option value="Undergarment">Undergarment</option>
+                                </select>
+                                <div class="form-text">Used by AI to group items.</div>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">Layer Level</label>
+                                <select class="form-select" id="layerLevel">
+                                    <option value="0">0 (Base - e.g. T-shirt, Jeans)</option>
+                                    <option value="1">1 (Mid - e.g. Hoodie, Sweater)</option>
+                                    <option value="2">2 (Outer - e.g. Jacket, Coat)</option>
+                                </select>
+                                <div class="form-text">Used for layering logic in AI recommendations.</div>
+                            </div>
+                        </div>
+
+                        <div class="text-end pt-3">
                             <button type="button" class="btn btn-secondary me-2" data-bs-dismiss="modal">Cancel</button>
-                            <button type="submit" class="btn btn-primary">Save Option</button>
+                            <button type="submit" class="btn btn-primary" id="saveButton">Save Option</button>
                         </div>
                     </form>
                 </div>
