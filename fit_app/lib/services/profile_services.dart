@@ -7,7 +7,7 @@ import 'package:fit_app/models/profile_model.dart';
 import 'package:http/http.dart' as http;
 
 class ProfileService {
-  static const String baseUrl = "${ApiConfig.serverBaseUrl}/api/profile/";
+  static String get baseUrl => "${ApiConfig.serverBaseUrl}/api/profile/";
 
   /// Gets the Firebase ID token for the current user.
   /// Throws if the user is not logged in.

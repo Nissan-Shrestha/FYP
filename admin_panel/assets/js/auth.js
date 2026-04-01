@@ -1,14 +1,6 @@
 // auth.js
-const firebaseConfig = {
-    apiKey: "AIzaSyBUgoG2hsr6kcUNAkG-FQCaHCplv5VVx84",
-    authDomain: "fit-app-auth-b7c35.firebaseapp.com",
-    projectId: "fit-app-auth-b7c35",
-    storageBucket: "fit-app-auth-b7c35.firebasestorage.app",
-    appId: "1:382773239202:android:114609cb72532c01e326fb"
-};
-
-// Initialize Firebase (via modular SDK if included)
-firebase.initializeApp(firebaseConfig);
+// Initialize Firebase
+firebase.initializeApp(FIREBASE_CONFIG);
 const auth = firebase.auth();
 
 if (document.getElementById("login-form")) {

@@ -11,6 +11,7 @@
 **/.env
 **/.env.*
 !**/.env.example
+admin_panel/assets/js/config.js
 
 # =============================================
 # Python / Django (backend/)

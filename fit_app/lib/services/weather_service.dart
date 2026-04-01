@@ -3,9 +3,10 @@ import 'dart:convert';
 import 'package:fit_app/models/weather_model.dart';
 
 import 'package:http/http.dart' as http;
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 class WeatherService {
-  final String apiKey = "2b780926c017c10e102b1cdbdedbb4c2";
+  final String apiKey = dotenv.env['OPENWEATHER_API_KEY'] ?? '';
 
   Future<WeatherModel> fetchWeather(double lat, double lon) async {
     final url =

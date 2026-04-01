@@ -9,7 +9,7 @@ import 'package:fit_app/models/clothing_option_model.dart';
 import 'package:http/http.dart' as http;
 
 class WardrobeService {
-  static const String _baseApi = "${ApiConfig.serverBaseUrl}/api";
+  static String get _baseApi => "${ApiConfig.serverBaseUrl}/api";
 
   static Future<List<ClothingOptionModel>> fetchClothingOptions() async {
     final response = await http.get(

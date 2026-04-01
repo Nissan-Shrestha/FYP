@@ -5,7 +5,7 @@ import 'package:fit_app/models/outfit_model.dart';
 import 'package:http/http.dart' as http;
 
 class OutfitService {
-  static const String _baseApi = "${ApiConfig.serverBaseUrl}/api";
+  static String get _baseApi => "${ApiConfig.serverBaseUrl}/api";
 
   static Future<String> _getIdToken() async {
     final user = FirebaseAuth.instance.currentUser;
