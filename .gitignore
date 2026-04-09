@@ -45,3 +45,9 @@ fit_app/.pub-cache/
 Thumbs.db
 *.swp
 *.swo
+
+# =============================================
+# SESSION REPORTS & PLANS
+# =============================================
+SESSION_REPORT.md
+STRIPE_INTEGRATION_PLAN.md

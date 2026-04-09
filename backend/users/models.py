@@ -291,7 +291,7 @@ class Schedule(models.Model):
         ordering = ['date_time']
 
 
-class FeatureRequest(models.Model):
+class FeaturedWardrobeRequest(models.Model):
     STATUS_CHOICES = [
         ('pending', 'Pending'),
         ('approved', 'Approved'),
@@ -301,12 +301,12 @@ class FeatureRequest(models.Model):
     requester = models.ForeignKey(
         Profile,
         on_delete=models.CASCADE,
-        related_name="feature_requests",
+        related_name="featured_wardrobe_requests",
     )
     wardrobe = models.ForeignKey(
         Wardrobe,
         on_delete=models.CASCADE,
-        related_name="feature_requests",
+        related_name="featured_wardrobe_requests",
     )
     status = models.CharField(
         max_length=20,
@@ -318,4 +318,4 @@ class FeatureRequest(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
 
     def __str__(self):
-        return f"Feature Request from {self.requester.username} ({self.status})"
+        return f"Featured Wardrobe Request from {self.requester.username} ({self.status})"

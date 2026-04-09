@@ -1,5 +1,5 @@
 import 'package:fit_app/constants.dart';
-import 'package:fit_app/models/feature_request_model.dart';
+import 'package:fit_app/models/featured_wardrobe_model.dart';
 import 'package:fit_app/models/outfit_model.dart';
 import 'package:fit_app/screens/outfits/outfit_detail_screen.dart';
 import 'package:fit_app/screens/wardrobe/wardrobe_view_screen.dart';
@@ -26,7 +26,7 @@ class _ExploreOutfitsScreenState extends State<ExploreOutfitsScreen> {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       context.read<OutfitViewmodel>().fetchExploreFilters();
       context.read<OutfitViewmodel>().fetchExploreOutfits(refresh: true);
-      context.read<OutfitViewmodel>().fetchFeaturedLookbooks();
+      context.read<OutfitViewmodel>().fetchFeaturedWardrobes();
     });
   }
 
@@ -77,9 +77,9 @@ class _ExploreOutfitsScreenState extends State<ExploreOutfitsScreen> {
           }
 
           final outfits = vm.exploreOutfits;
-          final lookbooks = vm.featuredLookbooks;
+          final wardrobes = vm.communityFeaturedWardrobes;
 
-          if (outfits.isEmpty && lookbooks.isEmpty) {
+          if (outfits.isEmpty && wardrobes.isEmpty) {
             return Center(
               child: Column(
                 mainAxisSize: MainAxisSize.min,
@@ -109,7 +109,7 @@ class _ExploreOutfitsScreenState extends State<ExploreOutfitsScreen> {
                 child: RefreshIndicator(
                   onRefresh: () async {
                     await vm.fetchExploreOutfits(refresh: true);
-                    await vm.fetchFeaturedLookbooks();
+                    await vm.fetchFeaturedWardrobes();
                   },
                   color: const Color(0xFF673AB7),
                   child: ListView.builder(
@@ -117,13 +117,13 @@ class _ExploreOutfitsScreenState extends State<ExploreOutfitsScreen> {
                     padding: const EdgeInsets.all(16),
                     itemCount:
                         outfits.length +
-                        (lookbooks.isNotEmpty ? 1 : 0) +
+                        (wardrobes.isNotEmpty ? 1 : 0) +
                         (vm.hasMoreExplore ? 1 : 0),
                     itemBuilder: (context, index) {
-                      if (lookbooks.isNotEmpty && index == 0) {
-                        return _FeaturedLookbooksSection(lookbooks: lookbooks);
+                      if (wardrobes.isNotEmpty && index == 0) {
+                        return _CommunityFeaturedWardrobesSection(wardrobes: wardrobes);
                       }
-                      final outfitIndex = lookbooks.isNotEmpty
+                      final outfitIndex = wardrobes.isNotEmpty
                           ? index - 1
                           : index;
 
@@ -408,9 +408,9 @@ class _ExploreOutfitCard extends StatelessWidget {
   }
 }
 
-class _FeaturedLookbooksSection extends StatelessWidget {
-  final List<FeaturedLookbookModel> lookbooks;
-  const _FeaturedLookbooksSection({required this.lookbooks});
+class _CommunityFeaturedWardrobesSection extends StatelessWidget {
+  final List<CommunityFeaturedWardrobeModel> wardrobes;
+  const _CommunityFeaturedWardrobesSection({required this.wardrobes});
 
   Future<void> _launchUrl(String handle, String platform) async {
     final cleanHandle = handle.startsWith('@') ? handle.substring(1) : handle;
@@ -452,10 +452,10 @@ class _FeaturedLookbooksSection extends StatelessWidget {
           height: 320,
           child: ListView.builder(
             scrollDirection: Axis.horizontal,
-            itemCount: lookbooks.length,
+            itemCount: wardrobes.length,
             padding: const EdgeInsets.only(bottom: 16),
             itemBuilder: (context, index) {
-              final lb = lookbooks[index];
+              final lb = wardrobes[index];
               final socials = lb.owner.socialLinks;
 
               return Container(
@@ -636,7 +636,7 @@ class _FeaturedLookbooksSection extends StatelessWidget {
                                         ),
                                       ),
                                       child: Text(
-                                        capitalize(lb.wardrobe.name),
+                                        lb.wardrobe.name,
                                         style: GoogleFonts.manrope(
                                           fontSize: 16.2,
                                           fontWeight: FontWeight.bold,

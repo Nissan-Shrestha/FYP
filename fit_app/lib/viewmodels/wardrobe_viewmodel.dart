@@ -3,7 +3,7 @@ import 'dart:io';
 import 'package:fit_app/models/wardrobe_model.dart';
 import 'package:fit_app/models/clothing_item_model.dart';
 import 'package:fit_app/models/clothing_option_model.dart';
-import 'package:fit_app/models/feature_request_model.dart';
+import 'package:fit_app/models/featured_wardrobe_model.dart';
 import 'package:fit_app/services/wardrobe_service.dart';
 import 'package:flutter/material.dart';
 
@@ -12,8 +12,8 @@ class WardrobeViewmodel extends ChangeNotifier {
   List<ClothingItemModel> clothingItems = [];
   List<ClothingItemModel> selectedWardrobeItems = [];
   Map<int, List<ClothingItemModel>> wardrobePreviewItems = {};
-  List<FeatureRequestModel> featureRequests = [];
-  List<FeatureRequestModel> pendingRequests = [];
+  List<FeaturedWardrobeModel> featuredWardrobeRequests = [];
+  List<FeaturedWardrobeModel> pendingFeaturedWardrobeRequests = [];
   List<ClothingOptionModel> clothingOptions = [];
 
   bool isLoadingWardrobes = false;
@@ -430,13 +430,13 @@ class WardrobeViewmodel extends ChangeNotifier {
     }
   }
 
-  Future<void> fetchFeatureRequests() async {
+  Future<void> fetchFeaturedWardrobeRequests() async {
     try {
       isLoadingRequests = true;
       error = null;
       notifyListeners();
 
-      featureRequests = await WardrobeService.fetchFeatureRequests();
+      featuredWardrobeRequests = await WardrobeService.fetchFeaturedWardrobeRequests();
     } catch (e) {
       error = e.toString();
     } finally {
@@ -445,14 +445,14 @@ class WardrobeViewmodel extends ChangeNotifier {
     }
   }
 
-  Future<bool> requestFeature(int wardrobeId) async {
+  Future<bool> requestFeaturedWardrobe(int wardrobeId) async {
     try {
       isSubmitting = true;
       error = null;
       notifyListeners();
 
-      final request = await WardrobeService.requestFeature(wardrobeId);
-      featureRequests = [request, ...featureRequests];
+      final request = await WardrobeService.requestFeaturedWardrobe(wardrobeId);
+      featuredWardrobeRequests = [request, ...featuredWardrobeRequests];
       return true;
     } catch (e) {
       error = e.toString();
@@ -463,16 +463,67 @@ class WardrobeViewmodel extends ChangeNotifier {
     }
   }
 
+  // --- MVVM Statistical & Financial Getters ---
+
+  /// Calculates the distribution of items by category
+  Map<String, int> getCategoryDistribution() {
+    final Map<String, int> counts = {};
+    for (var item in clothingItems) {
+      if (item.category.isNotEmpty) {
+        counts[item.category] = (counts[item.category] ?? 0) + 1;
+      }
+    }
+    return counts;
+  }
+
+  /// Calculates the distribution of items by season
+  Map<String, int> getSeasonDistribution() {
+    final Map<String, int> counts = {};
+    for (var item in clothingItems) {
+      if (item.season.isNotEmpty) {
+        counts[item.season] = (counts[item.season] ?? 0) + 1;
+      }
+    }
+    return counts;
+  }
+
+  /// Calculates the distribution of items by color
+  Map<String, int> getColorDistribution() {
+    final Map<String, int> counts = {};
+    for (var item in clothingItems) {
+      if (item.color.isNotEmpty) {
+        counts[item.color] = (counts[item.color] ?? 0) + 1;
+      }
+    }
+    return counts;
+  }
+
+  /// Calculates the total financial value of the wardrobe
+  double get totalWardrobeValue {
+    return clothingItems.where((i) => i.purchasePrice != null).fold(0.0, (sum, i) => sum + i.purchasePrice!);
+  }
+
+  /// Returns items that have a price, sorted by Cost Per Wear
+  List<ClothingItemModel> getPricedItemsSortedByCPW({bool descending = true}) {
+    final pricedItems = clothingItems.where((i) => i.purchasePrice != null).toList();
+    pricedItems.sort((a, b) {
+      final cpwA = a.purchasePrice! / (a.wearCount > 0 ? a.wearCount : 1);
+      final cpwB = b.purchasePrice! / (b.wearCount > 0 ? b.wearCount : 1);
+      return descending ? cpwB.compareTo(cpwA) : cpwA.compareTo(cpwB);
+    });
+    return pricedItems;
+  }
+
   void clearError() {
     error = null;
     notifyListeners();
   }
 
-  Future<void> fetchPendingRequests() async {
+  Future<void> fetchPendingFeaturedWardrobeRequests() async {
     try {
       isLoadingRequests = true;
       notifyListeners();
-      pendingRequests = await WardrobeService.fetchPendingRequests();
+      pendingFeaturedWardrobeRequests = await WardrobeService.fetchPendingFeaturedWardrobeRequests();
     } catch (e) {
       error = e.toString();
     } finally {
@@ -481,13 +532,13 @@ class WardrobeViewmodel extends ChangeNotifier {
     }
   }
 
-  Future<bool> approveRequest(int requestId) async {
+  Future<bool> approveFeaturedWardrobeRequest(int requestId) async {
     try {
       isSubmitting = true;
       notifyListeners();
       final success = await WardrobeService.approveRequest(requestId);
       if (success) {
-        pendingRequests.removeWhere((r) => r.id == requestId);
+        pendingFeaturedWardrobeRequests.removeWhere((r) => r.id == requestId);
       }
       return success;
     } catch (e) {
@@ -499,13 +550,13 @@ class WardrobeViewmodel extends ChangeNotifier {
     }
   }
 
-  Future<bool> rejectRequest(int requestId, String feedback) async {
+  Future<bool> rejectFeaturedWardrobeRequest(int requestId, String feedback) async {
     try {
       isSubmitting = true;
       notifyListeners();
       final success = await WardrobeService.rejectRequest(requestId, feedback);
       if (success) {
-        pendingRequests.removeWhere((r) => r.id == requestId);
+        pendingFeaturedWardrobeRequests.removeWhere((r) => r.id == requestId);
       }
       return success;
     } catch (e) {

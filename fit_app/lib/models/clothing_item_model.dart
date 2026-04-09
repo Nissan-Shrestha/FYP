@@ -14,6 +14,7 @@ class ClothingItemModel {
   final String color;
   final int layerLevel;
   final String? purchaseLink;
+  final int wearCount;
   final DateTime createdAt;
 
   const ClothingItemModel({
@@ -32,6 +33,7 @@ class ClothingItemModel {
     required this.color,
     required this.layerLevel,
     this.purchaseLink,
+    this.wearCount = 0,
     required this.createdAt,
   });
 
@@ -52,6 +54,7 @@ class ClothingItemModel {
       color: json["color"] as String? ?? "Black",
       layerLevel: json["layer_level"] as int? ?? 0,
       purchaseLink: json["purchase_link"] as String?,
+      wearCount: (json["wear_count"] as int?) ?? 0,
       createdAt: DateTime.parse(json["created_at"] as String),
     );
   }
@@ -73,6 +76,7 @@ class ClothingItemModel {
       "color": color,
       "layer_level": layerLevel,
       "purchase_link": purchaseLink,
+      "wear_count": wearCount,
       "created_at": createdAt.toIso8601String(),
     };
   }

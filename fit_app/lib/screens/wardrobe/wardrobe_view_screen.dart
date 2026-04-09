@@ -466,6 +466,50 @@ class _WardrobeViewScreenState extends State<WardrobeViewScreen> {
     );
   }
 
+  Future<void> _handleFeatureRequest(WardrobeViewmodel vm) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        title: Text(
+          "Featured Wardrobe",
+          style: GoogleFonts.manrope(fontWeight: FontWeight.bold),
+        ),
+        content: const Text(
+          "Feature this wardrobe in the community Explore tab to showcase your style? This increases your profile visibility and inspiration for others!",
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text("Not now"),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(context, true),
+            style: TextButton.styleFrom(foregroundColor: const Color(0xFF673AB7)),
+            child: const Text("Confirm"),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed != true || !mounted) return;
+
+    final success = await vm.requestFeaturedWardrobe(widget.wardrobeId);
+
+    if (!mounted) return;
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          success
+              ? "Featured Wardrobe request sent!"
+              : (vm.error ?? "Failed to send request"),
+        ),
+        backgroundColor: success ? const Color(0xff0AAE00) : Colors.redAccent,
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final wardrobeVM = context.watch<WardrobeViewmodel>();
@@ -525,7 +569,43 @@ class _WardrobeViewScreenState extends State<WardrobeViewScreen> {
                       top: 42,
                       child: Row(
                         children: [
-                          if (!widget.readOnly)
+                          if (!widget.readOnly) ...[
+                            GestureDetector(
+                              onTap: () => _handleFeatureRequest(wardrobeVM),
+                              child: Container(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 10,
+                                  vertical: 6,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: const Color(0xffF3E5F5),
+                                  borderRadius: BorderRadius.circular(20),
+                                  border: Border.all(
+                                    color: Colors.purple.shade100,
+                                  ),
+                                ),
+                                child: const Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Icon(
+                                      Icons.star_outline_rounded,
+                                      size: 14,
+                                      color: Colors.purple,
+                                    ),
+                                    SizedBox(width: 4),
+                                    Text(
+                                      "Feature",
+                                      style: TextStyle(
+                                        fontSize: 10.8,
+                                        fontWeight: FontWeight.bold,
+                                        color: Colors.purple,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
+                            const SizedBox(width: 8),
                             GestureDetector(
                               onTap: _showAddItemsSheet,
                               child: Container(
@@ -550,6 +630,7 @@ class _WardrobeViewScreenState extends State<WardrobeViewScreen> {
                                 ),
                               ),
                             ),
+                          ],
                           const SizedBox(width: 8),
                           GestureDetector(
                             onTap: _showSortBottomSheet,

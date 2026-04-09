@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import ClothingItem, Profile, Wardrobe, ClothingOption, Outfit, Report, Schedule, FeatureRequest
+from .models import ClothingItem, Profile, Wardrobe, ClothingOption, Outfit, Report, Schedule, FeaturedWardrobeRequest
 
 class ClothingOptionSerializer(serializers.ModelSerializer):
     class Meta:
@@ -9,10 +9,15 @@ class ClothingOptionSerializer(serializers.ModelSerializer):
 
 class ProfileSerializer(serializers.ModelSerializer):
     profile_picture = serializers.SerializerMethodField()
+    is_featured = serializers.SerializerMethodField()
 
     class Meta:
         model = Profile
         fields = ["id", "firebase_uid", "username", "email", "is_admin", "plan", "wardrobe_count", "wardrobe_limit", "outfits_count", "outfits_limit", "profile_picture", "bio", "social_links", "is_featured", "created_at"]
+
+    def get_is_featured(self, obj):
+        # The badge is EXCLUSIVE to Premium users who have been approved by Admin
+        return obj.plan.lower() == "premium" and obj.is_featured
 
     def get_profile_picture(self, obj):
         if not obj.profile_picture:
@@ -23,12 +28,23 @@ class ProfileSerializer(serializers.ModelSerializer):
         return obj.profile_picture.url
 
 
+from django.utils import timezone
+
 class ClothingItemSerializer(serializers.ModelSerializer):
     image = serializers.SerializerMethodField()
+    wear_count = serializers.SerializerMethodField()
 
     class Meta:
         model = ClothingItem
         fields = "__all__"
+        # We add wear_count to the extra fields manually since __all__ won't include MethodFields
+        # Actually in DRF MethodFields are included if you don't restrict them,
+        # but let's be explicit to be safe.
+        fields = [
+            "id", "owner", "name", "category", "item_type", "color",
+            "material", "size", "season", "occasion", "brand",
+            "purchase_price", "layer_level", "image", "wear_count", "created_at"
+        ]
         read_only_fields = ("id", "owner", "created_at")
 
     def get_image(self, obj):
@@ -38,6 +54,13 @@ class ClothingItemSerializer(serializers.ModelSerializer):
         if request:
             return request.build_absolute_uri(obj.image.url)
         return obj.image.url
+
+    def get_wear_count(self, obj):
+        # Only count schedules that have already passed (today or earlier)
+        return Schedule.objects.filter(
+            outfit__items=obj,
+            date_time__lte=timezone.now()
+        ).count()
 
 
 class WardrobeSerializer(serializers.ModelSerializer):
@@ -72,10 +95,14 @@ class OutfitSerializer(serializers.ModelSerializer):
     owner_username = serializers.CharField(source="owner.username", read_only=True)
     owner_firebase_uid = serializers.CharField(source="owner.firebase_uid", read_only=True)
     owner_profile_picture = serializers.ImageField(source="owner.profile_picture", read_only=True)
-    owner_is_featured = serializers.BooleanField(source="owner.is_featured", read_only=True)
     owner_social_links = serializers.JSONField(source="owner.social_links", read_only=True)
+    owner_is_featured = serializers.SerializerMethodField()
     saves_count = serializers.SerializerMethodField()
     is_saved = serializers.SerializerMethodField()
+
+    def get_owner_is_featured(self, obj):
+        # Sync the badge logic for outfits too
+        return obj.owner.plan.lower() == "premium" and obj.owner.is_featured
 
     def get_saves_count(self, obj):
         return obj.saved_by.count()
@@ -114,12 +141,12 @@ class ScheduleSerializer(serializers.ModelSerializer):
         read_only_fields = ("id", "owner", "created_at", "updated_at")
 
 
-class FeatureRequestSerializer(serializers.ModelSerializer):
+class FeaturedWardrobeRequestSerializer(serializers.ModelSerializer):
     wardrobe_name = serializers.CharField(source="wardrobe.name", read_only=True)
     requester_username = serializers.CharField(source="requester.username", read_only=True)
     requester_firebase_uid = serializers.CharField(source="requester.firebase_uid", read_only=True)
     
     class Meta:
-        model = FeatureRequest
+        model = FeaturedWardrobeRequest
         fields = "__all__"
         read_only_fields = ("id", "requester", "status", "admin_feedback", "created_at", "updated_at")

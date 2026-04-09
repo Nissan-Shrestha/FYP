@@ -6,7 +6,7 @@ import 'package:fit_app/constants.dart';
 import 'package:fit_app/models/wardrobe_model.dart';
 import 'package:fit_app/models/clothing_item_model.dart';
 import 'package:fit_app/models/clothing_option_model.dart';
-import 'package:fit_app/models/feature_request_model.dart';
+import 'package:fit_app/models/featured_wardrobe_model.dart';
 import 'package:http/http.dart' as http;
 
 class WardrobeService {
@@ -278,32 +278,32 @@ class WardrobeService {
     throw Exception("Failed to update clothing item");
   }
 
-  static Future<FeatureRequestModel> requestFeature(int wardrobeId) async {
+  static Future<FeaturedWardrobeModel> requestFeaturedWardrobe(int wardrobeId) async {
     final response = await http.post(
       Uri.parse("$_baseApi/feature-requests/"),
       headers: await _authHeaders(),
       body: jsonEncode({"wardrobe_id": wardrobeId}),
     );
     if (response.statusCode == 201) {
-      return FeatureRequestModel.fromJson(jsonDecode(response.body));
+      return FeaturedWardrobeModel.fromJson(jsonDecode(response.body));
     }
     final error = jsonDecode(response.body)["error"] ?? "Failed to send request";
     throw Exception(error);
   }
 
-  static Future<List<FeatureRequestModel>> fetchFeatureRequests() async {
+  static Future<List<FeaturedWardrobeModel>> fetchFeaturedWardrobeRequests() async {
     final response = await http.get(
       Uri.parse("$_baseApi/feature-requests/"),
       headers: await _authHeaders(json: false),
     );
     if (response.statusCode == 200) {
       final List<dynamic> data = jsonDecode(response.body);
-      return data.map((json) => FeatureRequestModel.fromJson(json)).toList();
+      return data.map((json) => FeaturedWardrobeModel.fromJson(json)).toList();
     }
     return [];
   }
 
-  static Future<List<FeatureRequestModel>> fetchPendingRequests() async {
+  static Future<List<FeaturedWardrobeModel>> fetchPendingFeaturedWardrobeRequests() async {
     final token = await _getIdToken();
     final response = await http.get(
       Uri.parse("$_baseApi/feature-requests/?status=pending"),
@@ -312,7 +312,7 @@ class WardrobeService {
 
     if (response.statusCode == 200) {
       final List data = jsonDecode(response.body);
-      return data.map((item) => FeatureRequestModel.fromJson(item)).toList();
+      return data.map((item) => FeaturedWardrobeModel.fromJson(item)).toList();
     }
     throw Exception("Failed to fetch pending requests");
   }

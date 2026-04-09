@@ -30,10 +30,10 @@ from .views import (
     schedules,
     schedule_detail,
     stylist_recommend,
-    feature_requests,
-    feature_request_detail,
-    featured_lookbooks,
-    admin_feature_requests,
+    featured_wardrobe_requests,
+    featured_wardrobe_request_detail,
+    featured_wardrobe_discovery,
+    admin_featured_wardrobe_requests,
     admin_wardrobe_view,
 )
 
@@ -72,9 +72,9 @@ urlpatterns = [
     path("admin/users/<str:firebase_uid>/avatar/", admin_user_avatar_delete),
     path("admin/users/<str:firebase_uid>/details/", admin_user_view),
     path("admin/users/<str:firebase_uid>/moderation-reset/", admin_moderation_reset),
-    path("feature-requests/", feature_requests),
-    path("feature-requests/<int:request_id>/", feature_request_detail),
-    path("outfits/featured-lookbooks/", featured_lookbooks),
-    path("admin/feature-requests/", admin_feature_requests),
+    path("feature-requests/", featured_wardrobe_requests),
+    path("feature-requests/<int:request_id>/", featured_wardrobe_request_detail),
+    path("featured-wardrobes/discovery/", featured_wardrobe_discovery),
+    path("admin/feature-requests/", admin_featured_wardrobe_requests),
     path("admin/wardrobes/<int:wardrobe_id>/", admin_wardrobe_view),
 ]

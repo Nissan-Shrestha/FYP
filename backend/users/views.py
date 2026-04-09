@@ -1,4 +1,5 @@
 from datetime import date
+from django.utils import timezone
 from decimal import Decimal, InvalidOperation
 from PIL import Image
 import io
@@ -6,12 +7,13 @@ import json
 import re
 from google import genai
 import os
+from django.db import models
 
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
 from .firebase_auth import get_firebase_uid
-from .models import ClothingItem, Profile, Wardrobe, ClothingOption, Outfit, Schedule, Report, FeatureRequest
-from .serializers import ClothingItemSerializer, ProfileSerializer, WardrobeSerializer, ClothingOptionSerializer, OutfitSerializer, ScheduleSerializer, ReportSerializer, FeatureRequestSerializer
+from .models import ClothingItem, Profile, Wardrobe, ClothingOption, Outfit, Schedule, Report, FeaturedWardrobeRequest
+from .serializers import ClothingItemSerializer, ProfileSerializer, WardrobeSerializer, ClothingOptionSerializer, OutfitSerializer, ScheduleSerializer, ReportSerializer, FeaturedWardrobeRequestSerializer
 
 def _map_category_to_item_type(category_name):
     """
@@ -285,15 +287,40 @@ def stylist_recommend(request):
         }}
         """
         
-        # 6. Run Gemini Flash
-        response = client.models.generate_content(
-            model='gemini-2.5-flash',
-            contents=prompt,
-        )
+        # 6. Run Gemini Flash Lite with Automatic Retries
+        import time
+        response = None
+        max_retries = 3
         
-        # Clean response string
-        if not response.text:
-            print(f"Stylist AI Warning: Received EMPTY response from gemini-2.5-flash. Feedback: {response.prompt_feedback}")
+        for attempt in range(max_retries):
+            try:
+                response = client.models.generate_content(
+                    model='gemini-2.5-flash-lite',
+                    contents=prompt,
+                )
+                break # Success! Exit the loop
+            except Exception as e:
+                err_str = str(e).lower()
+                is_overloaded = "503" in err_str or "overloaded" in err_str or "demand" in err_str
+                
+                # If we have retries left and it's an overload error, wait and try again
+                if attempt < max_retries - 1 and is_overloaded:
+                    print(f"Stylist AI (2.5 Lite): Gemini is busy. Retrying (Attempt {attempt + 2}/{max_retries})...")
+                    time.sleep(1.0) # Wait 1 second
+                    continue
+                
+                # If we're out of retries or it's a different error, handle it
+                if "429" in err_str or "rate limit" in err_str:
+                    return Response({"error": "You've asked for too many styles! Please take a short break."}, status=429)
+                
+                print(f"Stylist AI Critical Error after {attempt + 1} attempts: {str(e)}")
+                return Response({
+                    "error": "The AI Stylist is in extremely high demand right now. Please try one last time in a minute!"
+                }, status=503)
+        
+        # Clean response string (safety check)
+        if not response or not response.text:
+            print(f"Stylist AI Warning: Received EMPTY response from 2.5 Lite. Feedback: {response.prompt_feedback if response else 'No Response'}")
             return Response({"error": "The stylist is feeling shy right now. Try again!"}, status=500)
             
         raw_text = response.text.replace("```json", "").replace("```", "").strip()
@@ -1335,9 +1362,9 @@ def admin_moderation_reset(request, firebase_uid):
 
 
 @api_view(["GET", "POST"])
-def feature_requests(request):
+def featured_wardrobe_requests(request):
     """
-    User-managed feature requests. 
+    User-managed featured wardrobe requests. 
     POST: Create a new request.
     GET: List user's requests.
     """
@@ -1348,8 +1375,14 @@ def feature_requests(request):
     profile, _ = _get_profile_by_firebase_uid(firebase_uid)
 
     if request.method == "GET":
-        requests = FeatureRequest.objects.filter(requester=profile).order_by("-created_at")
-        serializer = FeatureRequestSerializer(requests, many=True)
+        from datetime import timedelta
+        # Limit to 3 days for Approved/Rejected, but show ALL Pending
+        three_days_ago = timezone.now() - timedelta(days=3)
+        queryset = FeaturedWardrobeRequest.objects.filter(requester=profile).filter(
+            models.Q(status='pending') | models.Q(updated_at__gte=three_days_ago)
+        ).order_by("-created_at")
+        
+        serializer = FeaturedWardrobeRequestSerializer(queryset, many=True)
         return Response(serializer.data)
 
     # POST: Create request
@@ -1362,21 +1395,32 @@ def feature_requests(request):
     except Wardrobe.DoesNotExist:
         return Response({"error": "Wardrobe not found"}, status=404)
 
-    # Prevent duplicates for same wardrobe if already pending/approved
-    if FeatureRequest.objects.filter(requester=profile, wardrobe=wardrobe, status__in=['pending', 'approved']).exists():
-        return Response({"error": "A request for this wardrobe is already active."}, status=400)
+    # Prevent duplicates if a request is PENDING or if an APPROVED request is still within the 3-day window
+    from datetime import timedelta
+    three_days_ago = timezone.now() - timedelta(days=3)
+    
+    active_request = FeaturedWardrobeRequest.objects.filter(
+        requester=profile, 
+        wardrobe=wardrobe
+    ).filter(
+        models.Q(status='pending') | 
+        models.Q(status='approved', updated_at__gte=three_days_ago)
+    ).exists()
 
-    feat_request = FeatureRequest.objects.create(
+    if active_request:
+        return Response({"error": "This wardrobe is already featured or has a pending request."}, status=400)
+
+    feat_request = FeaturedWardrobeRequest.objects.create(
         requester=profile,
         wardrobe=wardrobe
     )
-    return Response(FeatureRequestSerializer(feat_request).data, status=201)
+    return Response(FeaturedWardrobeRequestSerializer(feat_request).data, status=201)
 
 
 @api_view(["GET", "DELETE"])
-def feature_request_detail(request, request_id):
+def featured_wardrobe_request_detail(request, request_id):
     """
-    Manage an individual feature request.
+    Manage an individual featured wardrobe request.
     """
     
 
@@ -1385,12 +1429,12 @@ def feature_request_detail(request, request_id):
     profile, _ = _get_profile_by_firebase_uid(firebase_uid)
 
     try:
-        feat_req = FeatureRequest.objects.get(id=request_id, requester=profile)
-    except FeatureRequest.DoesNotExist:
+        feat_req = FeaturedWardrobeRequest.objects.get(id=request_id, requester=profile)
+    except FeaturedWardrobeRequest.DoesNotExist:
         return Response({"error": "Request not found"}, status=404)
 
     if request.method == "GET":
-        return Response(FeatureRequestSerializer(feat_req).data)
+        return Response(FeaturedWardrobeRequestSerializer(feat_req).data)
 
     # DELETE: Cancel request
     if feat_req.status != "pending":
@@ -1401,14 +1445,20 @@ def feature_request_detail(request, request_id):
 
 
 @api_view(["GET"])
-def featured_lookbooks(request):
+def featured_wardrobe_discovery(request):
     """
     Returns lookbooks (wardrobes) that have been approved as featured.
     Used on the Explore Screen.
     """
     
 
-    approved_requests = FeatureRequest.objects.filter(status="approved").order_by("-updated_at")
+    from datetime import timedelta
+    three_days_ago = timezone.now() - timedelta(days=3)
+    
+    approved_requests = FeaturedWardrobeRequest.objects.filter(
+        status="approved", 
+        updated_at__gte=three_days_ago
+    ).order_by("-updated_at")
     
     results = []
     for req in approved_requests:
@@ -1428,9 +1478,9 @@ def featured_lookbooks(request):
 
 
 @api_view(["GET", "POST"])
-def admin_feature_requests(request):
+def admin_featured_wardrobe_requests(request):
     """
-    Admin-only view to manage feature requests.
+    Admin-only view to manage featured wardrobe requests.
     """
     
 
@@ -1443,11 +1493,11 @@ def admin_feature_requests(request):
 
     if request.method == "GET":
         status_filter = request.GET.get("status")
-        queryset = FeatureRequest.objects.all().order_by("-created_at")
+        queryset = FeaturedWardrobeRequest.objects.all().order_by("-created_at")
         if status_filter:
             queryset = queryset.filter(status=status_filter)
         
-        serializer = FeatureRequestSerializer(queryset, many=True)
+        serializer = FeaturedWardrobeRequestSerializer(queryset, many=True)
         return Response(serializer.data)
 
     req_id = request.data.get("request_id")
@@ -1458,7 +1508,7 @@ def admin_feature_requests(request):
         return Response({"error": "request_id and status are required"}, status=400)
 
     try:
-        feat_req = FeatureRequest.objects.get(id=req_id)
+        feat_req = FeaturedWardrobeRequest.objects.get(id=req_id)
         feat_req.status = new_status
         feat_req.admin_feedback = feedback
         feat_req.save()
@@ -1468,7 +1518,7 @@ def admin_feature_requests(request):
             feat_req.requester.save()
 
         return Response({"message": f"Request marked as {new_status}"})
-    except FeatureRequest.DoesNotExist:
+    except FeaturedWardrobeRequest.DoesNotExist:
         return Response({"error": "Request not found"}, status=404)
 
 

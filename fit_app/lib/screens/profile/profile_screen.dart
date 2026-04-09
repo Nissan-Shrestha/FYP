@@ -1,5 +1,5 @@
 import 'package:fit_app/constants.dart';
-import 'package:fit_app/models/feature_request_model.dart';
+import 'package:fit_app/models/featured_wardrobe_model.dart';
 import 'package:fit_app/viewmodels/auth_viewmodel.dart';
 import 'package:fit_app/viewmodels/wardrobe_viewmodel.dart';
 import 'package:flutter/material.dart';
@@ -25,7 +25,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      context.read<WardrobeViewmodel>().fetchFeatureRequests();
+      context.read<WardrobeViewmodel>().fetchFeaturedWardrobeRequests();
     });
   }
 
@@ -707,10 +707,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     onTap: () => _showEditSocialsSheet(context, authVM),
                   ),
 
-                  if (wardrobeVM.featureRequests.isNotEmpty) ...[
+                  if (wardrobeVM.featuredWardrobeRequests.isNotEmpty) ...[
                     const SizedBox(height: 24),
-                    _sectionHeader("Featured Requests"),
-                    ...wardrobeVM.featureRequests.map(
+                    _sectionHeader("Featured Wardrobes"),
+                    ...wardrobeVM.featuredWardrobeRequests.map(
                       (req) => _FeatureRequestCard(request: req),
                     ),
                   ],
@@ -845,7 +845,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
 }
 
 class _FeatureRequestCard extends StatelessWidget {
-  final FeatureRequestModel request;
+  final FeaturedWardrobeModel request;
 
   const _FeatureRequestCard({required this.request});
 
@@ -900,7 +900,7 @@ class _FeatureRequestCard extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    "Wardrobe ID #${request.wardrobe}",
+                    "Wardrobe: ${request.wardrobeName ?? 'ID #${request.wardrobe}'}",
                     style: GoogleFonts.manrope(
                       fontWeight: FontWeight.bold,
                       fontSize: 12.6,

@@ -13,8 +13,8 @@ class ClothingItemDetailScreen extends StatelessWidget {
     final imageUrl = item.image == null
         ? null
         : item.image!.startsWith("http")
-            ? item.image!
-            : "${ApiConfig.serverBaseUrl}${item.image!}";
+        ? item.image!
+        : "${ApiConfig.serverBaseUrl}${item.image!}";
 
     return Scaffold(
       backgroundColor: const Color(0xffF2F2F2),
@@ -86,13 +86,19 @@ class ClothingItemDetailScreen extends StatelessWidget {
                         imageUrl,
                         fit: BoxFit.contain,
                         errorBuilder: (_, __, ___) => const Center(
-                          child: Icon(Icons.broken_image_outlined,
-                              size: 48, color: Colors.grey),
+                          child: Icon(
+                            Icons.broken_image_outlined,
+                            size: 48,
+                            color: Colors.grey,
+                          ),
                         ),
                       )
                     : const Center(
-                        child: Icon(Icons.checkroom_outlined,
-                            size: 64, color: Colors.grey),
+                        child: Icon(
+                          Icons.checkroom_outlined,
+                          size: 64,
+                          color: Colors.grey,
+                        ),
                       ),
               ),
             ),
@@ -190,4 +196,3 @@ class _PropertyRow extends StatelessWidget {
     );
   }
 }
-

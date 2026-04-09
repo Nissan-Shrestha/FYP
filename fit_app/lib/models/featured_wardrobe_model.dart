@@ -2,7 +2,7 @@ import 'package:fit_app/models/clothing_item_model.dart';
 import 'package:fit_app/models/wardrobe_model.dart';
 import 'package:fit_app/models/profile_model.dart';
 
-class FeatureRequestModel {
+class FeaturedWardrobeModel {
   final int id;
   final int requester;
   final int wardrobe;
@@ -13,7 +13,7 @@ class FeatureRequestModel {
   final DateTime createdAt;
   final DateTime updatedAt;
 
-  FeatureRequestModel({
+  FeaturedWardrobeModel({
     required this.id,
     required this.requester,
     required this.wardrobe,
@@ -25,8 +25,8 @@ class FeatureRequestModel {
     required this.updatedAt,
   });
 
-  factory FeatureRequestModel.fromJson(Map<String, dynamic> json) {
-    return FeatureRequestModel(
+  factory FeaturedWardrobeModel.fromJson(Map<String, dynamic> json) {
+    return FeaturedWardrobeModel(
       id: json['id'],
       requester: json['requester'],
       wardrobe: json['wardrobe'],
@@ -40,7 +40,7 @@ class FeatureRequestModel {
   }
 }
 
-class FeaturedLookbookModel {
+class CommunityFeaturedWardrobeModel {
   final int requestId;
   final WardrobeModel wardrobe;
   final String? adminFeedback;
@@ -53,7 +53,7 @@ class FeaturedLookbookModel {
   String get ownerUsername => owner.username;
   String? get ownerPicture => owner.profilePicture;
 
-  FeaturedLookbookModel({
+  CommunityFeaturedWardrobeModel({
     required this.requestId,
     required this.wardrobe,
     this.adminFeedback,
@@ -61,14 +61,14 @@ class FeaturedLookbookModel {
     this.previewItems,
   });
 
-  factory FeaturedLookbookModel.fromJson(Map<String, dynamic> json) {
+  factory CommunityFeaturedWardrobeModel.fromJson(Map<String, dynamic> json) {
     // Robustly handle nested JSON objects to avoid subtype errors
     final Map<String, dynamic> wardrobeJson =
         (json['wardrobe'] as Map?)?.cast<String, dynamic>() ?? {};
     final Map<String, dynamic> ownerJson =
         (json['owner'] as Map?)?.cast<String, dynamic>() ?? {};
 
-    return FeaturedLookbookModel(
+    return CommunityFeaturedWardrobeModel(
       requestId: json['request_id'] as int? ?? 0,
       wardrobe: WardrobeModel.fromJson(wardrobeJson),
       adminFeedback: json['admin_feedback'] as String?,
