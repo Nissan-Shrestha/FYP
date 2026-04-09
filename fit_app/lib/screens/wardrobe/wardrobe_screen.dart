@@ -214,7 +214,6 @@ class _WardrobeScreenState extends State<WardrobeScreen> {
     final wardrobeVM = context.watch<WardrobeViewmodel>();
     final firebaseUid = authVM.profile?.firebaseUid;
     final wardrobes = wardrobeVM.wardrobes;
-    final recentItems = wardrobeVM.clothingItems.take(10).toList();
 
     return Scaffold(
       backgroundColor: const Color(0xffF2F2F2),
@@ -226,7 +225,7 @@ class _WardrobeScreenState extends State<WardrobeScreen> {
         titleSpacing: 20,
         title: Text(
           "Wardrobe",
-          style: GoogleFonts.caveat(fontSize: 32, fontWeight: FontWeight.bold),
+          style: GoogleFonts.manrope(fontSize: 21.6, fontWeight: FontWeight.bold),
         ),
         actions: [
           IconButton(
@@ -250,119 +249,13 @@ class _WardrobeScreenState extends State<WardrobeScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const SizedBox(height: 20),
-
-              /// ================= RECENTLY ADDED =================
-              Text(
-                "Recently Added Items",
-                style: GoogleFonts.caveat(
-                  fontSize: 22,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-
-              const SizedBox(height: 20),
-
-              Row(
-                children: [
-                  /// ADD BUTTON
-                  GestureDetector(
-                    onTap: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (_) => const AddItemScreen(),
-                        ),
-                      );
-                    },
-                    child: Container(
-                      height: 60,
-                      width: 60,
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        shape: BoxShape.circle,
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.black.withValues(alpha: 0.1),
-                            blurRadius: 6,
-                            offset: const Offset(0, 3),
-                          ),
-                        ],
-                      ),
-                      child: const Icon(Icons.add),
-                    ),
-                  ),
-
-                  const SizedBox(width: 15),
-
-                  /// HORIZONTAL ITEMS
-                  Expanded(
-                    child: SizedBox(
-                      height: 80,
-                      child:
-                          wardrobeVM.isLoadingClothingItems &&
-                              recentItems.isEmpty
-                          ? const Center(child: CircularProgressIndicator())
-                          : recentItems.isEmpty
-                          ? Center(
-                              child: Text(
-                                "No items yet",
-                                style: GoogleFonts.caveat(fontSize: 16),
-                              ),
-                            )
-                          : ListView.builder(
-                              scrollDirection: Axis.horizontal,
-                              itemCount: recentItems.length,
-                              itemBuilder: (context, index) {
-                                final item = recentItems[index];
-                                final imageUrl = item.image == null
-                                    ? null
-                                    : item.image!.startsWith("http")
-                                    ? item.image!
-                                    : "${ApiConfig.serverBaseUrl}${item.image!}";
-
-                                return Padding(
-                                  padding: const EdgeInsets.only(right: 15),
-                                  child: Container(
-                                    width: 80,
-                                    decoration: BoxDecoration(
-                                      color: Colors.grey.shade300,
-                                      borderRadius: BorderRadius.circular(12),
-                                      boxShadow: [
-                                        BoxShadow(
-                                          color: Colors.black.withValues(
-                                            alpha: 0.08,
-                                          ),
-                                          blurRadius: 5,
-                                          offset: const Offset(0, 3),
-                                        ),
-                                      ],
-                                      image: imageUrl != null
-                                          ? DecorationImage(
-                                              image: NetworkImage(imageUrl),
-                                              fit: BoxFit.cover,
-                                            )
-                                          : null,
-                                    ),
-                                    child: imageUrl == null
-                                        ? const Icon(Icons.checkroom_outlined)
-                                        : null,
-                                  ),
-                                );
-                              },
-                            ),
-                    ),
-                  ),
-                ],
-              ),
-
-              const SizedBox(height: 45),
+              const SizedBox(height: 10),
 
               /// ================= WARDROBE SECTION =================
               Text(
-                "Wardrobe",
-                style: GoogleFonts.caveat(
-                  fontSize: 22,
+                "My Wardrobes",
+                style: GoogleFonts.manrope(
+                  fontSize: 17.1,
                   fontWeight: FontWeight.bold,
                 ),
               ),
@@ -376,7 +269,7 @@ class _WardrobeScreenState extends State<WardrobeScreen> {
                   padding: const EdgeInsets.symmetric(vertical: 8),
                   child: Text(
                     "No wardrobes found",
-                    style: GoogleFonts.caveat(fontSize: 18),
+                    style: GoogleFonts.manrope(fontSize: 16.2),
                   ),
                 )
               else
@@ -463,8 +356,6 @@ class _WardrobeScreenState extends State<WardrobeScreen> {
                   ),
                 ),
 
-              const SizedBox(height: 35),
-
               /// ================= CREATE NEW WARDROBE =================
               GestureDetector(
                 onTap: () {
@@ -496,20 +387,20 @@ class _WardrobeScreenState extends State<WardrobeScreen> {
                       const SizedBox(height: 10),
                       Text(
                         "Create new wardrobe",
-                        style: GoogleFonts.caveat(fontSize: 18),
+                        style: GoogleFonts.manrope(fontSize: 15.3),
                       ),
                     ],
                   ),
                 ),
               ),
 
-              const SizedBox(height: 28),
+              const SizedBox(height: 50),
 
               /// ================= ADD NEW ITEMS =================
               Text(
                 "Add new items",
-                style: GoogleFonts.caveat(
-                  fontSize: 22,
+                style: GoogleFonts.manrope(
+                  fontSize: 17.1,
                   fontWeight: FontWeight.bold,
                 ),
               ),
@@ -544,7 +435,7 @@ class _WardrobeScreenState extends State<WardrobeScreen> {
                       const SizedBox(height: 8),
                       Text(
                         "Add new items",
-                        style: GoogleFonts.caveat(fontSize: 18),
+                        style: GoogleFonts.manrope(fontSize: 15.3),
                       ),
                     ],
                   ),
@@ -603,7 +494,7 @@ class WardrobeCategoryCard extends StatelessWidget {
                 borderRadius: BorderRadius.circular(16),
                 boxShadow: [
                   BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.08),
+                    color: Colors.black.withValues(alpha: 0.08),
                     blurRadius: 6,
                     offset: const Offset(0, 3),
                   ),
@@ -658,12 +549,12 @@ class WardrobeCategoryCard extends StatelessWidget {
         const SizedBox(height: 10),
         Text(
           isDefault ? "${capitalize(title)} (Default)" : capitalize(title),
-          style: GoogleFonts.caveat(fontSize: 16, fontWeight: FontWeight.w600),
+          style: GoogleFonts.manrope(fontSize: 14.4, fontWeight: FontWeight.w600),
           textAlign: TextAlign.center,
         ),
         Text(
           "$itemCount item${itemCount == 1 ? "" : "s"}",
-          style: const TextStyle(fontSize: 11, color: Colors.black54),
+          style: const TextStyle(fontSize: 9.9, color: Colors.black54),
         ),
       ],
     );

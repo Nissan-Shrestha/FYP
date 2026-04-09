@@ -5,6 +5,7 @@ import 'package:fit_app/screens/wardrobe/clothing_item_detail_screen.dart'; // A
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import 'package:fit_app/screens/outfits/edit_outfit_screen.dart';
 
@@ -34,14 +35,14 @@ class _OutfitDetailScreenState extends State<OutfitDetailScreen> {
         return AlertDialog(
           title: Text(
             "Delete Outfit?",
-            style: GoogleFonts.caveat(
-              fontSize: 24,
+            style: GoogleFonts.manrope(
+              fontSize: 18,
               fontWeight: FontWeight.bold,
             ),
           ),
           content: Text(
             "Are you sure you want to delete '${outfit.name}'?",
-            style: const TextStyle(fontSize: 16),
+            style: const TextStyle(fontSize: 14.4),
           ),
           actions: [
             TextButton(
@@ -143,8 +144,8 @@ class _OutfitDetailScreenState extends State<OutfitDetailScreen> {
         centerTitle: true,
         title: Text(
           capitalize(outfit.name),
-          style: GoogleFonts.caveat(
-            fontSize: 28,
+          style: GoogleFonts.manrope(
+            fontSize: 19.8,
             fontWeight: FontWeight.bold,
             color: Colors.black,
           ),
@@ -172,8 +173,8 @@ class _OutfitDetailScreenState extends State<OutfitDetailScreen> {
                   ),
                   child: Text(
                     outfit.occasion,
-                    style: GoogleFonts.caveat(
-                      fontSize: 18,
+                    style: GoogleFonts.manrope(
+                      fontSize: 15.3,
                       fontWeight: FontWeight.bold,
                       color: const Color(0xff0AAE00),
                     ),
@@ -182,8 +183,8 @@ class _OutfitDetailScreenState extends State<OutfitDetailScreen> {
                 const Spacer(),
                 Text(
                   "${outfit.items.length} items",
-                  style: GoogleFonts.caveat(
-                    fontSize: 20,
+                  style: GoogleFonts.manrope(
+                    fontSize: 16.2,
                     color: Colors.grey.shade700,
                   ),
                 ),
@@ -195,8 +196,8 @@ class _OutfitDetailScreenState extends State<OutfitDetailScreen> {
             padding: const EdgeInsets.symmetric(horizontal: 20),
             child: Text(
               "Items in this Outfit",
-              style: GoogleFonts.caveat(
-                fontSize: 22,
+              style: GoogleFonts.manrope(
+                fontSize: 17.1,
                 fontWeight: FontWeight.bold,
               ),
             ),
@@ -276,7 +277,7 @@ class _OutfitDetailScreenState extends State<OutfitDetailScreen> {
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
                               style: const TextStyle(
-                                fontSize: 13,
+                                fontSize: 11.7,
                                 fontWeight: FontWeight.bold,
                               ),
                             ),
@@ -285,7 +286,7 @@ class _OutfitDetailScreenState extends State<OutfitDetailScreen> {
                               Text(
                                 capitalize(item.brand),
                                 style: const TextStyle(
-                                  fontSize: 11,
+                                  fontSize: 9.9,
                                   color: Colors.black87,
                                   fontWeight: FontWeight.w500,
                                 ),
@@ -294,7 +295,7 @@ class _OutfitDetailScreenState extends State<OutfitDetailScreen> {
                             Text(
                               capitalize(item.category),
                               style: const TextStyle(
-                                fontSize: 11,
+                                fontSize: 9.9,
                                 color: Colors.grey,
                               ),
                             ),
@@ -304,7 +305,7 @@ class _OutfitDetailScreenState extends State<OutfitDetailScreen> {
                                 child: Text(
                                   "\$${item.purchasePrice!.toStringAsFixed(2)}",
                                   style: const TextStyle(
-                                    fontSize: 12,
+                                    fontSize: 10.8,
                                     color: Color(0xff0AAE00),
                                     fontWeight: FontWeight.bold,
                                   ),
@@ -313,6 +314,37 @@ class _OutfitDetailScreenState extends State<OutfitDetailScreen> {
                           ],
                         ),
                       ),
+                      if (item.purchaseLink != null && item.purchaseLink!.isNotEmpty)
+                        Padding(
+                          padding: const EdgeInsets.fromLTRB(10, 0, 10, 10),
+                          child: GestureDetector(
+                            onTap: () => launchUrl(Uri.parse(item.purchaseLink!)),
+                            child: Container(
+                              width: double.infinity,
+                              padding: const EdgeInsets.symmetric(vertical: 6),
+                              decoration: BoxDecoration(
+                                color: const Color(0xff0AAE00),
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                              child: const Row(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Icon(Icons.shopping_cart_outlined, size: 12, color: Colors.white),
+                                  SizedBox(width: 4),
+                                  Text(
+                                    "BUY",
+                                    style: TextStyle(
+                                      color: Colors.white,
+                                      fontSize: 9,
+                                      fontWeight: FontWeight.bold,
+                                      letterSpacing: 1,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                        ),
                     ],
                   ),
                 ),
@@ -325,3 +357,4 @@ class _OutfitDetailScreenState extends State<OutfitDetailScreen> {
   );
 }
 }
+

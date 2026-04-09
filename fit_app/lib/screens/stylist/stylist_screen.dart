@@ -16,14 +16,6 @@ class _StylistScreenState extends State<StylistScreen> {
   String selectedOccasion = "Casual";
   bool useAutoWeather = true;
   String selectedManualWeather = "Clear Sky";
-  final List<String> occasions = [
-    "Casual",
-    "Work",
-    "Party",
-    "Date",
-    "Gym",
-    "Formal",
-  ];
 
   @override
   void initState() {
@@ -55,7 +47,7 @@ class _StylistScreenState extends State<StylistScreen> {
       appBar: AppBar(
         title: Text(
           "Personal Stylist",
-          style: GoogleFonts.caveat(fontWeight: FontWeight.bold, fontSize: 24),
+          style: GoogleFonts.manrope(fontWeight: FontWeight.bold, fontSize: 21.6),
         ),
         backgroundColor: Colors.transparent,
         elevation: 0,
@@ -63,11 +55,15 @@ class _StylistScreenState extends State<StylistScreen> {
       ),
       body: RefreshIndicator(
         onRefresh: () async {
-          context.read<WeatherViewmodel>().fetchWeather();
-          context.read<WardrobeViewmodel>().fetchClothingOptions();
-          context.read<StylistViewmodel>().reset();
+          final weatherVM = context.read<WeatherViewmodel>();
+          final wardrobeVM = context.read<WardrobeViewmodel>();
+          final stylistVM = context.read<StylistViewmodel>();
+
+          await weatherVM.fetchWeather();
+          await wardrobeVM.fetchClothingOptions();
+          stylistVM.reset();
         },
-        color: Colors.black,
+        color: const Color(0xFF673AB7),
         child: SingleChildScrollView(
           physics: const AlwaysScrollableScrollPhysics(),
           padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
@@ -78,13 +74,13 @@ class _StylistScreenState extends State<StylistScreen> {
               const SizedBox(height: 25),
               Text(
                 "What's the occasion?",
-                style: GoogleFonts.caveat(
-                  fontSize: 20,
+                style: GoogleFonts.manrope(
+                  fontSize: 18,
                   fontWeight: FontWeight.bold,
                 ),
               ),
               const SizedBox(height: 12),
-              _buildOccasionSelector(),
+              _buildOccasionSelector(wardrobeVM),
               const SizedBox(height: 30),
               _buildActionArea(stylistVM, weatherContext),
               const SizedBox(height: 20),
@@ -113,15 +109,15 @@ class _StylistScreenState extends State<StylistScreen> {
           children: [
             Text(
               useAutoWeather ? "Live Weather (Auto)" : "Manual Fashion Mode",
-              style: GoogleFonts.caveat(
-                fontSize: 20,
+              style: GoogleFonts.manrope(
+                fontSize: 18,
                 fontWeight: FontWeight.bold,
               ),
             ),
             Switch(
               value: useAutoWeather,
               onChanged: (val) => setState(() => useAutoWeather = val),
-              activeThumbColor: Colors.black,
+              activeThumbColor: const Color(0xFF673AB7),
             ),
           ],
         ),
@@ -152,7 +148,7 @@ class _StylistScreenState extends State<StylistScreen> {
               label: Text(w),
               selected: isActive,
               onSelected: (val) => setState(() => selectedManualWeather = w),
-              selectedColor: Colors.black,
+              selectedColor: const Color(0xFF673AB7),
               labelStyle: TextStyle(
                 color: isActive ? Colors.white : Colors.black,
                 fontWeight: FontWeight.bold,
@@ -169,11 +165,14 @@ class _StylistScreenState extends State<StylistScreen> {
 
   Widget _buildWeatherHeader(WeatherViewmodel weatherVM) {
     final weather = weatherVM.weather;
+    final isLoading = weatherVM.isLoading;
+    final error = weatherVM.error;
+
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.all(20),
+      padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(24),
+        borderRadius: BorderRadius.circular(28),
         gradient: const LinearGradient(
           colors: [Color(0xFF667eea), Color(0xFF764ba2)],
           begin: Alignment.topLeft,
@@ -181,71 +180,161 @@ class _StylistScreenState extends State<StylistScreen> {
         ),
         boxShadow: [
           BoxShadow(
-            color: const Color(0xFF764ba2).withValues(alpha: 0.3),
-            blurRadius: 15,
-            offset: const Offset(0, 8),
+            color: const Color(0xFF764ba2).withValues(alpha: 0.35),
+            blurRadius: 20,
+            offset: const Offset(0, 10),
           ),
         ],
       ),
-      child: Row(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          if (weather != null)
-            Image.network(
-              "https://openweathermap.org/img/wn/${weather.icon}@2x.png",
-              width: 60,
-              height: 60,
-            )
-          else
-            const Icon(Icons.wb_sunny, color: Colors.white, size: 40),
-          const SizedBox(width: 15),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  weather != null
-                      ? "${weather.temperature.toStringAsFixed(1)}°C"
-                      : "--°C",
-                  style: const TextStyle(
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                "LOCAL ATMOSPHERE",
+                style: GoogleFonts.manrope(
+                  fontSize: 9.9,
+                  fontWeight: FontWeight.w900,
+                  color: Colors.white.withValues(alpha: 0.6),
+                  letterSpacing: 2.0,
+                ),
+              ),
+              if (isLoading)
+                const SizedBox(
+                  width: 14,
+                  height: 14,
+                  child: CircularProgressIndicator(
+                    strokeWidth: 2,
                     color: Colors.white,
-                    fontSize: 28,
-                    fontWeight: FontWeight.bold,
+                  ),
+                )
+              else
+                GestureDetector(
+                  onTap: () => weatherVM.fetchWeather(),
+                  child: Icon(
+                    Icons.refresh_rounded,
+                    size: 18,
+                    color: Colors.white.withValues(alpha: 0.7),
                   ),
                 ),
-                Text(
-                  weather != null
-                      ? weather.description.toUpperCase()
-                      : "FETCHING WEATHER...",
-                  style: const TextStyle(
-                    color: Colors.white70,
-                    fontSize: 13,
-                    fontWeight: FontWeight.w500,
-                  ),
-                ),
-              ],
-            ),
+            ],
           ),
+          const SizedBox(height: 16),
+          if (error != null && weather == null)
+            _buildWeatherError(error)
+          else
+            _buildWeatherMain(weather),
         ],
       ),
     );
   }
 
-  Widget _buildOccasionSelector() {
+  Widget _buildWeatherError(String message) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          "Connection Issue",
+          style: GoogleFonts.manrope(
+            fontSize: 16.2,
+            fontWeight: FontWeight.bold,
+            color: Colors.white,
+          ),
+        ),
+        const SizedBox(height: 4),
+        Text(
+          "Using style fallback. Tap refresh to retry.",
+          style: GoogleFonts.manrope(
+            fontSize: 11.7,
+            color: Colors.white.withValues(alpha: 0.8),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildWeatherMain(dynamic weather) {
+    return Row(
+      children: [
+        if (weather != null)
+          Image.network(
+            "https://openweathermap.org/img/wn/${weather.icon}@2x.png",
+            width: 60,
+            height: 60,
+          )
+        else
+          Container(
+            padding: const EdgeInsets.all(10),
+            decoration: BoxDecoration(
+              color: Colors.white.withValues(alpha: 0.1),
+              shape: BoxShape.circle,
+            ),
+            child: const Icon(Icons.wb_cloudy_rounded, color: Colors.white, size: 28),
+          ),
+        const SizedBox(width: 20),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                weather != null
+                    ? "${weather.temperature.toStringAsFixed(0)}\u00B0C"
+                    : "--\u00B0C",
+                style: GoogleFonts.manrope(
+                  fontSize: 28.8,
+                  fontWeight: FontWeight.w900,
+                  color: Colors.white,
+                  letterSpacing: -1,
+                ),
+              ),
+              Text(
+                weather != null
+                    ? "${weather.cityName} \u2022 ${weather.description.toUpperCase()}"
+                    : "PREPARING WEATHER DATA...",
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: GoogleFonts.manrope(
+                  fontSize: 11.7,
+                  color: Colors.white.withValues(alpha: 0.9),
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildOccasionSelector(WardrobeViewmodel wardrobeVM) {
+    final dynamicOccasions = wardrobeVM.getOptionsByType("occasion");
+    
+    // Fallback if DB hasn't loaded or is empty
+    final list = dynamicOccasions.isNotEmpty 
+        ? dynamicOccasions 
+        : ["Casual", "Work", "Party", "Date", "Gym", "Formal"];
+
     return SizedBox(
       height: 45,
       child: ListView.builder(
         scrollDirection: Axis.horizontal,
-        itemCount: occasions.length,
+        itemCount: list.length,
         itemBuilder: (context, index) {
-          final occ = occasions[index];
+          final occ = list[index];
           final isActive = selectedOccasion == occ;
           return Padding(
             padding: const EdgeInsets.only(right: 10),
             child: ChoiceChip(
               label: Text(occ),
               selected: isActive,
-              onSelected: (val) => setState(() => selectedOccasion = occ),
-              selectedColor: Colors.black,
+              onSelected: (val) {
+                if (val) {
+                  setState(() => selectedOccasion = occ);
+                }
+              },
+              selectedColor: const Color(0xFF673AB7),
               labelStyle: TextStyle(
                 color: isActive ? Colors.white : Colors.black,
                 fontWeight: FontWeight.bold,
@@ -270,7 +359,7 @@ class _StylistScreenState extends State<StylistScreen> {
                 weather: weatherContext,
               ),
         style: ElevatedButton.styleFrom(
-          backgroundColor: Colors.black,
+          backgroundColor: const Color(0xFF673AB7),
           padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 15),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(30),
@@ -313,8 +402,8 @@ class _StylistScreenState extends State<StylistScreen> {
             padding: const EdgeInsets.only(bottom: 12),
             child: Text(
               stylistVM.lookName!.toUpperCase(),
-              style: GoogleFonts.inter(
-                fontSize: 16,
+              style: GoogleFonts.manrope(
+                fontSize: 14.4,
                 fontWeight: FontWeight.w900,
                 letterSpacing: 2.5,
                 color: Colors.black.withValues(alpha: 0.7),
@@ -335,8 +424,8 @@ class _StylistScreenState extends State<StylistScreen> {
               Expanded(
                 child: Text(
                   stylistVM.stylistTip ?? "",
-                  style: GoogleFonts.inter(
-                    fontSize: 14,
+                  style: GoogleFonts.manrope(
+                    fontSize: 12.6,
                     fontStyle: FontStyle.italic,
                   ),
                 ),
@@ -397,7 +486,7 @@ class _StylistScreenState extends State<StylistScreen> {
                           item.category,
                           style: const TextStyle(
                             fontWeight: FontWeight.bold,
-                            fontSize: 12,
+                            fontSize: 10.8,
                           ),
                           maxLines: 1,
                         ),
@@ -421,7 +510,7 @@ class _StylistScreenState extends State<StylistScreen> {
                             Text(
                               item.color,
                               style: const TextStyle(
-                                fontSize: 10,
+                                fontSize: 9,
                                 color: Colors.grey,
                               ),
                             ),

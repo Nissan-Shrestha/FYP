@@ -29,7 +29,7 @@ class PlanScreen extends StatelessWidget {
         tileColor: Colors.white,
         accentColor: Color(0xFFC7CCA0),
         billingText: "Billed Annually",
-        priceText: "25\$/yr",
+        priceText: "\$25/yr",
       ),
     ];
 
@@ -69,8 +69,8 @@ class PlanScreen extends StatelessWidget {
         centerTitle: true,
         title: Text(
           "Subscription",
-          style: GoogleFonts.caveat(
-            fontSize: 30,
+          style: GoogleFonts.manrope(
+            fontSize: 19.8,
             fontWeight: FontWeight.bold,
             color: Colors.black,
           ),
@@ -105,8 +105,8 @@ class _PlanSection extends StatelessWidget {
           padding: const EdgeInsets.only(left: 2, bottom: 10),
           child: Text(
             plan.title,
-            style: GoogleFonts.caveat(
-              fontSize: 26,
+            style: GoogleFonts.manrope(
+              fontSize: 18,
               fontWeight: FontWeight.bold,
               color: Colors.black,
             ),
@@ -156,15 +156,15 @@ class _PlanSection extends StatelessWidget {
                           children: [
                             Text(
                               "Current Plan",
-                              style: GoogleFonts.caveat(
-                                fontSize: 14,
+                              style: GoogleFonts.manrope(
+                                fontSize: 12.6,
                                 color: Colors.black54,
                               ),
                             ),
                             Text(
                               plan.billingText,
-                              style: GoogleFonts.caveat(
-                                fontSize: 17,
+                              style: GoogleFonts.manrope(
+                                fontSize: 15.3,
                                 color: Colors.black87,
                                 fontWeight: FontWeight.w600,
                               ),
@@ -176,8 +176,8 @@ class _PlanSection extends StatelessWidget {
                       Expanded(
                         child: Text(
                           plan.billingText,
-                          style: GoogleFonts.caveat(
-                            fontSize: 17,
+                          style: GoogleFonts.manrope(
+                            fontSize: 15.3,
                             color: Colors.black87,
                             fontWeight: FontWeight.w600,
                           ),
@@ -196,8 +196,8 @@ class _PlanSection extends StatelessWidget {
                         ),
                         child: Text(
                           "Recommended",
-                          style: GoogleFonts.caveat(
-                            fontSize: 12,
+                          style: GoogleFonts.manrope(
+                            fontSize: 10.8,
                             color: plan.accentColor,
                             fontWeight: FontWeight.bold,
                           ),
@@ -207,8 +207,8 @@ class _PlanSection extends StatelessWidget {
                       const SizedBox(width: 8),
                     Text(
                       plan.priceText,
-                      style: GoogleFonts.caveat(
-                        fontSize: 24,
+                      style: GoogleFonts.manrope(
+                        fontSize: 18,
                         fontWeight: FontWeight.bold,
                         color: Colors.black,
                       ),
@@ -231,8 +231,8 @@ class _PlanSection extends StatelessWidget {
                   ),
                   child: Text(
                     "See Details",
-                    style: GoogleFonts.caveat(
-                      fontSize: 17,
+                    style: GoogleFonts.manrope(
+                      fontSize: 15.3,
                       color: Colors.black,
                       fontWeight: FontWeight.w600,
                     ),
@@ -264,4 +264,5 @@ class _PlanData {
     required this.priceText,
   });
 }
+
 

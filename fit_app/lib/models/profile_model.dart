@@ -9,8 +9,11 @@ class ProfileModel {
   final int outfitsCount;
   final int outfitsLimit;
 
-  final String currency;
   final String? profilePicture;
+  final String? bio;
+  final Map<String, dynamic>? socialLinks;
+  final bool isFeatured;
+  final bool isAdmin;
 
   String? get fullProfilePictureUrl {
     if (profilePicture == null) return null;
@@ -21,6 +24,13 @@ class ProfileModel {
           .replaceAll("127.0.0.1", "192.168.1.67");
     }
     return "http://192.168.1.67:8000$profilePicture";
+  }
+
+  String get socialHandle {
+    if (socialLinks == null) return "";
+    if (socialLinks!.containsKey('instagram')) return socialLinks!['instagram'];
+    if (socialLinks!.containsKey('tiktok')) return socialLinks!['tiktok'];
+    return "";
   }
 
   ProfileModel({
@@ -34,8 +44,11 @@ class ProfileModel {
     required this.outfitsCount,
     required this.outfitsLimit,
 
-    required this.currency,
     this.profilePicture,
+    this.bio,
+    this.socialLinks,
+    this.isFeatured = false,
+    this.isAdmin = false,
   });
 
   factory ProfileModel.fromJson(Map<String, dynamic> json) {
@@ -50,12 +63,22 @@ class ProfileModel {
       outfitsCount: json['outfits_count'],
       outfitsLimit: json['outfits_limit'],
 
-      currency: json['currency'],
       profilePicture: json['profile_picture'],
+      bio: json['bio'],
+      socialLinks: json['social_links'] as Map<String, dynamic>?,
+      isFeatured: json['is_featured'] ?? false,
+      isAdmin: json['is_admin'] ?? false,
     );
   }
 
-  ProfileModel copyWith({String? username, String? profilePicture}) {
+  ProfileModel copyWith({
+    String? username,
+    String? profilePicture,
+    String? bio,
+    Map<String, dynamic>? socialLinks,
+    bool? isFeatured,
+    bool? isAdmin,
+  }) {
     return ProfileModel(
       id: id,
       firebaseUid: firebaseUid,
@@ -67,8 +90,11 @@ class ProfileModel {
       outfitsCount: outfitsCount,
       outfitsLimit: outfitsLimit,
 
-      currency: currency,
       profilePicture: profilePicture ?? this.profilePicture,
+      bio: bio ?? this.bio,
+      socialLinks: socialLinks ?? this.socialLinks,
+      isFeatured: isFeatured ?? this.isFeatured,
+      isAdmin: isAdmin ?? this.isAdmin,
     );
   }
 }

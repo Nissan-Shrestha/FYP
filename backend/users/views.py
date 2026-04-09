@@ -10,8 +10,8 @@ import os
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
 from .firebase_auth import get_firebase_uid
-from .models import ClothingItem, Profile, Wardrobe, ClothingOption, Outfit, Schedule
-from .serializers import ClothingItemSerializer, ProfileSerializer, WardrobeSerializer, ClothingOptionSerializer, OutfitSerializer, ScheduleSerializer
+from .models import ClothingItem, Profile, Wardrobe, ClothingOption, Outfit, Schedule, Report, FeatureRequest
+from .serializers import ClothingItemSerializer, ProfileSerializer, WardrobeSerializer, ClothingOptionSerializer, OutfitSerializer, ScheduleSerializer, ReportSerializer, FeatureRequestSerializer
 
 def _map_category_to_item_type(category_name):
     """
@@ -131,6 +131,8 @@ def outfits(request):
     profile, error_response = _get_profile_by_firebase_uid(firebase_uid)
     if error_response:
         return error_response
+
+    request.user_profile = profile
 
     if request.method == "GET":
         queryset = Outfit.objects.filter(owner=profile).order_by("-created_at")
@@ -291,7 +293,7 @@ def stylist_recommend(request):
         
         # Clean response string
         if not response.text:
-            print(f"Stylist AI Warning: Received EMPTY response from {model}. Feedback: {response.prompt_feedback}")
+            print(f"Stylist AI Warning: Received EMPTY response from gemini-2.5-flash. Feedback: {response.prompt_feedback}")
             return Response({"error": "The stylist is feeling shy right now. Try again!"}, status=500)
             
         raw_text = response.text.replace("```json", "").replace("```", "").strip()
@@ -338,6 +340,8 @@ def outfit_detail(request, outfit_id):
     profile, error_response = _get_profile_by_firebase_uid(firebase_uid)
     if error_response:
         return error_response
+
+    request.user_profile = profile
 
     try:
         outfit = Outfit.objects.get(id=outfit_id, owner=profile)
@@ -392,14 +396,15 @@ def explore_outfits(request):
     """
     Returns all public outfits from all users with pagination and optional filtering. 
     """
-    from .models import Outfit
-    from .serializers import OutfitSerializer
     from django.core.paginator import Paginator
     
-    auth_header = request.headers.get("Authorization")
-    if not auth_header or not auth_header.startswith("Bearer "):
-        return Response({"error": "Unauthorized"}, status=401)
-        
+    firebase_uid, err = get_firebase_uid(request)
+    if err:
+        return err
+    profile, _ = _get_profile_by_firebase_uid(firebase_uid)
+    if profile:
+        request.user_profile = profile
+
     outfits = Outfit.objects.filter(is_public=True).order_by('-created_at')
     
     # Apply Filters
@@ -407,8 +412,6 @@ def explore_outfits(request):
     season = request.GET.get("season")
     if occasion:
         outfits = outfits.filter(occasion__iexact=occasion)
-    if season:
-        outfits = outfits.filter(season__iexact=season)
     
     page_num = request.GET.get("page", 1)
     page_size = 10
@@ -618,6 +621,19 @@ def get_or_create_profile(request):
         if request.FILES.get("profile_picture"):
             profile.profile_picture = request.FILES["profile_picture"]
 
+        # HANDLE NEW FIELDS
+        if "bio" in request.data:
+            profile.bio = request.data["bio"]
+        if "social_links" in request.data:
+            social_links = request.data["social_links"]
+            if isinstance(social_links, str):
+                try:
+                    profile.social_links = json.loads(social_links)
+                except json.JSONDecodeError:
+                    pass
+            elif isinstance(social_links, dict):
+                profile.social_links = social_links
+
         profile.save()
 
     serializer = ProfileSerializer(profile, context={"request": request})
@@ -693,6 +709,7 @@ def clothing_items(request):
         purchase_price=serializer.validated_data.get("purchase_price"),
         image=processed_image,
         layer_level=layer_level,
+        purchase_link=request.data.get("purchase_link"),
     )
 
     default_wardrobe.items.add(item)
@@ -733,17 +750,11 @@ def clothing_item_detail(request, item_id):
                 return error_response
             item.purchase_price = parsed_price
 
-        if "purchase_date" in request.data:
-            parsed_date, error_response = _parse_optional_date(
-                request.data.get("purchase_date"),
-                "purchase_date",
-            )
-            if error_response:
-                return error_response
-            item.purchase_date = parsed_date
-
         if request.FILES.get("image"):
             item.image = _process_background_removal(request.FILES["image"])
+
+        if "purchase_link" in request.data:
+            item.purchase_link = request.data.get("purchase_link")
 
         # Enforce required fields after partial update.
         missing = [
@@ -849,16 +860,24 @@ def wardrobe_items(request, wardrobe_id):
         queryset = wardrobe.items.filter(owner=profile).order_by("-created_at")
         return Response(ClothingItemSerializer(queryset, many=True, context={"request": request}).data)
 
-    item_id = request.data.get("item_id")
-    if not item_id:
-        return Response({"error": "item_id is required"}, status=400)
+    item_ids = request.data.get("item_ids", [])
+    if not isinstance(item_ids, list):
+        item_ids = []
 
-    try:
-        item = ClothingItem.objects.get(id=item_id, owner=profile)
-    except ClothingItem.DoesNotExist:
-        return Response({"error": "Clothing item not found"}, status=404)
+    # Support single item_id for backward compatibility
+    single_item_id = request.data.get("item_id")
+    if single_item_id:
+        item_ids.append(single_item_id)
 
-    wardrobe.items.add(item)
+    if not item_ids:
+        return Response({"error": "item_id or item_ids is required"}, status=400)
+
+    # Bulk fetch items owned by profile
+    items = ClothingItem.objects.filter(id__in=item_ids, owner=profile)
+    if not items.exists():
+        return Response({"error": "No valid clothing items found"}, status=404)
+
+    wardrobe.items.add(*items)
     return Response(WardrobeSerializer(wardrobe, context={"request": request}).data, status=200)
 
 
@@ -909,7 +928,6 @@ def admin_dashboard_data(request):
         return Response({"error": "Admin access required"}, status=403)
 
     from django.db.models import Count
-    from .models import Outfit, Report
     
     stats = {
         "total_users": Profile.objects.count(),
@@ -921,8 +939,8 @@ def admin_dashboard_data(request):
         "pending_reports": Report.objects.filter(status='pending').count(),
     }
 
-    # Get the 10 most recent profiles based on ID (as proxy for signup time)
-    recent_users_qs = Profile.objects.all().order_by("-id")[:10]
+    # Get the 5 most recent profiles based on ID (as proxy for signup time)
+    recent_users_qs = Profile.objects.all().order_by("-id")[:5]
     users_data = ProfileSerializer(recent_users_qs, many=True, context={"request": request}).data
 
     # Get top 5 popular public outfits
@@ -1151,7 +1169,6 @@ def admin_user_view(request, firebase_uid):
         return Response({"error": "User not found"}, status=404)
 
     from .models import Outfit
-    from .serializers import OutfitSerializer
     
     wardrobes_qs = Wardrobe.objects.filter(owner=target_profile)
     items_qs = ClothingItem.objects.filter(owner=target_profile)
@@ -1170,7 +1187,7 @@ def create_report(request):
     """
     Creates a new report for an outfit.
     """
-    from .models import Report, Outfit
+    
     
     firebase_uid, err = get_firebase_uid(request)
     if err:
@@ -1200,8 +1217,7 @@ def admin_report_list(request):
     """
     Lists all reports. Admin only.
     """
-    from .models import Report
-    from .serializers import ReportSerializer
+    
     
     firebase_uid, err = get_firebase_uid(request)
     if err:
@@ -1222,7 +1238,7 @@ def admin_report_action(request, report_id):
     Takes an action on a report. Admin only.
     Actions: 'ignore', 'resolve', 'delete_outfit'
     """
-    from .models import Report
+    
     
     firebase_uid, err = get_firebase_uid(request)
     if err:
@@ -1263,8 +1279,7 @@ def admin_report_view(request, report_id):
     """
     Returns single report details. Admin only.
     """
-    from .models import Report
-    from .serializers import ReportSerializer
+    
     
     firebase_uid, err = get_firebase_uid(request)
     if err:
@@ -1319,3 +1334,166 @@ def admin_moderation_reset(request, firebase_uid):
 
 
 
+@api_view(["GET", "POST"])
+def feature_requests(request):
+    """
+    User-managed feature requests. 
+    POST: Create a new request.
+    GET: List user's requests.
+    """
+    
+
+    firebase_uid, err = get_firebase_uid(request)
+    if err: return err
+    profile, _ = _get_profile_by_firebase_uid(firebase_uid)
+
+    if request.method == "GET":
+        requests = FeatureRequest.objects.filter(requester=profile).order_by("-created_at")
+        serializer = FeatureRequestSerializer(requests, many=True)
+        return Response(serializer.data)
+
+    # POST: Create request
+    wardrobe_id = request.data.get("wardrobe_id")
+    if not wardrobe_id:
+        return Response({"error": "wardrobe_id is required"}, status=400)
+
+    try:
+        wardrobe = Wardrobe.objects.get(id=wardrobe_id, owner=profile)
+    except Wardrobe.DoesNotExist:
+        return Response({"error": "Wardrobe not found"}, status=404)
+
+    # Prevent duplicates for same wardrobe if already pending/approved
+    if FeatureRequest.objects.filter(requester=profile, wardrobe=wardrobe, status__in=['pending', 'approved']).exists():
+        return Response({"error": "A request for this wardrobe is already active."}, status=400)
+
+    feat_request = FeatureRequest.objects.create(
+        requester=profile,
+        wardrobe=wardrobe
+    )
+    return Response(FeatureRequestSerializer(feat_request).data, status=201)
+
+
+@api_view(["GET", "DELETE"])
+def feature_request_detail(request, request_id):
+    """
+    Manage an individual feature request.
+    """
+    
+
+    firebase_uid, err = get_firebase_uid(request)
+    if err: return err
+    profile, _ = _get_profile_by_firebase_uid(firebase_uid)
+
+    try:
+        feat_req = FeatureRequest.objects.get(id=request_id, requester=profile)
+    except FeatureRequest.DoesNotExist:
+        return Response({"error": "Request not found"}, status=404)
+
+    if request.method == "GET":
+        return Response(FeatureRequestSerializer(feat_req).data)
+
+    # DELETE: Cancel request
+    if feat_req.status != "pending":
+        return Response({"error": "Only pending requests can be cancelled."}, status=400)
+    
+    feat_req.delete()
+    return Response(status=204)
+
+
+@api_view(["GET"])
+def featured_lookbooks(request):
+    """
+    Returns lookbooks (wardrobes) that have been approved as featured.
+    Used on the Explore Screen.
+    """
+    
+
+    approved_requests = FeatureRequest.objects.filter(status="approved").order_by("-updated_at")
+    
+    results = []
+    for req in approved_requests:
+        # Get first 4 items for preview
+        preview_items = req.wardrobe.items.all()[:4]
+        preview_data = ClothingItemSerializer(preview_items, many=True, context={"request": request}).data
+
+        results.append({
+            "request_id": req.id,
+            "wardrobe": WardrobeSerializer(req.wardrobe, context={"request": request}).data,
+            "preview_items": preview_data,
+            "admin_feedback": req.admin_feedback,
+            "owner": ProfileSerializer(req.requester, context={"request": request}).data
+        })
+    
+    return Response(results)
+
+
+@api_view(["GET", "POST"])
+def admin_feature_requests(request):
+    """
+    Admin-only view to manage feature requests.
+    """
+    
+
+    firebase_uid_req, err = get_firebase_uid(request)
+    if err: return err
+    profile_req, _ = _get_profile_by_firebase_uid(firebase_uid_req)
+
+    if not profile_req.is_admin:
+        return Response({"error": "Admin access required"}, status=403)
+
+    if request.method == "GET":
+        status_filter = request.GET.get("status")
+        queryset = FeatureRequest.objects.all().order_by("-created_at")
+        if status_filter:
+            queryset = queryset.filter(status=status_filter)
+        
+        serializer = FeatureRequestSerializer(queryset, many=True)
+        return Response(serializer.data)
+
+    req_id = request.data.get("request_id")
+    new_status = request.data.get("status")
+    feedback = request.data.get("feedback", "")
+
+    if not req_id or not new_status:
+        return Response({"error": "request_id and status are required"}, status=400)
+
+    try:
+        feat_req = FeatureRequest.objects.get(id=req_id)
+        feat_req.status = new_status
+        feat_req.admin_feedback = feedback
+        feat_req.save()
+
+        if new_status == "approved":
+            feat_req.requester.is_featured = True
+            feat_req.requester.save()
+
+        return Response({"message": f"Request marked as {new_status}"})
+    except FeatureRequest.DoesNotExist:
+        return Response({"error": "Request not found"}, status=404)
+
+
+@api_view(["GET"])
+def admin_wardrobe_view(request, wardrobe_id):
+    """
+    Allows admin to view ANY wardrobe and its items for review.
+    """
+    
+
+    firebase_uid_req, err = get_firebase_uid(request)
+    if err: return err
+    profile_req, _ = _get_profile_by_firebase_uid(firebase_uid_req)
+
+    if not profile_req.is_admin:
+        return Response({"error": "Admin access required"}, status=403)
+
+    try:
+        wardrobe = Wardrobe.objects.get(id=wardrobe_id)
+        serializer = WardrobeSerializer(wardrobe, context={"request": request})
+        data = serializer.data
+        
+        items_queryset = wardrobe.items.all()
+        data["items_details"] = ClothingItemSerializer(items_queryset, many=True, context={"request": request}).data
+        
+        return Response(data)
+    except Wardrobe.DoesNotExist:
+        return Response({"error": "Wardrobe not found"}, status=404)

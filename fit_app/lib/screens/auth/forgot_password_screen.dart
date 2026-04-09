@@ -62,8 +62,8 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
               Text(
                 "Enter your email to receive a password reset link",
                 textAlign: TextAlign.center,
-                style: GoogleFonts.caveat(
-                  fontSize: 16,
+                style: GoogleFonts.manrope(
+                  fontSize: 14.4,
                   fontWeight: FontWeight.w600,
                 ),
               ),
@@ -87,8 +87,8 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                   controller: _emailController,
                   decoration: InputDecoration(
                     hintText: 'Email Address',
-                    hintStyle: GoogleFonts.caveat(
-                      fontSize: 16,
+                    hintStyle: GoogleFonts.manrope(
+                      fontSize: 14.4,
                       fontWeight: FontWeight.w400,
                     ),
                     border: InputBorder.none,
@@ -125,8 +125,8 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                   child: Center(
                     child: Text(
                       "Continue",
-                      style: GoogleFonts.caveat(
-                        fontSize: 28,
+                      style: GoogleFonts.manrope(
+                        fontSize: 19.8,
                         fontWeight: FontWeight.w800,
                         color: Colors.white,
                       ),
@@ -142,8 +142,8 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                 onTap: () => Navigator.pop(context),
                 child: Text(
                   "Back to Login",
-                  style: GoogleFonts.caveat(
-                    fontSize: 16,
+                  style: GoogleFonts.manrope(
+                    fontSize: 14.4,
                     fontWeight: FontWeight.w600,
                     color: Colors.green,
                   ),
@@ -156,4 +156,5 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
     );
   }
 }
+
 

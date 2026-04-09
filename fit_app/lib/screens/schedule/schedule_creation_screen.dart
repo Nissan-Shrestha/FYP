@@ -139,8 +139,8 @@ class _ScheduleCreationScreenState extends State<ScheduleCreationScreen> {
         centerTitle: true,
         title: Text(
           "New Schedule",
-          style: GoogleFonts.caveat(
-            fontSize: 28,
+          style: GoogleFonts.manrope(
+            fontSize: 19.8,
             fontWeight: FontWeight.w700,
             color: Colors.black,
           ),
@@ -153,7 +153,7 @@ class _ScheduleCreationScreenState extends State<ScheduleCreationScreen> {
           children: [
             Text(
               "What's the occasion?",
-              style: GoogleFonts.caveat(fontSize: 20, fontWeight: FontWeight.w600),
+              style: GoogleFonts.manrope(fontSize: 16.2, fontWeight: FontWeight.w600),
             ),
             const SizedBox(height: 12),
             _buildTextField(
@@ -186,7 +186,7 @@ class _ScheduleCreationScreenState extends State<ScheduleCreationScreen> {
             const SizedBox(height: 32),
             Text(
               "Pick an Outfit",
-              style: GoogleFonts.caveat(fontSize: 20, fontWeight: FontWeight.w600),
+              style: GoogleFonts.manrope(fontSize: 16.2, fontWeight: FontWeight.w600),
             ),
             const SizedBox(height: 16),
             if (outfitVM.isLoading)
@@ -218,8 +218,8 @@ class _ScheduleCreationScreenState extends State<ScheduleCreationScreen> {
                       )
                     : Text(
                         "Confirm Selection",
-                        style: GoogleFonts.caveat(
-                          fontSize: 20,
+                        style: GoogleFonts.manrope(
+                          fontSize: 16.2,
                           fontWeight: FontWeight.w700,
                         ),
                       ),
@@ -250,10 +250,10 @@ class _ScheduleCreationScreenState extends State<ScheduleCreationScreen> {
       ),
       child: TextField(
         controller: controller,
-        style: GoogleFonts.caveat(fontSize: 18),
+        style: GoogleFonts.manrope(fontSize: 15.3),
         decoration: InputDecoration(
           hintText: hint,
-          hintStyle: GoogleFonts.caveat(color: Colors.grey, fontSize: 18),
+          hintStyle: GoogleFonts.manrope(color: Colors.grey, fontSize: 15.3),
           prefixIcon: Icon(icon, color: const Color(0xFF10A8F5)),
           border: InputBorder.none,
           contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
@@ -275,7 +275,7 @@ class _ScheduleCreationScreenState extends State<ScheduleCreationScreen> {
         children: [
           Text(
             label,
-            style: GoogleFonts.caveat(fontSize: 16, color: Colors.grey.shade700),
+            style: GoogleFonts.manrope(fontSize: 14.4, color: Colors.grey.shade700),
           ),
           const SizedBox(height: 8),
           Container(
@@ -299,8 +299,8 @@ class _ScheduleCreationScreenState extends State<ScheduleCreationScreen> {
                 Expanded(
                   child: Text(
                     value,
-                    style: GoogleFonts.caveat(
-                      fontSize: 18,
+                    style: GoogleFonts.manrope(
+                      fontSize: 15.3,
                       fontWeight: FontWeight.w600,
                     ),
                   ),
@@ -380,8 +380,8 @@ class _ScheduleCreationScreenState extends State<ScheduleCreationScreen> {
                   const SizedBox(height: 12),
                   Text(
                     capitalize(outfit.name),
-                    style: GoogleFonts.caveat(
-                      fontSize: 18,
+                    style: GoogleFonts.manrope(
+                      fontSize: 15.3,
                       fontWeight: FontWeight.w700,
                       color: Colors.black87,
                     ),
@@ -391,7 +391,7 @@ class _ScheduleCreationScreenState extends State<ScheduleCreationScreen> {
                   Text(
                     "${outfit.items.length} Items",
                     style: const TextStyle(
-                      fontSize: 12,
+                      fontSize: 10.8,
                       color: Colors.black54,
                       fontWeight: FontWeight.w500,
                     ),
@@ -462,13 +462,13 @@ class _ScheduleCreationScreenState extends State<ScheduleCreationScreen> {
           const SizedBox(height: 12),
           Text(
             "No outfits found",
-            style: GoogleFonts.caveat(fontSize: 20, color: Colors.grey.shade600),
+            style: GoogleFonts.manrope(fontSize: 16.2, color: Colors.grey.shade600),
           ),
           const SizedBox(height: 4),
           Text(
             "Create an outfit first to schedule it.",
             textAlign: TextAlign.center,
-            style: GoogleFonts.caveat(fontSize: 16, color: Colors.grey),
+            style: GoogleFonts.manrope(fontSize: 14.4, color: Colors.grey),
           ),
         ],
       ),
@@ -505,3 +505,4 @@ class _MiniPreviewBox extends StatelessWidget {
     );
   }
 }
+

@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Users Management | Wardrobe Admin</title>
+    <title>Feature Requests | Wardrobe Admin</title>
     
     <!-- Bootstrap CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
@@ -28,13 +28,13 @@
                         <a class="nav-link" href="index.html">Dashboard</a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link active" aria-current="page" href="users.html">Users</a>
+                        <a class="nav-link" href="users.html">Users</a>
                     </li>
                     <li class="nav-item">
                         <a class="nav-link" id="nav-reports" href="reports.html">Reports</a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link" href="feature_requests.html">Feature Requests</a>
+                        <a class="nav-link active" aria-current="page" href="feature_requests.html">Feature Requests</a>
                     </li>
                     <li class="nav-item">
                         <a class="nav-link" href="categories.html">App Options</a>
@@ -55,87 +55,61 @@
     <!-- Main Content Area -->
     <div class="container mt-5">
         <div class="d-flex justify-content-between align-items-center mb-4">
-            <h2>User Management</h2>
+            <h2>Feature Requests Management</h2>
             <button class="btn btn-primary" onclick="location.reload()"><i class="bi bi-arrow-clockwise me-1"></i>Refresh</button>
         </div>
 
         <!-- Data Table Section -->
         <div class="card shadow-sm border-0">
             <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
-                <h5 class="mb-0 fw-bold">All Registered Users</h5>
-                <span id="user-count-badge" class="badge bg-primary rounded-pill">... users</span>
+                <h5 class="mb-0 fw-bold">Pending Requests</h5>
+                <span id="request-count-badge" class="badge bg-primary rounded-pill">0 requests</span>
             </div>
             <div class="card-body p-0">
                 <div class="table-responsive">
                     <table class="table table-hover align-middle mb-0">
                         <thead class="table-light">
                             <tr>
-                                <th>Username</th>
-                                <th>Email</th>
-                                <th>Plan</th>
-                                <th>Role</th>
-                                <th>Joined</th>
-                                <th>Actions</th>
+                                <th>Requester</th>
+                                <th>Wardrobe ID</th>
+                                <th>Submitted Date</th>
+                                <th>Status</th>
+                                <th class="text-end">Actions</th>
                             </tr>
                         </thead>
-                        <tbody id="all-users-table-body">
+                        <tbody id="requests-table-body">
                             <tr>
-                                <td colspan="6" class="text-center py-5">
+                                <td colspan="5" class="text-center py-5">
                                     <div class="spinner-border text-primary" role="status">
                                         <span class="visually-hidden">Loading...</span>
                                     </div>
-                                    <p class="mt-2 text-muted">Retrieving users data...</p>
+                                    <p class="mt-2 text-muted">Retrieving feature requests...</p>
                                 </td>
                             </tr>
                         </tbody>
                     </table>
                 </div>
             </div>
-            <div class="card-footer bg-white py-3">
-                <nav aria-label="Page navigation">
-                    <ul class="pagination pagination-sm justify-content-center mb-0" id="users-pagination">
-                        <!-- Pagination will be handled by JS -->
-                    </ul>
-                </nav>
-            </div>
         </div>
     </div>
 
-    <!-- Edit User Modal -->
-    <div class="modal fade" id="editUserModal" tabindex="-1" aria-labelledby="editUserModalLabel" aria-hidden="true">
+    <!-- Reject Feedback Modal -->
+    <div class="modal fade" id="rejectModal" tabindex="-1" aria-labelledby="rejectModalLabel" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content border-0 shadow">
-                <div class="modal-header bg-dark text-white">
-                    <h5 class="modal-title" id="editUserModalLabel">Edit User Profile</h5>
+                <div class="modal-header bg-danger text-white">
+                    <h5 class="modal-title" id="rejectModalLabel">Reject Feature Request</h5>
                     <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
                 <div class="modal-body p-4">
-                    <form id="edit-user-form">
-                        <input type="hidden" id="edit-user-firebase-uid">
-                        
+                    <form id="reject-form">
+                        <input type="hidden" id="reject-request-id">
                         <div class="mb-3">
-                            <label for="edit-username" class="form-label fw-semibold">Username</label>
-                            <input type="text" class="form-control" id="edit-username" required>
+                            <label for="reject-feedback" class="form-label fw-semibold">Admin Feedback</label>
+                            <textarea class="form-control" id="reject-feedback" rows="3" placeholder="Explain why this request is being rejected (e.g., poor image quality)..." required></textarea>
                         </div>
-                        
-                        <div class="mb-3">
-                            <label for="edit-plan" class="form-label fw-semibold">Subscription Plan</label>
-                            <select class="form-select" id="edit-plan">
-                                <option value="Free">Free</option>
-                                <option value="Premium">Premium</option>
-                            </select>
-                        </div>
-                        
-                        <div class="mb-4">
-                            <label class="form-label fw-semibold">User Role</label>
-                            <div class="form-check form-switch">
-                                <input class="form-check-input" type="checkbox" id="edit-is-admin">
-                                <label class="form-check-label" for="edit-is-admin">Administrator Access</label>
-                            </div>
-                        </div>
-
-                        <div class="d-grid">
-                            <button type="submit" class="btn btn-primary py-2">Save Changes</button>
+                        <div class="d-grid shadow-sm">
+                            <button type="submit" class="btn btn-danger py-2">Confirm Rejection</button>
                         </div>
                     </form>
                 </div>
@@ -154,6 +128,6 @@
     <script src="assets/js/api.js"></script>
     <script src="assets/js/config.js"></script>
     <script src="assets/js/auth.js"></script>
-    <script src="assets/js/users.js"></script>
+    <script src="assets/js/feature_requests.js"></script>
 </body>
 </html>

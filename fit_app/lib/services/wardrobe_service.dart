@@ -6,6 +6,7 @@ import 'package:fit_app/constants.dart';
 import 'package:fit_app/models/wardrobe_model.dart';
 import 'package:fit_app/models/clothing_item_model.dart';
 import 'package:fit_app/models/clothing_option_model.dart';
+import 'package:fit_app/models/feature_request_model.dart';
 import 'package:http/http.dart' as http;
 
 class WardrobeService {
@@ -190,6 +191,21 @@ class WardrobeService {
     throw Exception("Failed to add item to wardrobe");
   }
 
+  static Future<WardrobeModel> addItemsToWardrobe({
+    required int wardrobeId,
+    required List<int> itemIds,
+  }) async {
+    final response = await http.post(
+      Uri.parse("$_baseApi/wardrobes/$wardrobeId/items/"),
+      headers: await _authHeaders(),
+      body: jsonEncode({"item_ids": itemIds}),
+    );
+    if (response.statusCode == 200) {
+      return WardrobeModel.fromJson(jsonDecode(response.body));
+    }
+    throw Exception("Failed to add items to wardrobe");
+  }
+
   static Future<WardrobeModel> removeItemFromWardrobe({
     required int wardrobeId,
     required int itemId,
@@ -226,6 +242,7 @@ class WardrobeService {
     String color = "",
     String brand = "",
     double? purchasePrice,
+    String? purchaseLink,
     File? imageFile,
   }) async {
     final token = await _getIdToken();
@@ -245,6 +262,7 @@ class WardrobeService {
     request.fields["brand"] = brand;
     request.fields["purchase_price"] =
         purchasePrice == null ? "" : purchasePrice.toStringAsFixed(2);
+    request.fields["purchase_link"] = purchaseLink ?? "";
 
     if (imageFile != null) {
       request.files.add(
@@ -260,4 +278,65 @@ class WardrobeService {
     throw Exception("Failed to update clothing item");
   }
 
+  static Future<FeatureRequestModel> requestFeature(int wardrobeId) async {
+    final response = await http.post(
+      Uri.parse("$_baseApi/feature-requests/"),
+      headers: await _authHeaders(),
+      body: jsonEncode({"wardrobe_id": wardrobeId}),
+    );
+    if (response.statusCode == 201) {
+      return FeatureRequestModel.fromJson(jsonDecode(response.body));
+    }
+    final error = jsonDecode(response.body)["error"] ?? "Failed to send request";
+    throw Exception(error);
+  }
+
+  static Future<List<FeatureRequestModel>> fetchFeatureRequests() async {
+    final response = await http.get(
+      Uri.parse("$_baseApi/feature-requests/"),
+      headers: await _authHeaders(json: false),
+    );
+    if (response.statusCode == 200) {
+      final List<dynamic> data = jsonDecode(response.body);
+      return data.map((json) => FeatureRequestModel.fromJson(json)).toList();
+    }
+    return [];
+  }
+
+  static Future<List<FeatureRequestModel>> fetchPendingRequests() async {
+    final token = await _getIdToken();
+    final response = await http.get(
+      Uri.parse("$_baseApi/feature-requests/?status=pending"),
+      headers: {"Authorization": "Bearer $token"},
+    );
+
+    if (response.statusCode == 200) {
+      final List data = jsonDecode(response.body);
+      return data.map((item) => FeatureRequestModel.fromJson(item)).toList();
+    }
+    throw Exception("Failed to fetch pending requests");
+  }
+
+  static Future<bool> approveRequest(int requestId) async {
+    final token = await _getIdToken();
+    final response = await http.post(
+      Uri.parse("$_baseApi/feature-requests/$requestId/approve/"),
+      headers: {"Authorization": "Bearer $token"},
+    );
+    return response.statusCode == 200;
+  }
+
+  static Future<bool> rejectRequest(int requestId, String feedback) async {
+    final token = await _getIdToken();
+    final response = await http.post(
+      Uri.parse("$_baseApi/feature-requests/$requestId/reject/"),
+      headers: {
+        "Authorization": "Bearer $token",
+        "Content-Type": "application/json",
+      },
+      body: jsonEncode({"feedback": feedback}),
+    );
+    return response.statusCode == 200;
+  }
 }
+

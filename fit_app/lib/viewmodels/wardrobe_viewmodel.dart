@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:fit_app/models/wardrobe_model.dart';
 import 'package:fit_app/models/clothing_item_model.dart';
 import 'package:fit_app/models/clothing_option_model.dart';
+import 'package:fit_app/models/feature_request_model.dart';
 import 'package:fit_app/services/wardrobe_service.dart';
 import 'package:flutter/material.dart';
 
@@ -11,6 +12,8 @@ class WardrobeViewmodel extends ChangeNotifier {
   List<ClothingItemModel> clothingItems = [];
   List<ClothingItemModel> selectedWardrobeItems = [];
   Map<int, List<ClothingItemModel>> wardrobePreviewItems = {};
+  List<FeatureRequestModel> featureRequests = [];
+  List<FeatureRequestModel> pendingRequests = [];
   List<ClothingOptionModel> clothingOptions = [];
 
   bool isLoadingWardrobes = false;
@@ -18,6 +21,7 @@ class WardrobeViewmodel extends ChangeNotifier {
   bool isLoadingSelectedWardrobeItems = false;
   bool isLoadingWardrobePreviews = false;
   bool isLoadingOptions = false;
+  bool isLoadingRequests = false;
   bool isSubmitting = false;
 
   String? error;
@@ -212,6 +216,7 @@ class WardrobeViewmodel extends ChangeNotifier {
     String color = "",
     String brand = "",
     double? purchasePrice,
+    String? purchaseLink,
     File? imageFile,
   }) async {
     try {
@@ -274,6 +279,30 @@ class WardrobeViewmodel extends ChangeNotifier {
       await WardrobeService.addItemToWardrobe(
         wardrobeId: wardrobeId,
         itemId: itemId,
+      );
+      return true;
+    } catch (e) {
+      error = e.toString();
+      return false;
+    } finally {
+      isSubmitting = false;
+      notifyListeners();
+    }
+  }
+
+  Future<bool> addItemsToWardrobe({
+    required int wardrobeId,
+    required List<int> itemIds,
+  }) async {
+    try {
+      if (itemIds.isEmpty) return true;
+      isSubmitting = true;
+      error = null;
+      notifyListeners();
+
+      await WardrobeService.addItemsToWardrobe(
+        wardrobeId: wardrobeId,
+        itemIds: itemIds,
       );
       return true;
     } catch (e) {
@@ -356,6 +385,7 @@ class WardrobeViewmodel extends ChangeNotifier {
     required String color,
     required String brand,
     double? purchasePrice,
+    String? purchaseLink,
     File? imageFile,
   }) async {
     try {
@@ -374,6 +404,7 @@ class WardrobeViewmodel extends ChangeNotifier {
         color: color,
         brand: brand,
         purchasePrice: purchasePrice,
+        purchaseLink: purchaseLink,
         imageFile: imageFile,
       );
 
@@ -399,8 +430,91 @@ class WardrobeViewmodel extends ChangeNotifier {
     }
   }
 
+  Future<void> fetchFeatureRequests() async {
+    try {
+      isLoadingRequests = true;
+      error = null;
+      notifyListeners();
+
+      featureRequests = await WardrobeService.fetchFeatureRequests();
+    } catch (e) {
+      error = e.toString();
+    } finally {
+      isLoadingRequests = false;
+      notifyListeners();
+    }
+  }
+
+  Future<bool> requestFeature(int wardrobeId) async {
+    try {
+      isSubmitting = true;
+      error = null;
+      notifyListeners();
+
+      final request = await WardrobeService.requestFeature(wardrobeId);
+      featureRequests = [request, ...featureRequests];
+      return true;
+    } catch (e) {
+      error = e.toString();
+      return false;
+    } finally {
+      isSubmitting = false;
+      notifyListeners();
+    }
+  }
+
   void clearError() {
     error = null;
     notifyListeners();
   }
+
+  Future<void> fetchPendingRequests() async {
+    try {
+      isLoadingRequests = true;
+      notifyListeners();
+      pendingRequests = await WardrobeService.fetchPendingRequests();
+    } catch (e) {
+      error = e.toString();
+    } finally {
+      isLoadingRequests = false;
+      notifyListeners();
+    }
+  }
+
+  Future<bool> approveRequest(int requestId) async {
+    try {
+      isSubmitting = true;
+      notifyListeners();
+      final success = await WardrobeService.approveRequest(requestId);
+      if (success) {
+        pendingRequests.removeWhere((r) => r.id == requestId);
+      }
+      return success;
+    } catch (e) {
+      error = e.toString();
+      return false;
+    } finally {
+      isSubmitting = false;
+      notifyListeners();
+    }
+  }
+
+  Future<bool> rejectRequest(int requestId, String feedback) async {
+    try {
+      isSubmitting = true;
+      notifyListeners();
+      final success = await WardrobeService.rejectRequest(requestId, feedback);
+      if (success) {
+        pendingRequests.removeWhere((r) => r.id == requestId);
+      }
+      return success;
+    } catch (e) {
+      error = e.toString();
+      return false;
+    } finally {
+      isSubmitting = false;
+      notifyListeners();
+    }
+  }
 }
+

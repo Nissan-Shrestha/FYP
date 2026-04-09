@@ -48,3 +48,4 @@ class StylistViewmodel extends ChangeNotifier {
     notifyListeners();
   }
 }
+

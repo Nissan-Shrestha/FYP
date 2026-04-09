@@ -134,4 +134,25 @@ class AuthViewmodel extends ChangeNotifier {
       notifyListeners();
     }
   }
+
+  Future<void> updateProfile({String? bio, Map<String, dynamic>? socialLinks}) async {
+    if (_profile == null) return;
+
+    _isLoading = true;
+    notifyListeners();
+
+    try {
+      final updatedProfile = await ProfileService.updateProfile(
+        bio: bio,
+        socialLinks: socialLinks,
+      );
+
+      _profile = updatedProfile;
+    } catch (e) {
+      _error = e.toString();
+    } finally {
+      _isLoading = false;
+      notifyListeners();
+    }
+  }
 }

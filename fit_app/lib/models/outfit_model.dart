@@ -8,6 +8,8 @@ class OutfitModel {
   final String? ownerUsername;
   final String? ownerProfilePicture;
   final List<ClothingItemModel> items;
+  final bool ownerIsFeatured;
+  final Map<String, dynamic>? ownerSocialLinks;
   final int savesCount;
   final bool isSaved;
   final DateTime createdAt;
@@ -22,6 +24,8 @@ class OutfitModel {
     required this.items,
     this.savesCount = 0,
     this.isSaved = false,
+    this.ownerIsFeatured = false,
+    this.ownerSocialLinks,
     required this.createdAt,
   });
 
@@ -40,6 +44,8 @@ class OutfitModel {
           [],
       savesCount: json["saves_count"] as int? ?? 0,
       isSaved: json["is_saved"] as bool? ?? false,
+      ownerIsFeatured: json["owner_is_featured"] as bool? ?? false,
+      ownerSocialLinks: json["owner_social_links"] as Map<String, dynamic>?,
       createdAt: DateTime.parse(json["created_at"] as String),
     );
   }
@@ -52,6 +58,7 @@ class OutfitModel {
       "is_public": isPublic,
       if (ownerUsername != null) "owner_username": ownerUsername,
       "items": items.map((item) => item.toJson()).toList(),
+      if (ownerSocialLinks != null) "owner_social_links": ownerSocialLinks,
       "created_at": createdAt.toIso8601String(),
     };
   }
@@ -66,6 +73,8 @@ class OutfitModel {
     List<ClothingItemModel>? items,
     int? savesCount,
     bool? isSaved,
+    bool? ownerIsFeatured,
+    Map<String, dynamic>? ownerSocialLinks,
     DateTime? createdAt,
   }) {
     return OutfitModel(
@@ -78,7 +87,10 @@ class OutfitModel {
       items: items ?? this.items,
       savesCount: savesCount ?? this.savesCount,
       isSaved: isSaved ?? this.isSaved,
+      ownerIsFeatured: ownerIsFeatured ?? this.ownerIsFeatured,
+      ownerSocialLinks: ownerSocialLinks ?? this.ownerSocialLinks,
       createdAt: createdAt ?? this.createdAt,
     );
   }
 }
+

@@ -83,4 +83,25 @@ class ProfileService {
       throw Exception("Image upload failed");
     }
   }
+
+  static Future<ProfileModel> updateProfile({
+    String? bio,
+    Map<String, dynamic>? socialLinks,
+  }) async {
+    final Map<String, dynamic> body = {};
+    if (bio != null) body["bio"] = bio;
+    if (socialLinks != null) body["social_links"] = socialLinks;
+
+    final response = await http.patch(
+      Uri.parse(baseUrl),
+      headers: await _authHeaders(),
+      body: jsonEncode(body),
+    );
+
+    if (response.statusCode == 200) {
+      return ProfileModel.fromJson(jsonDecode(response.body));
+    } else {
+      throw Exception("Failed to update profile");
+    }
+  }
 }

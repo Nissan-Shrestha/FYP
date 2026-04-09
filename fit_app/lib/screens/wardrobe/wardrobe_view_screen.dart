@@ -1,5 +1,6 @@
 import 'package:fit_app/constants.dart';
 import 'package:fit_app/models/clothing_item_model.dart';
+import 'package:fit_app/screens/wardrobe/clothing_item_detail_screen.dart';
 import 'package:fit_app/screens/wardrobe/edit_clothing_item_screen.dart';
 import 'package:fit_app/viewmodels/auth_viewmodel.dart';
 import 'package:fit_app/viewmodels/wardrobe_viewmodel.dart';
@@ -11,12 +12,14 @@ class WardrobeViewScreen extends StatefulWidget {
   final int wardrobeId;
   final String wardrobeName;
   final bool isDefaultWardrobe;
+  final bool readOnly;
 
   const WardrobeViewScreen({
     super.key,
     required this.wardrobeId,
     required this.wardrobeName,
     this.isDefaultWardrobe = false,
+    this.readOnly = false,
   });
 
   @override
@@ -101,8 +104,8 @@ class _WardrobeViewScreenState extends State<WardrobeViewScreen> {
                     const SizedBox(height: 12),
                     Text(
                       "Add Items to ${capitalize(widget.wardrobeName)}",
-                      style: GoogleFonts.caveat(
-                        fontSize: 24,
+                      style: GoogleFonts.manrope(
+                        fontSize: 18,
                         fontWeight: FontWeight.bold,
                       ),
                     ),
@@ -110,7 +113,7 @@ class _WardrobeViewScreenState extends State<WardrobeViewScreen> {
                     if (availableItems.isNotEmpty)
                       Text(
                         "${selectedToAdd.length} selected",
-                        style: const TextStyle(fontSize: 12, color: Colors.black54),
+                        style: const TextStyle(fontSize: 10.8, color: Colors.black54),
                       ),
                     const SizedBox(height: 10),
                     if (vm.isLoadingClothingItems)
@@ -122,7 +125,7 @@ class _WardrobeViewScreenState extends State<WardrobeViewScreen> {
                         child: Center(
                           child: Text(
                             "No more items available to add",
-                            style: GoogleFonts.caveat(fontSize: 20),
+                            style: GoogleFonts.manrope(fontSize: 16.2),
                           ),
                         ),
                       )
@@ -203,17 +206,15 @@ class _WardrobeViewScreenState extends State<WardrobeViewScreen> {
                                 ? null
                                 : () async {
                                     int successCount = 0;
-                                    for (final itemId in selectedToAdd.toList()) {
-                                      if (!modalContext.mounted) return;
-                                       final ok = await modalContext
-                                          .read<WardrobeViewmodel>()
-                                          .addItemToWardrobe(
-                                            wardrobeId: widget.wardrobeId,
-                                            itemId: itemId,
-                                          );
-                                      if (ok) {
-                                        successCount++;
-                                      }
+                                    final selectedList = selectedToAdd.toList();
+                                    final ok = await modalContext
+                                        .read<WardrobeViewmodel>()
+                                        .addItemsToWardrobe(
+                                          wardrobeId: widget.wardrobeId,
+                                          itemIds: selectedList,
+                                        );
+                                    if (ok) {
+                                      successCount = selectedList.length;
                                     }
                                     if (!modalContext.mounted) return;
                                     await modalContext
@@ -513,8 +514,8 @@ class _WardrobeViewScreenState extends State<WardrobeViewScreen> {
                       alignment: Alignment.topCenter,
                       child: Text(
                         capitalize(widget.wardrobeName),
-                        style: GoogleFonts.caveat(
-                          fontSize: 28,
+                        style: GoogleFonts.manrope(
+                          fontSize: 19.8,
                           fontWeight: FontWeight.bold,
                         ),
                       ),
@@ -524,30 +525,31 @@ class _WardrobeViewScreenState extends State<WardrobeViewScreen> {
                       top: 42,
                       child: Row(
                         children: [
-                          GestureDetector(
-                            onTap: _showAddItemsSheet,
-                            child: Container(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 10,
-                                vertical: 6,
-                              ),
-                              decoration: BoxDecoration(
-                                color: const Color(0xffDFF3E3),
-                                borderRadius: BorderRadius.circular(20),
-                              ),
-                              child: const Row(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  Icon(Icons.add, size: 14),
-                                  SizedBox(width: 2),
-                                  Text(
-                                    "Add Items",
-                                    style: TextStyle(fontSize: 12),
-                                  ),
-                                ],
+                          if (!widget.readOnly)
+                            GestureDetector(
+                              onTap: _showAddItemsSheet,
+                              child: Container(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 10,
+                                  vertical: 6,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: const Color(0xffDFF3E3),
+                                  borderRadius: BorderRadius.circular(20),
+                                ),
+                                child: const Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Icon(Icons.add, size: 14),
+                                    SizedBox(width: 2),
+                                    Text(
+                                      "Add Items",
+                                      style: TextStyle(fontSize: 10.8),
+                                    ),
+                                  ],
+                                ),
                               ),
                             ),
-                          ),
                           const SizedBox(width: 8),
                           GestureDetector(
                             onTap: _showSortBottomSheet,
@@ -565,7 +567,7 @@ class _WardrobeViewScreenState extends State<WardrobeViewScreen> {
                                 children: [
                                   Text(
                                     _selectedSort,
-                                    style: const TextStyle(fontSize: 12),
+                                    style: const TextStyle(fontSize: 10.8),
                                   ),
                                   const SizedBox(width: 4),
                                   const Icon(Icons.keyboard_arrow_down, size: 16),
@@ -598,7 +600,7 @@ class _WardrobeViewScreenState extends State<WardrobeViewScreen> {
                   ? Center(
                       child: Text(
                         "No items in this wardrobe yet",
-                        style: GoogleFonts.caveat(fontSize: 22),
+                        style: GoogleFonts.manrope(fontSize: 17.1),
                       ),
                     )
                   : GridView.builder(
@@ -641,15 +643,17 @@ class _WardrobeViewScreenState extends State<WardrobeViewScreen> {
                             Navigator.push(
                               context,
                               MaterialPageRoute(
-                                builder: (_) => EditClothingItemScreen(item: item),
+                                builder: (_) => widget.readOnly
+                                    ? ClothingItemDetailScreen(item: item)
+                                    : EditClothingItemScreen(item: item),
                               ),
                             );
                           },
-                          onLongPress: () => _showItemActions(item),
+                          onLongPress: widget.readOnly ? null : () => _showItemActions(item),
                           child: Stack(
                             children: [
                               Positioned.fill(child: tile),
-                              if (!widget.isDefaultWardrobe)
+                              if (!widget.isDefaultWardrobe && !widget.readOnly)
                                 const Positioned(
                                   right: 6,
                                   top: 6,
@@ -732,4 +736,5 @@ class _ErrorState extends StatelessWidget {
     );
   }
 }
+
 

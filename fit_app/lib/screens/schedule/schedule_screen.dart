@@ -65,8 +65,8 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
         centerTitle: true,
         title: Text(
           "Fit Calendar",
-          style: GoogleFonts.caveat(
-            fontSize: 28,
+          style: GoogleFonts.manrope(
+            fontSize: 19.8,
             fontWeight: FontWeight.w700,
             color: Colors.black,
           ),
@@ -92,16 +92,16 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
               children: [
                 Text(
                   "Scheduled Outfits",
-                  style: GoogleFonts.caveat(
-                    fontSize: 24,
+                  style: GoogleFonts.manrope(
+                    fontSize: 18,
                     fontWeight: FontWeight.w600,
                   ),
                 ),
                 if (schedules.isNotEmpty)
                   Text(
                     "${schedules.length} Event${schedules.length == 1 ? '' : 's'}",
-                    style: GoogleFonts.caveat(
-                      fontSize: 18,
+                    style: GoogleFonts.manrope(
+                      fontSize: 15.3,
                       color: const Color(0xFF10A8F5),
                       fontWeight: FontWeight.w500,
                     ),
@@ -120,7 +120,7 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
                           child: Text(
                             "Error: ${scheduleVM.error}",
                             textAlign: TextAlign.center,
-                            style: GoogleFonts.caveat(fontSize: 18, color: Colors.red),
+                            style: GoogleFonts.manrope(fontSize: 15.3, color: Colors.red),
                           ),
                         ),
                       )
@@ -149,9 +149,9 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
         elevation: 4,
         label: Text(
           "Schedule Outfit",
-          style: GoogleFonts.caveat(
+          style: GoogleFonts.manrope(
             color: Colors.white,
-            fontSize: 18,
+            fontSize: 15.3,
             fontWeight: FontWeight.w700,
           ),
         ),
@@ -205,8 +205,8 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
                 children: [
                   Text(
                     ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'][(date.weekday - 1) % 7],
-                    style: GoogleFonts.caveat(
-                      fontSize: 15,
+                    style: GoogleFonts.manrope(
+                      fontSize: 13.5,
                       color: isSelected ? Colors.white70 : Colors.grey.shade600,
                       fontWeight: FontWeight.w600,
                     ),
@@ -214,8 +214,8 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
                   const SizedBox(height: 4),
                   Text(
                     date.day.toString(),
-                    style: GoogleFonts.caveat(
-                      fontSize: 24,
+                    style: GoogleFonts.manrope(
+                      fontSize: 18,
                       color: isSelected ? Colors.white : Colors.black87,
                       fontWeight: FontWeight.w700,
                     ),
@@ -238,12 +238,12 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
           const SizedBox(height: 16),
           Text(
             "No plans for today",
-            style: GoogleFonts.caveat(fontSize: 22, color: Colors.grey.shade600),
+            style: GoogleFonts.manrope(fontSize: 17.1, color: Colors.grey.shade600),
           ),
           const SizedBox(height: 8),
           Text(
             "Tap the button below to schedule an outfit.",
-            style: GoogleFonts.caveat(fontSize: 18, color: Colors.grey),
+            style: GoogleFonts.manrope(fontSize: 15.3, color: Colors.grey),
           ),
         ],
       ),
@@ -323,7 +323,7 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
                                     timeStr,
                                     style: const TextStyle(
                                       color: Color(0xFF10A8F5),
-                                      fontSize: 11,
+                                      fontSize: 9.9,
                                       fontWeight: FontWeight.bold,
                                       letterSpacing: 0.5,
                                     ),
@@ -332,8 +332,8 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
                                 const SizedBox(height: 10),
                                 Text(
                                   schedule.eventTitle,
-                                  style: GoogleFonts.caveat(
-                                    fontSize: 22,
+                                  style: GoogleFonts.manrope(
+                                    fontSize: 17.1,
                                     fontWeight: FontWeight.w600,
                                     color: Colors.black87,
                                   ),
@@ -343,8 +343,8 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
                                 const SizedBox(height: 2),
                                 Text(
                                   outfit?.name ?? "No outfit selected",
-                                  style: GoogleFonts.caveat(
-                                    fontSize: 17,
+                                  style: GoogleFonts.manrope(
+                                    fontSize: 15.3,
                                     color: Colors.grey.shade600,
                                   ),
                                   maxLines: 1,
@@ -458,3 +458,4 @@ class _MiniPreviewBox extends StatelessWidget {
     );
   }
 }
+

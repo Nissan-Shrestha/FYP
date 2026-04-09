@@ -41,6 +41,31 @@ function renderHeader(profile) {
     document.getElementById("user-plan-badge").innerText = profile.plan;
     document.getElementById("user-role-badge").innerText = profile.is_admin ? "Administrator" : "Regular User";
 
+    // NEW: Render Bio
+    const bioEl = document.getElementById("user-bio");
+    if (profile.bio) {
+        bioEl.innerText = profile.bio;
+        bioEl.classList.remove("d-none");
+    } else {
+        bioEl.innerText = "No bio provided.";
+    }
+
+    // NEW: Render Social Links
+    const socialEl = document.getElementById("user-socials");
+    socialEl.innerHTML = "";
+    if (profile.social_links) {
+        const links = profile.social_links;
+        if (links.instagram) {
+            socialEl.innerHTML += `<a href="https://instagram.com/${links.instagram.replace('@','')}" target="_blank" class="text-white text-decoration-none small"><i class="bi bi-instagram me-1"></i>${links.instagram}</a>`;
+        }
+        if (links.twitter) {
+            socialEl.innerHTML += `<a href="https://twitter.com/${links.twitter.replace('@','')}" target="_blank" class="text-white text-decoration-none small"><i class="bi bi-twitter-x me-1"></i>${links.twitter}</a>`;
+        }
+        if (links.tiktok) {
+            socialEl.innerHTML += `<a href="https://tiktok.com/@${links.tiktok.replace('@','')}" target="_blank" class="text-white text-decoration-none small"><i class="bi bi-tiktok me-1"></i>${links.tiktok}</a>`;
+        }
+    }
+
     const hasPicture = !!profile.profile_picture;
     const avatarUrl = profile.profile_picture || "https://img.icons8.com/color/150/test-account.png";
     document.getElementById("user-avatar-container").innerHTML = `

@@ -5,6 +5,7 @@ import 'package:fit_app/screens/outfits/create_outfit_screen.dart';
 import 'package:fit_app/screens/outfits/edit_outfit_screen.dart';
 import 'package:fit_app/screens/outfits/outfit_detail_screen.dart';
 import 'package:fit_app/screens/schedule/schedule_screen.dart';
+import 'package:fit_app/screens/stylist/stylist_screen.dart';
 import 'package:fit_app/viewmodels/outfit_viewmodel.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -47,7 +48,7 @@ class _OutfitsScreenState extends State<OutfitsScreen> {
         titleSpacing: 20,
         title: Text(
           "Outfits",
-          style: GoogleFonts.caveat(fontSize: 32, fontWeight: FontWeight.bold),
+          style: GoogleFonts.manrope(fontSize: 21.6, fontWeight: FontWeight.bold),
         ),
         actions: [
           IconButton(
@@ -75,20 +76,14 @@ class _OutfitsScreenState extends State<OutfitsScreen> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 const SizedBox(height: 20),
-                Text(
-                  "Outfit Suggestion for Today",
-                  style: GoogleFonts.caveat(
-                    fontSize: 22,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
+
                 const SizedBox(height: 10),
                 _buildOutfitSuggestion(),
                 const SizedBox(height: 20),
                 Text(
                   "Create an Outfit",
-                  style: GoogleFonts.caveat(
-                    fontSize: 22,
+                  style: GoogleFonts.manrope(
+                    fontSize: 17.1,
                     fontWeight: FontWeight.bold,
                   ),
                 ),
@@ -123,7 +118,7 @@ class _OutfitsScreenState extends State<OutfitsScreen> {
                         const SizedBox(height: 8),
                         Text(
                           "Create new outfits",
-                          style: GoogleFonts.caveat(fontSize: 18),
+                          style: GoogleFonts.manrope(fontSize: 15.3),
                         ),
                       ],
                     ),
@@ -132,8 +127,8 @@ class _OutfitsScreenState extends State<OutfitsScreen> {
                 const SizedBox(height: 20),
                 Text(
                   "My Outfits",
-                  style: GoogleFonts.caveat(
-                    fontSize: 22,
+                  style: GoogleFonts.manrope(
+                    fontSize: 17.1,
                     fontWeight: FontWeight.bold,
                   ),
                 ),
@@ -146,7 +141,7 @@ class _OutfitsScreenState extends State<OutfitsScreen> {
                     child: Center(
                       child: Text(
                         "No outfits created yet",
-                        style: GoogleFonts.caveat(fontSize: 18),
+                        style: GoogleFonts.manrope(fontSize: 15.3),
                       ),
                     ),
                   )
@@ -169,8 +164,8 @@ class _OutfitsScreenState extends State<OutfitsScreen> {
                 const SizedBox(height: 30),
                 Text(
                   "Saved Outfits",
-                  style: GoogleFonts.caveat(
-                    fontSize: 22,
+                  style: GoogleFonts.manrope(
+                    fontSize: 17.1,
                     fontWeight: FontWeight.bold,
                   ),
                 ),
@@ -183,7 +178,10 @@ class _OutfitsScreenState extends State<OutfitsScreen> {
                     child: Center(
                       child: Text(
                         "No saved outfits yet",
-                        style: GoogleFonts.caveat(fontSize: 18, color: Colors.grey),
+                        style: GoogleFonts.manrope(
+                          fontSize: 15.3,
+                          color: Colors.grey,
+                        ),
                       ),
                     ),
                   )
@@ -216,53 +214,123 @@ class _OutfitsScreenState extends State<OutfitsScreen> {
   }
 
   Widget _buildOutfitSuggestion() {
-    return Container(
-      height: 200,
-      width: double.maxFinite,
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(16),
-        color: Colors.grey.shade400,
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.1),
-            blurRadius: 6,
-            offset: const Offset(0, 4),
+    return InkWell(
+      onTap: () {
+        Navigator.push(
+          context,
+          MaterialPageRoute(builder: (_) => const StylistScreen()),
+        );
+      },
+      borderRadius: BorderRadius.circular(28),
+      child: Container(
+        width: double.infinity,
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(28),
+          gradient: LinearGradient(
+            colors: [
+              const Color(0xFF673AB7),
+              const Color(0xFF673AB7).withValues(alpha: 0.8),
+            ],
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
           ),
-        ],
-      ),
-      child: Padding(
-        padding: const EdgeInsets.all(12),
-        child: Row(
+          boxShadow: [
+            BoxShadow(
+              color: const Color(0xFF673AB7).withValues(alpha: 0.25),
+              blurRadius: 20,
+              offset: const Offset(0, 10),
+            ),
+          ],
+        ),
+        clipBehavior: Clip.antiAlias,
+        child: Stack(
           children: [
-            Expanded(
-              child: Container(
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(12),
-                  image: const DecorationImage(
-                    fit: BoxFit.cover,
-                    image: NetworkImage(
-                      "https://www.realsimple.com/thmb/46MVTJ_t0HSHaVFUNeu0dhBWvhY=/1500x0/filters:no_upscale():max_bytes(150000):strip_icc()/what-to-wear-Formal-events-fd6eff677fe84b05b11e99eb8c2cc14f.jpg",
-                    ),
-                  ),
-                ),
+            Positioned(
+              right: -20,
+              bottom: -20,
+              child: Icon(
+                Icons.auto_awesome_rounded,
+                size: 140,
+                color: Colors.white.withValues(alpha: 0.08),
               ),
             ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
+            Padding(
+              padding: const EdgeInsets.all(24),
+              child: Row(
                 children: [
-                  const Icon(Icons.auto_awesome, color: Colors.amber),
-                  const SizedBox(height: 8),
-                  Text(
-                    "AI Suggestions coming soon",
-                    textAlign: TextAlign.center,
-                    style: GoogleFonts.caveat(
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.white,
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 10,
+                            vertical: 4,
+                          ),
+                          decoration: BoxDecoration(
+                            color: Colors.white.withValues(alpha: 0.2),
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: Text(
+                            "AI POWERED",
+                            style: GoogleFonts.manrope(
+                              fontSize: 9,
+                              fontWeight: FontWeight.w900,
+                              color: Colors.white,
+                              letterSpacing: 1.5,
+                            ),
+                          ),
+                        ),
+                        const SizedBox(height: 12),
+                        Text(
+                          "Your Personal\nAI Stylist",
+                          style: GoogleFonts.manrope(
+                            fontSize: 23.4,
+                            fontWeight: FontWeight.w900,
+                            color: Colors.white,
+                            letterSpacing: -0.5,
+                            height: 1.1,
+                          ),
+                        ),
+                        const SizedBox(height: 10),
+                        Text(
+                          "Let AI pick the perfect outfit for any occasion or weather.",
+                          style: GoogleFonts.manrope(
+                            fontSize: 11.7,
+                            color: Colors.white.withValues(alpha: 0.7),
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                        const SizedBox(height: 22),
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 18,
+                            vertical: 10,
+                          ),
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(14),
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.black.withValues(alpha: 0.1),
+                                blurRadius: 10,
+                                offset: const Offset(0, 4),
+                              ),
+                            ],
+                          ),
+                          child: Text(
+                            "Try Now",
+                            style: GoogleFonts.manrope(
+                              color: const Color(0xFF673AB7),
+                              fontWeight: FontWeight.w800,
+                              fontSize: 12.6,
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
                   ),
+                  const SizedBox(width: 10),
                 ],
               ),
             ),
@@ -308,8 +376,8 @@ class _OutfitCard extends StatelessWidget {
                   leading: const Icon(Icons.bookmark_remove, color: Colors.red),
                   title: Text(
                     "Unsave Outfit",
-                    style: GoogleFonts.caveat(
-                      fontSize: 18,
+                    style: GoogleFonts.manrope(
+                      fontSize: 15.3,
                       fontWeight: FontWeight.bold,
                       color: Colors.red,
                     ),
@@ -321,7 +389,8 @@ class _OutfitCard extends StatelessWidget {
                       builder: (ctx) => AlertDialog(
                         title: const Text("Unsave Outfit"),
                         content: const Text(
-                            "Are you sure you want to remove this outfit from your saved list?"),
+                          "Are you sure you want to remove this outfit from your saved list?",
+                        ),
                         actions: [
                           TextButton(
                             onPressed: () => Navigator.pop(ctx, false),
@@ -329,8 +398,10 @@ class _OutfitCard extends StatelessWidget {
                           ),
                           TextButton(
                             onPressed: () => Navigator.pop(ctx, true),
-                            child: const Text("Unsave",
-                                style: TextStyle(color: Colors.red)),
+                            child: const Text(
+                              "Unsave",
+                              style: TextStyle(color: Colors.red),
+                            ),
                           ),
                         ],
                       ),
@@ -351,8 +422,10 @@ class _OutfitCard extends StatelessWidget {
                   leading: const Icon(Icons.edit, color: Colors.blue),
                   title: Text(
                     "Edit Outfit",
-                    style: GoogleFonts.caveat(
-                        fontSize: 18, fontWeight: FontWeight.bold),
+                    style: GoogleFonts.manrope(
+                      fontSize: 15.3,
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
                   onTap: () {
                     Navigator.pop(context);
@@ -368,8 +441,8 @@ class _OutfitCard extends StatelessWidget {
                   leading: const Icon(Icons.delete, color: Colors.red),
                   title: Text(
                     "Delete Outfit",
-                    style: GoogleFonts.caveat(
-                      fontSize: 18,
+                    style: GoogleFonts.manrope(
+                      fontSize: 15.3,
                       fontWeight: FontWeight.bold,
                       color: Colors.red,
                     ),
@@ -381,7 +454,8 @@ class _OutfitCard extends StatelessWidget {
                       builder: (ctx) => AlertDialog(
                         title: const Text("Delete Outfit"),
                         content: const Text(
-                            "Are you sure you want to delete this outfit? This action cannot be undone."),
+                          "Are you sure you want to delete this outfit? This action cannot be undone.",
+                        ),
                         actions: [
                           TextButton(
                             onPressed: () => Navigator.pop(ctx, false),
@@ -389,8 +463,10 @@ class _OutfitCard extends StatelessWidget {
                           ),
                           TextButton(
                             onPressed: () => Navigator.pop(ctx, true),
-                            child: const Text("Delete",
-                                style: TextStyle(color: Colors.red)),
+                            child: const Text(
+                              "Delete",
+                              style: TextStyle(color: Colors.red),
+                            ),
                           ),
                         ],
                       ),
@@ -439,7 +515,8 @@ class _OutfitCard extends StatelessWidget {
         final result = await Navigator.push(
           context,
           MaterialPageRoute(
-            builder: (_) => OutfitDetailScreen(outfit: outfit, readOnly: readOnly),
+            builder: (_) =>
+                OutfitDetailScreen(outfit: outfit, readOnly: readOnly),
           ),
         );
 
@@ -470,9 +547,13 @@ class _OutfitCard extends StatelessWidget {
                   Expanded(
                     child: Row(
                       children: [
-                        Expanded(child: _MiniPreviewBox(imageUrl: imageSlots[0])),
+                        Expanded(
+                          child: _MiniPreviewBox(imageUrl: imageSlots[0]),
+                        ),
                         const SizedBox(width: 10),
-                        Expanded(child: _MiniPreviewBox(imageUrl: imageSlots[1])),
+                        Expanded(
+                          child: _MiniPreviewBox(imageUrl: imageSlots[1]),
+                        ),
                       ],
                     ),
                   ),
@@ -480,9 +561,13 @@ class _OutfitCard extends StatelessWidget {
                   Expanded(
                     child: Row(
                       children: [
-                        Expanded(child: _MiniPreviewBox(imageUrl: imageSlots[2])),
+                        Expanded(
+                          child: _MiniPreviewBox(imageUrl: imageSlots[2]),
+                        ),
                         const SizedBox(width: 10),
-                        Expanded(child: _MiniPreviewBox(imageUrl: imageSlots[3])),
+                        Expanded(
+                          child: _MiniPreviewBox(imageUrl: imageSlots[3]),
+                        ),
                       ],
                     ),
                   ),
@@ -493,14 +578,17 @@ class _OutfitCard extends StatelessWidget {
           const SizedBox(height: 10),
           Text(
             capitalize(outfit.name),
-            style: GoogleFonts.caveat(fontSize: 16, fontWeight: FontWeight.w600),
+            style: GoogleFonts.manrope(
+              fontSize: 14.4,
+              fontWeight: FontWeight.w600,
+            ),
             textAlign: TextAlign.center,
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
           ),
           Text(
             "${outfit.items.length} item${outfit.items.length == 1 ? "" : "s"}",
-            style: const TextStyle(fontSize: 11, color: Colors.black54),
+            style: const TextStyle(fontSize: 9.9, color: Colors.black54),
           ),
         ],
       ),

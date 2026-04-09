@@ -9,8 +9,9 @@ class StatisticsScreen extends StatelessWidget {
     return Scaffold(
       appBar: AppBar(title: const Text("Statistics")),
       body: Center(
-        child: Text("Statistics Page", style: GoogleFonts.caveat(fontSize: 24)),
+        child: Text("Statistics Page", style: GoogleFonts.manrope(fontSize: 18)),
       ),
     );
   }
 }
+

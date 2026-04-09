@@ -52,8 +52,8 @@ class ClothingItemDetailScreen extends StatelessWidget {
         centerTitle: true,
         title: Text(
           "Item Details",
-          style: GoogleFonts.caveat(
-            fontSize: 28,
+          style: GoogleFonts.manrope(
+            fontSize: 19.8,
             fontWeight: FontWeight.bold,
             color: Colors.black,
           ),
@@ -101,8 +101,8 @@ class ClothingItemDetailScreen extends StatelessWidget {
             // Item Headers
             Text(
               capitalize(item.name),
-              style: GoogleFonts.caveat(
-                fontSize: 32,
+              style: GoogleFonts.manrope(
+                fontSize: 21.6,
                 fontWeight: FontWeight.bold,
                 color: Colors.black,
               ),
@@ -111,7 +111,7 @@ class ClothingItemDetailScreen extends StatelessWidget {
               Text(
                 item.brand.toUpperCase(),
                 style: TextStyle(
-                  fontSize: 12,
+                  fontSize: 10.8,
                   letterSpacing: 1.2,
                   color: Colors.grey.shade600,
                   fontWeight: FontWeight.bold,
@@ -171,8 +171,8 @@ class _PropertyRow extends StatelessWidget {
         children: [
           Text(
             label,
-            style: GoogleFonts.caveat(
-              fontSize: 18,
+            style: GoogleFonts.manrope(
+              fontSize: 15.3,
               fontWeight: FontWeight.bold,
               color: Colors.grey.shade600,
             ),
@@ -180,7 +180,7 @@ class _PropertyRow extends StatelessWidget {
           Text(
             capitalize(value),
             style: TextStyle(
-              fontSize: 15,
+              fontSize: 13.5,
               fontWeight: FontWeight.w600,
               color: valueColor ?? Colors.black87,
             ),
@@ -190,3 +190,4 @@ class _PropertyRow extends StatelessWidget {
     );
   }
 }
+

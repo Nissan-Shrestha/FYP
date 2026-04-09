@@ -30,3 +30,4 @@ class WeatherViewmodel extends ChangeNotifier {
     }
   }
 }
+

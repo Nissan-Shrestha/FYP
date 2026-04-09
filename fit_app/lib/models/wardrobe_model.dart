@@ -4,6 +4,7 @@ class WardrobeModel {
   final String name;
   final bool isDefault;
   final int itemCount;
+  final String? thumbnail;
   final DateTime createdAt;
   final DateTime updatedAt;
 
@@ -13,6 +14,7 @@ class WardrobeModel {
     required this.name,
     required this.isDefault,
     required this.itemCount,
+    this.thumbnail,
     required this.createdAt,
     required this.updatedAt,
   });
@@ -24,6 +26,7 @@ class WardrobeModel {
       name: (json["name"] as String?) ?? "",
       isDefault: json["is_default"] as bool? ?? false,
       itemCount: _asInt(json["item_count"], fallback: 0),
+      thumbnail: json["thumbnail"] as String?,
       createdAt:
           DateTime.tryParse((json["created_at"] as String?) ?? "") ??
           DateTime.fromMillisecondsSinceEpoch(0),
@@ -40,6 +43,7 @@ class WardrobeModel {
       "name": name,
       "is_default": isDefault,
       "item_count": itemCount,
+      "thumbnail": thumbnail,
       "created_at": createdAt.toIso8601String(),
       "updated_at": updatedAt.toIso8601String(),
     };
@@ -52,3 +56,4 @@ int _asInt(dynamic value, {int fallback = 0}) {
   if (value is String) return int.tryParse(value) ?? fallback;
   return fallback;
 }
+

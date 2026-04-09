@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'package:url_launcher/url_launcher.dart';
 
 import 'package:fit_app/constants.dart';
 import 'package:fit_app/models/clothing_item_model.dart';
@@ -30,6 +31,7 @@ class _EditClothingItemScreenState extends State<EditClothingItemScreen> {
   late String material;
   late String color;
   late String brand;
+  String? purchaseLink;
   double? _purchasePrice;
 
   @override
@@ -44,6 +46,7 @@ class _EditClothingItemScreenState extends State<EditClothingItemScreen> {
     material = item.material;
     color = item.color;
     brand = item.brand;
+    purchaseLink = item.purchaseLink;
     _purchasePrice = item.purchasePrice;
   }
 
@@ -80,6 +83,7 @@ class _EditClothingItemScreenState extends State<EditClothingItemScreen> {
       color: values["Color"]!,
       brand: values["Brand"]!,
       purchasePrice: _purchasePrice,
+      purchaseLink: purchaseLink,
       imageFile: _selectedImage,
     );
 
@@ -150,8 +154,8 @@ class _EditClothingItemScreenState extends State<EditClothingItemScreen> {
               children: [
                 Text(
                   "Update Item Photo",
-                  style: GoogleFonts.caveat(
-                    fontSize: 24,
+                  style: GoogleFonts.manrope(
+                    fontSize: 18,
                     fontWeight: FontWeight.bold,
                   ),
                 ),
@@ -211,7 +215,7 @@ class _EditClothingItemScreenState extends State<EditClothingItemScreen> {
         centerTitle: true,
         title: Text(
           "Edit Item",
-          style: GoogleFonts.caveat(fontSize: 28, fontWeight: FontWeight.bold),
+          style: GoogleFonts.manrope(fontSize: 19.8, fontWeight: FontWeight.bold),
         ),
       ),
       body: SingleChildScrollView(
@@ -374,7 +378,7 @@ class _EditClothingItemScreenState extends State<EditClothingItemScreen> {
                     ),
                     _EditableFieldRow(
                       label: "Price",
-                      value: _purchasePrice == null ? "Enter price" : _purchasePrice.toString(),
+                      value: _purchasePrice == null ? "Enter price" : "\$${_purchasePrice!.toStringAsFixed(2)}",
                       onTap: () => _openInputSheet(
                         title: "Price",
                         hint: "e.g. 49.99",
@@ -382,6 +386,29 @@ class _EditClothingItemScreenState extends State<EditClothingItemScreen> {
                         onApplied: (v) => setState(() => _purchasePrice = double.tryParse(v)),
                       ),
                     ),
+                    _EditableFieldRow(
+                      label: "Purchase Link",
+                      value: (purchaseLink == null || purchaseLink!.isEmpty) ? "Add buy link" : purchaseLink!,
+                      onTap: () => _openInputSheet(
+                        title: "Purchase Link",
+                        hint: "e.g. https://amazon.com/item...",
+                        initialValue: purchaseLink ?? "",
+                        onApplied: (v) => setState(() => purchaseLink = v),
+                      ),
+                    ),
+                    if (purchaseLink != null && purchaseLink!.isNotEmpty)
+                      Padding(
+                        padding: const EdgeInsets.only(top: 4, bottom: 12),
+                        child: TextButton.icon(
+                          onPressed: () => launchUrl(Uri.parse(purchaseLink!)),
+                          icon: const Icon(Icons.open_in_new, size: 16),
+                          label: const Text("Test Link"),
+                          style: TextButton.styleFrom(
+                            foregroundColor: const Color(0xff0AAE00),
+                            padding: const EdgeInsets.symmetric(horizontal: 12),
+                          ),
+                        ),
+                      ),
                     const SizedBox(height: 20),
                     SizedBox(
                       width: double.infinity,
@@ -401,8 +428,8 @@ class _EditClothingItemScreenState extends State<EditClothingItemScreen> {
                           wardrobeVM.isSubmitting
                               ? "Saving..."
                               : "Save Changes",
-                          style: GoogleFonts.caveat(
-                            fontSize: 22,
+                          style: GoogleFonts.manrope(
+                            fontSize: 17.1,
                             fontWeight: FontWeight.bold,
                           ),
                         ),
@@ -444,8 +471,8 @@ class _EditClothingItemScreenState extends State<EditClothingItemScreen> {
               children: [
                 Text(
                   title,
-                  style: GoogleFonts.caveat(
-                    fontSize: 24,
+                  style: GoogleFonts.manrope(
+                    fontSize: 18,
                     fontWeight: FontWeight.bold,
                   ),
                 ),
@@ -495,8 +522,8 @@ class _EditClothingItemScreenState extends State<EditClothingItemScreen> {
           children: [
             Text(
               title,
-              style: GoogleFonts.caveat(
-                fontSize: 24,
+              style: GoogleFonts.manrope(
+                fontSize: 18,
                 fontWeight: FontWeight.bold,
               ),
             ),
@@ -557,8 +584,8 @@ class _EditableFieldRow extends StatelessWidget {
                 width: 86,
                 child: Text(
                   label,
-                  style: GoogleFonts.caveat(
-                    fontSize: 17,
+                  style: GoogleFonts.manrope(
+                    fontSize: 15.3,
                     fontWeight: FontWeight.w700,
                   ),
                 ),
@@ -572,7 +599,7 @@ class _EditableFieldRow extends StatelessWidget {
                   overflow: TextOverflow.ellipsis,
                   style: TextStyle(
                     color: Colors.grey.shade700,
-                    fontSize: 13.5,
+                    fontSize: 12.2,
                     fontStyle: FontStyle.italic,
                   ),
                 ),
@@ -586,3 +613,4 @@ class _EditableFieldRow extends StatelessWidget {
     );
   }
 }
+

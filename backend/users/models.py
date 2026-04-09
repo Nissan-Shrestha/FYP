@@ -15,8 +15,13 @@ class Profile(models.Model):
     outfits_count = models.IntegerField(default=0)
     outfits_limit = models.IntegerField(default=200)
 
-    currency = models.CharField(max_length=10, default="USD")
     profile_picture = models.ImageField(upload_to="profile_pics/", null=True, blank=True)
+    
+    # New discovery/social fields
+    bio = models.TextField(null=True, blank=True)
+    social_links = models.JSONField(null=True, blank=True, help_text="e.g. {'instagram': '@user', 'tiktok': '@user'}")
+    is_featured = models.BooleanField(default=False, help_text="Set by admin to show verified/featured badge")
+    
     created_at = models.DateTimeField(default=timezone.now)
 
     def __str__(self):
@@ -95,6 +100,7 @@ class ClothingItem(models.Model):
     image = models.ImageField(upload_to="clothing_items/", null=True, blank=True)
     color = models.CharField(max_length=50, default="Black")
     layer_level = models.IntegerField(default=0)  # 0: Base, 1: Mid, 2: Outer
+    purchase_link = models.URLField(max_length=500, null=True, blank=True, help_text="External link to buy the item")
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
@@ -283,3 +289,33 @@ class Schedule(models.Model):
 
     class Meta:
         ordering = ['date_time']
+
+
+class FeatureRequest(models.Model):
+    STATUS_CHOICES = [
+        ('pending', 'Pending'),
+        ('approved', 'Approved'),
+        ('rejected', 'Rejected'),
+    ]
+
+    requester = models.ForeignKey(
+        Profile,
+        on_delete=models.CASCADE,
+        related_name="feature_requests",
+    )
+    wardrobe = models.ForeignKey(
+        Wardrobe,
+        on_delete=models.CASCADE,
+        related_name="feature_requests",
+    )
+    status = models.CharField(
+        max_length=20,
+        choices=STATUS_CHOICES,
+        default='pending',
+    )
+    admin_feedback = models.TextField(null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return f"Feature Request from {self.requester.username} ({self.status})"

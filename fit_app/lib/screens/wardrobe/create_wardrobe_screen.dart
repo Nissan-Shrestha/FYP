@@ -89,8 +89,8 @@ class _CreateWardrobeScreenState extends State<CreateWardrobeScreen> {
               Center(
                 child: Text(
                   "Create a Wardrobe",
-                  style: GoogleFonts.caveat(
-                    fontSize: 36,
+                  style: GoogleFonts.manrope(
+                    fontSize: 25.2,
                     fontWeight: FontWeight.bold,
                   ),
                 ),
@@ -98,8 +98,8 @@ class _CreateWardrobeScreenState extends State<CreateWardrobeScreen> {
               const SizedBox(height: 22),
               Text(
                 "Closet Name",
-                style: GoogleFonts.caveat(
-                  fontSize: 22,
+                style: GoogleFonts.manrope(
+                  fontSize: 17.1,
                   fontWeight: FontWeight.w700,
                 ),
               ),
@@ -124,7 +124,7 @@ class _CreateWardrobeScreenState extends State<CreateWardrobeScreen> {
                   onSubmitted: (_) => _createWardrobe(context),
                   decoration: InputDecoration(
                     hintText: "Enter a name for the wardrobe",
-                    hintStyle: GoogleFonts.caveat(fontSize: 16),
+                    hintStyle: GoogleFonts.manrope(fontSize: 14.4),
                     border: InputBorder.none,
                     contentPadding: const EdgeInsets.symmetric(
                       horizontal: 16,
@@ -151,8 +151,8 @@ class _CreateWardrobeScreenState extends State<CreateWardrobeScreen> {
                   ),
                   child: Text(
                     wardrobeVM.isSubmitting ? "Creating..." : "Create",
-                    style: GoogleFonts.caveat(
-                      fontSize: 28,
+                    style: GoogleFonts.manrope(
+                      fontSize: 19.8,
                       fontWeight: FontWeight.bold,
                     ),
                   ),
@@ -165,4 +165,5 @@ class _CreateWardrobeScreenState extends State<CreateWardrobeScreen> {
     );
   }
 }
+
 

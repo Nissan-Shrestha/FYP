@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:fit_app/constants.dart';
+import 'package:fit_app/models/feature_request_model.dart';
 import 'package:fit_app/models/outfit_model.dart';
 import 'package:http/http.dart' as http;
 
@@ -179,4 +180,21 @@ class OutfitService {
     );
     return response.statusCode == 201;
   }
+
+  static Future<List<FeaturedLookbookModel>> fetchFeaturedLookbooks() async {
+    try {
+      final response = await http.get(
+        Uri.parse("$_baseApi/outfits/featured-lookbooks/"),
+        headers: await _authHeaders(json: false),
+      );
+      if (response.statusCode == 200) {
+        final List<dynamic> data = jsonDecode(response.body);
+        return data.map((json) => FeaturedLookbookModel.fromJson(json)).toList();
+      }
+    } catch (_) {
+      return [];
+    }
+    return [];
+  }
 }
+

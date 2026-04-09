@@ -44,12 +44,12 @@ class _NavigationScreenState extends State<NavigationScreen> {
           unselectedItemColor: Colors.grey,
           selectedItemColor: Colors.black,
           showUnselectedLabels: true,
-          unselectedLabelStyle: GoogleFonts.caveat(
-            fontSize: 14,
+          unselectedLabelStyle: GoogleFonts.manrope(
+            fontSize: 12.6,
             fontWeight: FontWeight.bold,
           ),
-          selectedLabelStyle: GoogleFonts.caveat(
-            fontSize: 14,
+          selectedLabelStyle: GoogleFonts.manrope(
+            fontSize: 12.6,
             fontWeight: FontWeight.bold,
           ),
           items: [
@@ -73,3 +73,4 @@ class _NavigationScreenState extends State<NavigationScreen> {
     );
   }
 }
+

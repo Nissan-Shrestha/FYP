@@ -1,3 +1,4 @@
+import 'package:fit_app/models/feature_request_model.dart';
 import 'package:fit_app/models/outfit_model.dart';
 import 'package:fit_app/services/outfit_service.dart';
 import 'package:flutter/material.dart';
@@ -6,9 +7,11 @@ class OutfitViewmodel extends ChangeNotifier {
   List<OutfitModel> outfits = [];
   List<OutfitModel> exploreOutfits = [];
   List<OutfitModel> savedOutfits = [];
+  List<FeaturedLookbookModel> featuredLookbooks = [];
   bool isLoading = false;
   bool isLoadingExplore = false;
   bool isLoadingSaved = false;
+  bool isLoadingFeatured = false;
   bool isSubmitting = false;
   String? error;
 
@@ -137,6 +140,21 @@ class OutfitViewmodel extends ChangeNotifier {
     }
   }
 
+  Future<void> fetchFeaturedLookbooks() async {
+    try {
+      isLoadingFeatured = true;
+      error = null;
+      notifyListeners();
+
+      featuredLookbooks = await OutfitService.fetchFeaturedLookbooks();
+    } catch (e) {
+      error = e.toString();
+    } finally {
+      isLoadingFeatured = false;
+      notifyListeners();
+    }
+  }
+
   Future<OutfitModel?> createOutfit({
     required String name,
     String? occasion,
@@ -229,3 +247,4 @@ class OutfitViewmodel extends ChangeNotifier {
     }
   }
 }
+

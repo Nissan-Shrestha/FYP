@@ -163,8 +163,8 @@ class _AddItemScreenState extends State<AddItemScreen> {
               children: [
                 Text(
                   "Add Item Photo",
-                  style: GoogleFonts.caveat(
-                    fontSize: 24,
+                  style: GoogleFonts.manrope(
+                    fontSize: 18,
                     fontWeight: FontWeight.bold,
                   ),
                 ),
@@ -245,8 +245,8 @@ class _AddItemScreenState extends State<AddItemScreen> {
         centerTitle: true,
         title: Text(
           "Add Item",
-          style: GoogleFonts.caveat(
-            fontSize: 28,
+          style: GoogleFonts.manrope(
+            fontSize: 19.8,
             fontWeight: FontWeight.bold,
             color: Colors.black,
           ),
@@ -424,7 +424,7 @@ class _AddItemScreenState extends State<AddItemScreen> {
                     ),
                     _FieldRow(
                       label: "Price",
-                      value: _purchasePrice == null ? "Enter price" : _purchasePrice.toString(),
+                      value: _purchasePrice == null ? "Enter price" : "\$${_purchasePrice!.toStringAsFixed(2)}",
                       onTap: () => _openInputSheet(
                         title: "Price",
                         hint: "e.g. 49.99",
@@ -438,7 +438,7 @@ class _AddItemScreenState extends State<AddItemScreen> {
                       child: ElevatedButton(
                         onPressed: wardrobeVM.isSubmitting ? null : _saveItem,
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: const Color(0xff0AAE00),
+                          backgroundColor: const Color(0xFF673AB7),
                           foregroundColor: Colors.white,
                           elevation: 2,
                           shape: RoundedRectangleBorder(
@@ -447,8 +447,8 @@ class _AddItemScreenState extends State<AddItemScreen> {
                         ),
                         child: Text(
                           wardrobeVM.isSubmitting ? "Saving..." : "Save",
-                          style: GoogleFonts.caveat(
-                            fontSize: 24,
+                          style: GoogleFonts.manrope(
+                            fontSize: 18,
                             fontWeight: FontWeight.bold,
                           ),
                         ),
@@ -492,15 +492,15 @@ class _AddItemScreenState extends State<AddItemScreen> {
                 children: [
                   Text(
                     title,
-                    style: GoogleFonts.caveat(
-                      fontSize: 24,
+                    style: GoogleFonts.manrope(
+                      fontSize: 18,
                       fontWeight: FontWeight.bold,
                     ),
                   ),
                   const SizedBox(height: 4),
                   Text(
                     subtitle,
-                    style: TextStyle(color: Colors.grey.shade700, fontSize: 12),
+                    style: TextStyle(color: Colors.grey.shade700, fontSize: 10.8),
                   ),
                   const SizedBox(height: 14),
                   ...options.map(
@@ -549,8 +549,8 @@ class _AddItemScreenState extends State<AddItemScreen> {
             children: [
               Text(
                 title,
-                style: GoogleFonts.caveat(
-                  fontSize: 24,
+                style: GoogleFonts.manrope(
+                  fontSize: 18,
                   fontWeight: FontWeight.bold,
                 ),
               ),
@@ -610,8 +610,8 @@ class _FieldRow extends StatelessWidget {
                 width: 86,
                 child: Text(
                   label,
-                  style: GoogleFonts.caveat(
-                    fontSize: 17,
+                  style: GoogleFonts.manrope(
+                    fontSize: 15.3,
                     fontWeight: FontWeight.w700,
                     color: Colors.black,
                   ),
@@ -627,7 +627,7 @@ class _FieldRow extends StatelessWidget {
                     overflow: TextOverflow.ellipsis,
                     style: TextStyle(
                       color: Colors.grey.shade600,
-                      fontSize: 13.5,
+                      fontSize: 12.2,
                       fontStyle: FontStyle.italic,
                     ),
                   ),
@@ -646,4 +646,5 @@ class _FieldRow extends StatelessWidget {
     );
   }
 }
+
 

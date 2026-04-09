@@ -139,8 +139,8 @@ class _EditOutfitScreenState extends State<EditOutfitScreen> {
         centerTitle: true,
         title: Text(
           "Edit Outfit",
-          style: GoogleFonts.caveat(
-            fontSize: 28,
+          style: GoogleFonts.manrope(
+            fontSize: 19.8,
             fontWeight: FontWeight.bold,
             color: Colors.black,
           ),
@@ -162,8 +162,8 @@ class _EditOutfitScreenState extends State<EditOutfitScreen> {
               onPressed: _saveOutfit,
               child: Text(
                 "Save",
-                style: GoogleFonts.caveat(
-                  fontSize: 20,
+                style: GoogleFonts.manrope(
+                  fontSize: 16.2,
                   fontWeight: FontWeight.bold,
                   color: const Color(0xff0AAE00),
                 ),
@@ -194,7 +194,7 @@ class _EditOutfitScreenState extends State<EditOutfitScreen> {
                     controller: _nameController,
                     decoration: InputDecoration(
                       labelText: "Outfit Name",
-                      labelStyle: GoogleFonts.caveat(fontSize: 18),
+                      labelStyle: GoogleFonts.manrope(fontSize: 15.3),
                       hintText: "e.g. Summer Brunch",
                       border: const UnderlineInputBorder(),
                     ),
@@ -208,8 +208,8 @@ class _EditOutfitScreenState extends State<EditOutfitScreen> {
                         children: [
                           Text(
                             "Occasion",
-                            style: GoogleFonts.caveat(
-                              fontSize: 18,
+                            style: GoogleFonts.manrope(
+                              fontSize: 15.3,
                               fontWeight: FontWeight.bold,
                             ),
                           ),
@@ -231,14 +231,14 @@ class _EditOutfitScreenState extends State<EditOutfitScreen> {
                     contentPadding: EdgeInsets.zero,
                     title: Text(
                       "Make Outfit Public",
-                      style: GoogleFonts.caveat(
-                        fontSize: 18,
+                      style: GoogleFonts.manrope(
+                        fontSize: 15.3,
                         fontWeight: FontWeight.bold,
                       ),
                     ),
                     subtitle: Text(
                       "Visible to everyone on Explore",
-                      style: TextStyle(fontSize: 12, color: Colors.grey.shade600),
+                      style: TextStyle(fontSize: 10.8, color: Colors.grey.shade600),
                     ),
                     value: _isPublic,
                     activeThumbColor: const Color(0xff0AAE00),
@@ -254,8 +254,8 @@ class _EditOutfitScreenState extends State<EditOutfitScreen> {
               children: [
                 Text(
                   "Select Items (${_selectedItemIds.length})",
-                  style: GoogleFonts.caveat(
-                    fontSize: 22,
+                  style: GoogleFonts.manrope(
+                    fontSize: 17.1,
                     fontWeight: FontWeight.bold,
                   ),
                 ),
@@ -270,7 +270,7 @@ class _EditOutfitScreenState extends State<EditOutfitScreen> {
                     ? Center(
                         child: Text(
                           "No items in your wardrobe yet.",
-                          style: GoogleFonts.caveat(fontSize: 18),
+                          style: GoogleFonts.manrope(fontSize: 15.3),
                         ),
                       )
                     : GridView.builder(
@@ -325,8 +325,8 @@ class _EditOutfitScreenState extends State<EditOutfitScreen> {
                 children: [
                   Text(
                     "Select Occasion",
-                    style: GoogleFonts.caveat(
-                      fontSize: 24,
+                    style: GoogleFonts.manrope(
+                      fontSize: 18,
                       fontWeight: FontWeight.bold,
                     ),
                   ),
@@ -411,7 +411,7 @@ class _ClothingItemSelectionTile extends StatelessWidget {
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       textAlign: TextAlign.center,
-                      style: const TextStyle(fontSize: 10),
+                      style: const TextStyle(fontSize: 9),
                     ),
                   ),
                 ],
@@ -436,3 +436,4 @@ class _ClothingItemSelectionTile extends StatelessWidget {
     );
   }
 }
+

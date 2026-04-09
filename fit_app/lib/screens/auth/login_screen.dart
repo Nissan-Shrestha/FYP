@@ -77,8 +77,8 @@ class _LoginScreenState extends State<LoginScreen> {
               Text(
                 "Enter your email and password to securely access your wardrobe",
                 textAlign: TextAlign.center,
-                style: GoogleFonts.caveat(
-                  fontSize: 16,
+                style: GoogleFonts.manrope(
+                  fontSize: 14.4,
                   fontWeight: FontWeight.w600,
                 ),
               ),
@@ -100,8 +100,8 @@ class _LoginScreenState extends State<LoginScreen> {
                   controller: _emailController,
                   decoration: InputDecoration(
                     hintText: 'Email Address',
-                    hintStyle: GoogleFonts.caveat(
-                      fontSize: 16,
+                    hintStyle: GoogleFonts.manrope(
+                      fontSize: 14.4,
                       fontWeight: FontWeight.w400,
                     ),
                     border: InputBorder.none,
@@ -135,8 +135,8 @@ class _LoginScreenState extends State<LoginScreen> {
                   obscureText: true,
                   decoration: InputDecoration(
                     hintText: 'Password',
-                    hintStyle: GoogleFonts.caveat(
-                      fontSize: 16,
+                    hintStyle: GoogleFonts.manrope(
+                      fontSize: 14.4,
                       fontWeight: FontWeight.w400,
                     ),
                     border: InputBorder.none,
@@ -167,8 +167,8 @@ class _LoginScreenState extends State<LoginScreen> {
                     },
                     child: Text(
                       "Forgot Password",
-                      style: GoogleFonts.caveat(
-                        fontSize: 14,
+                      style: GoogleFonts.manrope(
+                        fontSize: 12.6,
                         fontWeight: FontWeight.w600,
                       ),
                     ),
@@ -201,8 +201,8 @@ class _LoginScreenState extends State<LoginScreen> {
                     child: Center(
                       child: Text(
                         "Login",
-                        style: GoogleFonts.caveat(
-                          fontSize: 28,
+                        style: GoogleFonts.manrope(
+                          fontSize: 19.8,
                           fontWeight: FontWeight.w800,
                           color: Colors.white,
                         ),
@@ -231,8 +231,8 @@ class _LoginScreenState extends State<LoginScreen> {
                 child: RichText(
                   text: TextSpan(
                     text: "Don't have an account?",
-                    style: GoogleFonts.caveat(
-                      fontSize: 16,
+                    style: GoogleFonts.manrope(
+                      fontSize: 14.4,
                       fontWeight: FontWeight.w400,
                       color: Colors.black,
                     ),
@@ -255,4 +255,5 @@ class _LoginScreenState extends State<LoginScreen> {
     );
   }
 }
+
 

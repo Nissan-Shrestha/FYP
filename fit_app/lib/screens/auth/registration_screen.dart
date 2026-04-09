@@ -84,8 +84,8 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
               Text(
                 "Create a new account to get started",
                 textAlign: TextAlign.center,
-                style: GoogleFonts.caveat(
-                  fontSize: 16,
+                style: GoogleFonts.manrope(
+                  fontSize: 14.4,
                   fontWeight: FontWeight.w600,
                 ),
               ),
@@ -109,8 +109,8 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
                   controller: _usernameController,
                   decoration: InputDecoration(
                     hintText: 'Username',
-                    hintStyle: GoogleFonts.caveat(
-                      fontSize: 16,
+                    hintStyle: GoogleFonts.manrope(
+                      fontSize: 14.4,
                       fontWeight: FontWeight.w400,
                     ),
                     border: InputBorder.none,
@@ -144,8 +144,8 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
                   controller: _emailController,
                   decoration: InputDecoration(
                     hintText: 'Email address',
-                    hintStyle: GoogleFonts.caveat(
-                      fontSize: 16,
+                    hintStyle: GoogleFonts.manrope(
+                      fontSize: 14.4,
                       fontWeight: FontWeight.w400,
                     ),
                     border: InputBorder.none,
@@ -180,8 +180,8 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
                   obscureText: true,
                   decoration: InputDecoration(
                     hintText: 'Password',
-                    hintStyle: GoogleFonts.caveat(
-                      fontSize: 16,
+                    hintStyle: GoogleFonts.manrope(
+                      fontSize: 14.4,
                       fontWeight: FontWeight.w400,
                     ),
                     border: InputBorder.none,
@@ -216,8 +216,8 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
                   obscureText: true,
                   decoration: InputDecoration(
                     hintText: 'Confirm Password',
-                    hintStyle: GoogleFonts.caveat(
-                      fontSize: 16,
+                    hintStyle: GoogleFonts.manrope(
+                      fontSize: 14.4,
                       fontWeight: FontWeight.w400,
                     ),
                     border: InputBorder.none,
@@ -256,8 +256,8 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
                         child: Center(
                           child: Text(
                             "Create Account",
-                            style: GoogleFonts.caveat(
-                              fontSize: 24,
+                            style: GoogleFonts.manrope(
+                              fontSize: 18,
                               fontWeight: FontWeight.w800,
                               color: Colors.white,
                             ),
@@ -284,9 +284,9 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
                 child: RichText(
                   text: TextSpan(
                     text: "Already have an account?",
-                    style: GoogleFonts.caveat(
+                    style: GoogleFonts.manrope(
                       color: Colors.black,
-                      fontSize: 16,
+                      fontSize: 14.4,
                       fontWeight: FontWeight.w400,
                     ),
                     children: const [
@@ -308,4 +308,5 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
     );
   }
 }
+
 
