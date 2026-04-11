@@ -10,6 +10,7 @@ import '../auth/login_screen.dart';
 import 'plan_screen.dart';
 import 'statistics_screen.dart';
 import 'package:fit_app/screens/profile/featured_requests_screen.dart';
+import 'package:fit_app/screens/profile/change_password_screen.dart';
 
 const Color primaryPurple = Color(0xFF673AB7);
 const Color backgroundGrey = Color(0xffF8F9FA);
@@ -693,6 +694,19 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     ),
                   ),
 
+                  const SizedBox(height: 24),
+                  _sectionHeader("Security"),
+                  _settingTile(
+                    title: "Change Password",
+                    subtitle: "Update your account credentials",
+                    icon: Icons.lock_person_outlined,
+                    onTap: () => Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => const ChangePasswordScreen(),
+                      ),
+                    ),
+                  ),
                   const SizedBox(height: 24),
 
                   _sectionHeader("Preferences"),

@@ -1,5 +1,7 @@
+import 'package:fit_app/viewmodels/auth_viewmodel.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:provider/provider.dart';
 
 class ForgotPasswordScreen extends StatefulWidget {
   const ForgotPasswordScreen({super.key});
@@ -18,135 +20,132 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
     super.dispose();
   }
 
-  void _continue() {
+  Future<void> _handleSubmit() async {
     if (_formKey.currentState!.validate()) {
-      // TODO: connect to reset logic
+      try {
+        await context.read<AuthViewmodel>().resetPassword(_emailController.text.trim());
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text("Reset link sent! Please check your email inbox."),
+            backgroundColor: Colors.green,
+          ),
+        );
+        Navigator.pop(context);
+      } catch (e) {
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text("Error: ${e.toString()}"),
+            backgroundColor: Colors.redAccent,
+          ),
+        );
+      }
     }
   }
 
   @override
   Widget build(BuildContext context) {
+    final isLoading = context.watch<AuthViewmodel>().isLoading;
+
     return Scaffold(
+      backgroundColor: const Color(0xffF8F9FA),
+      appBar: AppBar(
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        foregroundColor: Colors.black,
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back_ios_new_rounded, size: 20),
+          onPressed: () => Navigator.pop(context),
+        ),
+      ),
       body: SingleChildScrollView(
-        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 50),
+        padding: const EdgeInsets.symmetric(horizontal: 24),
         child: Form(
           key: _formKey,
           child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const SizedBox(height: 150),
-
-              /// LOGO (matched to other screens)
-              Container(
-                height: 120,
-                width: 120,
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(28),
-                  color: Colors.white,
-                  image: const DecorationImage(
-                    image: AssetImage("assets/icons/fit logo.jpg"),
-                    fit: BoxFit.cover,
-                  ),
-                  boxShadow: const [
-                    BoxShadow(
-                      color: Colors.black26,
-                      blurRadius: 12,
-                      offset: Offset(0, 6),
-                    ),
-                  ],
-                ),
-              ),
-
-              const SizedBox(height: 25),
-
-              /// DESCRIPTION
+              const SizedBox(height: 20),
               Text(
-                "Enter your email to receive a password reset link",
-                textAlign: TextAlign.center,
+                "Reset Password",
                 style: GoogleFonts.manrope(
-                  fontSize: 14.4,
-                  fontWeight: FontWeight.w600,
+                  fontSize: 32,
+                  fontWeight: FontWeight.w900,
+                  color: Colors.black,
                 ),
               ),
-
-              const SizedBox(height: 25),
-
-              /// EMAIL FIELD (shadowed like others)
-              Container(
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(100),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withValues(alpha: 0.12),
-                      blurRadius: 8,
-                      offset: const Offset(0, 4),
-                    ),
-                  ],
-                ),
-                child: TextFormField(
-                  controller: _emailController,
-                  decoration: InputDecoration(
-                    hintText: 'Email Address',
-                    hintStyle: GoogleFonts.manrope(
-                      fontSize: 14.4,
-                      fontWeight: FontWeight.w400,
-                    ),
-                    border: InputBorder.none,
-                    contentPadding: const EdgeInsets.symmetric(
-                      horizontal: 20,
-                      vertical: 16,
-                    ),
-                  ),
-                  validator: (value) => (value == null || !value.contains('@'))
-                      ? 'Enter a valid email'
-                      : null,
+              const SizedBox(height: 12),
+              Text(
+                "Don't worry! It happens. Enter the email associated with your account and we'll send a magic link.",
+                style: GoogleFonts.manrope(
+                  fontSize: 15,
+                  color: Colors.grey.shade600,
+                  height: 1.5,
                 ),
               ),
-
-              const SizedBox(height: 25),
-
-              /// CONTINUE BUTTON (shadowed like login/register)
-              GestureDetector(
-                onTap: _continue,
-                child: Container(
-                  width: double.maxFinite,
-                  height: 60,
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(100),
-                    color: const Color(0xff00A300),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withValues(alpha: 0.18),
-                        blurRadius: 10,
-                        offset: const Offset(0, 5),
-                      ),
-                    ],
-                  ),
-                  child: Center(
-                    child: Text(
-                      "Continue",
-                      style: GoogleFonts.manrope(
-                        fontSize: 19.8,
-                        fontWeight: FontWeight.w800,
-                        color: Colors.white,
-                      ),
-                    ),
-                  ),
+              const SizedBox(height: 48),
+              
+              Text(
+                "Email Address",
+                style: GoogleFonts.manrope(
+                  fontSize: 13,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.black87,
                 ),
               ),
-
-              const SizedBox(height: 25),
-
-              /// BACK TO LOGIN
-              GestureDetector(
-                onTap: () => Navigator.pop(context),
-                child: Text(
-                  "Back to Login",
-                  style: GoogleFonts.manrope(
-                    fontSize: 14.4,
-                    fontWeight: FontWeight.w600,
-                    color: Colors.green,
+              const SizedBox(height: 8),
+              TextFormField(
+                controller: _emailController,
+                style: GoogleFonts.manrope(fontWeight: FontWeight.w600),
+                decoration: InputDecoration(
+                  filled: true,
+                  fillColor: Colors.white,
+                  hintText: "alex@style.com",
+                  hintStyle: TextStyle(color: Colors.grey.shade400),
+                  prefixIcon: const Icon(Icons.alternate_email_rounded, size: 20),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(16),
+                    borderSide: BorderSide(color: Colors.grey.shade200),
                   ),
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(16),
+                    borderSide: BorderSide(color: Colors.grey.shade200),
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(16),
+                    borderSide: const BorderSide(color: Color(0xFF673AB7), width: 2),
+                  ),
+                ),
+                validator: (value) => (value == null || !value.contains('@'))
+                    ? 'Enter a valid email'
+                    : null,
+              ),
+
+              const SizedBox(height: 48),
+              
+              SizedBox(
+                width: double.infinity,
+                height: 56,
+                child: ElevatedButton(
+                  onPressed: isLoading ? null : _handleSubmit,
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFF673AB7),
+                    foregroundColor: Colors.white,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(16),
+                    ),
+                    elevation: 0,
+                  ),
+                  child: isLoading
+                      ? const CircularProgressIndicator(color: Colors.white)
+                      : Text(
+                          "Send Reset Link",
+                          style: GoogleFonts.manrope(
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
                 ),
               ),
             ],
@@ -156,5 +155,3 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
     );
   }
 }
-
-

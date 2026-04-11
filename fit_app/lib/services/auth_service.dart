@@ -24,5 +24,23 @@ class AuthService {
   }
 
   User? get currentUser => _auth.currentUser;
+
+  Future<void> changePassword({required String currentPassword, required String newPassword}) async {
+    User? user = _auth.currentUser;
+    if (user == null || user.email == null) throw Exception("No user logged in.");
+
+    // Re-authenticate user for security
+    AuthCredential credential = EmailAuthProvider.credential(
+      email: user.email!,
+      password: currentPassword,
+    );
+
+    await user.reauthenticateWithCredential(credential);
+    await user.updatePassword(newPassword);
+  }
+
+  Future<void> sendPasswordResetEmail(String email) async {
+    await _auth.sendPasswordResetEmail(email: email);
+  }
 }
 
