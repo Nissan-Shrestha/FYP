@@ -1,4 +1,5 @@
 from rest_framework import serializers
+from django.db import models
 from .models import ClothingItem, Profile, Wardrobe, ClothingOption, Outfit, Report, Schedule, FeaturedWardrobeRequest
 
 class ClothingOptionSerializer(serializers.ModelSerializer):
@@ -33,17 +34,14 @@ from django.utils import timezone
 class ClothingItemSerializer(serializers.ModelSerializer):
     image = serializers.SerializerMethodField()
     wear_count = serializers.SerializerMethodField()
+    is_locked = serializers.SerializerMethodField()
 
     class Meta:
         model = ClothingItem
-        fields = "__all__"
-        # We add wear_count to the extra fields manually since __all__ won't include MethodFields
-        # Actually in DRF MethodFields are included if you don't restrict them,
-        # but let's be explicit to be safe.
         fields = [
             "id", "owner", "name", "category", "item_type", "color",
             "material", "size", "season", "occasion", "brand",
-            "purchase_price", "layer_level", "image", "wear_count", "created_at"
+            "purchase_price", "layer_level", "image", "wear_count", "is_locked", "created_at"
         ]
         read_only_fields = ("id", "owner", "created_at")
 
@@ -62,15 +60,37 @@ class ClothingItemSerializer(serializers.ModelSerializer):
             date_time__lte=timezone.now()
         ).count()
 
+    def get_is_locked(self, obj):
+        # Check if any associated wardrobe is locked
+        from datetime import timedelta
+        three_days_ago = timezone.now() - timedelta(days=3)
+        return FeaturedWardrobeRequest.objects.filter(
+            wardrobe__items=obj
+        ).filter(
+            models.Q(status='pending', is_paid=True) | 
+            models.Q(status='approved', updated_at__gte=three_days_ago)
+        ).exists()
+
 
 class WardrobeSerializer(serializers.ModelSerializer):
     item_count = serializers.SerializerMethodField()
     thumbnail = serializers.SerializerMethodField()
+    is_locked = serializers.SerializerMethodField()
 
     class Meta:
         model = Wardrobe
-        fields = "__all__"
+        fields = ["id", "owner", "name", "is_default", "item_count", "thumbnail", "is_locked", "created_at", "updated_at"]
         read_only_fields = ("id", "owner", "items", "created_at", "updated_at")
+
+    def get_is_locked(self, obj):
+        from datetime import timedelta
+        three_days_ago = timezone.now() - timedelta(days=3)
+        return FeaturedWardrobeRequest.objects.filter(
+            wardrobe=obj
+        ).filter(
+            models.Q(status='pending', is_paid=True) | 
+            models.Q(status='approved', updated_at__gte=three_days_ago)
+        ).exists()
 
     def get_item_count(self, obj):
         return obj.items.count()

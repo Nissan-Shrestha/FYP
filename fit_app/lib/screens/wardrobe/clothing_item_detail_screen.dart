@@ -102,6 +102,35 @@ class ClothingItemDetailScreen extends StatelessWidget {
                       ),
               ),
             ),
+            if (item.isLocked)
+              Padding(
+                padding: const EdgeInsets.only(top: 16),
+                child: Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                  decoration: BoxDecoration(
+                    color: Colors.orange.shade50,
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: Colors.orange.shade200),
+                  ),
+                  child: Row(
+                    children: [
+                      const Icon(Icons.lock_clock_rounded, color: Colors.orange, size: 20),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Text(
+                          "This item is part of a featured wardrobe. Editing is locked until the feature period ends.",
+                          style: GoogleFonts.manrope(
+                            fontSize: 12.6,
+                            color: Colors.orange.shade900,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
             const SizedBox(height: 20),
 
             // Item Headers

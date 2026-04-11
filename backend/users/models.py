@@ -103,6 +103,14 @@ class ClothingItem(models.Model):
     purchase_link = models.URLField(max_length=500, null=True, blank=True, help_text="External link to buy the item")
     created_at = models.DateTimeField(auto_now_add=True)
 
+    @property
+    def is_locked(self):
+        """Checks if any associated wardrobe is locked."""
+        for wardrobe in self.wardrobes.all():
+            if wardrobe.is_locked:
+                return True
+        return False
+
     class Meta:
         constraints = [
             models.CheckConstraint(

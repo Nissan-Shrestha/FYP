@@ -16,6 +16,7 @@ class ClothingItemModel {
   final String? purchaseLink;
   final int wearCount;
   final DateTime createdAt;
+  final bool isLocked;
 
   const ClothingItemModel({
     required this.id,
@@ -35,6 +36,7 @@ class ClothingItemModel {
     this.purchaseLink,
     this.wearCount = 0,
     required this.createdAt,
+    this.isLocked = false,
   });
 
   factory ClothingItemModel.fromJson(Map<String, dynamic> json) {
@@ -56,6 +58,7 @@ class ClothingItemModel {
       purchaseLink: json["purchase_link"] as String?,
       wearCount: (json["wear_count"] as int?) ?? 0,
       createdAt: DateTime.parse(json["created_at"] as String),
+      isLocked: json["is_locked"] as bool? ?? false,
     );
   }
 
@@ -78,6 +81,7 @@ class ClothingItemModel {
       "purchase_link": purchaseLink,
       "wear_count": wearCount,
       "created_at": createdAt.toIso8601String(),
+      "is_locked": isLocked,
     };
   }
 

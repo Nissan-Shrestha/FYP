@@ -7,6 +7,7 @@ class WardrobeModel {
   final String? thumbnail;
   final DateTime createdAt;
   final DateTime updatedAt;
+  final bool isLocked;
 
   const WardrobeModel({
     required this.id,
@@ -17,6 +18,7 @@ class WardrobeModel {
     this.thumbnail,
     required this.createdAt,
     required this.updatedAt,
+    this.isLocked = false,
   });
 
   factory WardrobeModel.fromJson(Map<String, dynamic> json) {
@@ -33,6 +35,7 @@ class WardrobeModel {
       updatedAt:
           DateTime.tryParse((json["updated_at"] as String?) ?? "") ??
           DateTime.fromMillisecondsSinceEpoch(0),
+      isLocked: json["is_locked"] as bool? ?? false,
     );
   }
 
@@ -46,6 +49,7 @@ class WardrobeModel {
       "thumbnail": thumbnail,
       "created_at": createdAt.toIso8601String(),
       "updated_at": updatedAt.toIso8601String(),
+      "is_locked": isLocked,
     };
   }
 }

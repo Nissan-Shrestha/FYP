@@ -251,6 +251,94 @@ class _WardrobeScreenState extends State<WardrobeScreen> {
             children: [
               const SizedBox(height: 10),
 
+              /// ================= ADD NEW ITEMS =================
+              Text(
+                "Add new items",
+                style: GoogleFonts.manrope(
+                  fontSize: 17.1,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+
+              const SizedBox(height: 16),
+
+              GestureDetector(
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (_) => const AddItemScreen()),
+                  );
+                },
+                child: Container(
+                  height: 120,
+                  width: double.infinity,
+                  decoration: BoxDecoration(
+                    color: Colors.grey.shade300,
+                    borderRadius: BorderRadius.circular(16),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withValues(alpha: 0.08),
+                        blurRadius: 6,
+                        offset: const Offset(0, 3),
+                      ),
+                    ],
+                  ),
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      const Icon(Icons.add, size: 36),
+                      const SizedBox(height: 8),
+                      Text(
+                        "Add new items",
+                        style: GoogleFonts.manrope(fontSize: 15.3),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+
+              const SizedBox(height: 30),
+
+              /// ================= CREATE NEW WARDROBE =================
+              GestureDetector(
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => const CreateWardrobeScreen(),
+                    ),
+                  );
+                },
+                child: Container(
+                  height: 120, // Reduced height for better fit at top
+                  width: double.infinity,
+                  decoration: BoxDecoration(
+                    color: Colors.grey.shade300,
+                    borderRadius: BorderRadius.circular(16),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withValues(alpha: 0.08),
+                        blurRadius: 6,
+                        offset: const Offset(0, 3),
+                      ),
+                    ],
+                  ),
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      const Icon(Icons.add_box_outlined, size: 36),
+                      const SizedBox(height: 8),
+                      Text(
+                        "Create new wardrobe",
+                        style: GoogleFonts.manrope(fontSize: 15.3),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+
+              const SizedBox(height: 40),
+
               /// ================= WARDROBE SECTION =================
               Text(
                 "My Wardrobes",
@@ -355,92 +443,6 @@ class _WardrobeScreenState extends State<WardrobeScreen> {
                     ],
                   ),
                 ),
-
-              /// ================= CREATE NEW WARDROBE =================
-              GestureDetector(
-                onTap: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (_) => const CreateWardrobeScreen(),
-                    ),
-                  );
-                },
-                child: Container(
-                  height: 160,
-                  width: double.infinity,
-                  decoration: BoxDecoration(
-                    color: Colors.grey.shade300,
-                    borderRadius: BorderRadius.circular(16),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withValues(alpha: 0.08),
-                        blurRadius: 6,
-                        offset: const Offset(0, 3),
-                      ),
-                    ],
-                  ),
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      const Icon(Icons.add_box_outlined, size: 40),
-                      const SizedBox(height: 10),
-                      Text(
-                        "Create new wardrobe",
-                        style: GoogleFonts.manrope(fontSize: 15.3),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-
-              const SizedBox(height: 50),
-
-              /// ================= ADD NEW ITEMS =================
-              Text(
-                "Add new items",
-                style: GoogleFonts.manrope(
-                  fontSize: 17.1,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-
-              const SizedBox(height: 16),
-
-              GestureDetector(
-                onTap: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(builder: (_) => const AddItemScreen()),
-                  );
-                },
-                child: Container(
-                  height: 120,
-                  width: double.infinity,
-                  decoration: BoxDecoration(
-                    color: Colors.grey.shade300,
-                    borderRadius: BorderRadius.circular(16),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withValues(alpha: 0.08),
-                        blurRadius: 6,
-                        offset: const Offset(0, 3),
-                      ),
-                    ],
-                  ),
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      const Icon(Icons.add, size: 36),
-                      const SizedBox(height: 8),
-                      Text(
-                        "Add new items",
-                        style: GoogleFonts.manrope(fontSize: 15.3),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
 
               const SizedBox(height: 40),
             ],

@@ -178,7 +178,8 @@ class WardrobeViewmodel extends ChangeNotifier {
 
       return updated;
     } catch (e) {
-      lastActionError = e.toString();
+      error = e.toString().replaceAll("Exception: ", "");
+      lastActionError = error;
       return null;
     } finally {
       isSubmitting = false;
@@ -200,7 +201,8 @@ class WardrobeViewmodel extends ChangeNotifier {
       wardrobePreviewItems.remove(wardrobeId);
       return true;
     } catch (e) {
-      lastActionError = e.toString();
+      error = e.toString().replaceAll("Exception: ", "");
+      lastActionError = error;
       return false;
     } finally {
       isSubmitting = false;
@@ -488,8 +490,7 @@ class WardrobeViewmodel extends ChangeNotifier {
       await Stripe.instance.presentPaymentSheet();
 
       // Note: We don't need to call the backend to "Confirm" it here.
-      // Our backend Webhook will catch the success and update the request status.
-      
+      await fetchWardrobes();
       return true;
     } on StripeException catch (e) {
       lastActionError = e.error.localizedMessage ?? "Payment canceled or failed.";

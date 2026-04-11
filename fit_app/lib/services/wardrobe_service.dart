@@ -70,7 +70,8 @@ class WardrobeService {
     if (response.statusCode == 201) {
       return WardrobeModel.fromJson(jsonDecode(response.body));
     }
-    throw Exception("Failed to create wardrobe");
+    final error = _parseError(response.body, "Failed to create wardrobe");
+    throw Exception(error);
   }
 
   static Future<WardrobeModel> renameWardrobe({
@@ -85,7 +86,8 @@ class WardrobeService {
     if (response.statusCode == 200) {
       return WardrobeModel.fromJson(jsonDecode(response.body));
     }
-    throw Exception("Failed to rename wardrobe");
+    final error = _parseError(response.body, "Failed to rename wardrobe");
+    throw Exception(error);
   }
 
   static Future<void> deleteWardrobe({
@@ -96,7 +98,8 @@ class WardrobeService {
       headers: await _authHeaders(json: false),
     );
     if (response.statusCode == 204) return;
-    throw Exception("Failed to delete wardrobe");
+    final error = _parseError(response.body, "Failed to delete wardrobe");
+    throw Exception(error);
   }
 
   static Future<List<ClothingItemModel>> fetchClothingItems() async {
@@ -188,7 +191,8 @@ class WardrobeService {
     if (response.statusCode == 200) {
       return WardrobeModel.fromJson(jsonDecode(response.body));
     }
-    throw Exception("Failed to add item to wardrobe");
+    final error = _parseError(response.body, "Failed to add item to wardrobe");
+    throw Exception(error);
   }
 
   static Future<WardrobeModel> addItemsToWardrobe({
@@ -203,7 +207,8 @@ class WardrobeService {
     if (response.statusCode == 200) {
       return WardrobeModel.fromJson(jsonDecode(response.body));
     }
-    throw Exception("Failed to add items to wardrobe");
+    final error = _parseError(response.body, "Failed to add items to wardrobe");
+    throw Exception(error);
   }
 
   static Future<WardrobeModel> removeItemFromWardrobe({
@@ -217,7 +222,8 @@ class WardrobeService {
     if (response.statusCode == 200) {
       return WardrobeModel.fromJson(jsonDecode(response.body));
     }
-    throw Exception("Failed to remove item from wardrobe");
+    final error = _parseError(response.body, "Failed to remove item from wardrobe");
+    throw Exception(error);
   }
 
   static Future<void> deleteClothingItem({
@@ -228,7 +234,8 @@ class WardrobeService {
       headers: await _authHeaders(json: false),
     );
     if (response.statusCode == 204) return;
-    throw Exception("Failed to delete clothing item");
+    final error = _parseError(response.body, "Failed to delete clothing item");
+    throw Exception(error);
   }
 
   static Future<ClothingItemModel> updateClothingItem({
@@ -275,7 +282,8 @@ class WardrobeService {
     if (streamed.statusCode == 200) {
       return ClothingItemModel.fromJson(jsonDecode(body));
     }
-    throw Exception("Failed to update clothing item");
+    final error = _parseError(body, "Failed to update clothing item");
+    throw Exception(error);
   }
 
   static Future<FeaturedWardrobeModel> requestFeaturedWardrobe(int wardrobeId) async {
@@ -352,6 +360,16 @@ class WardrobeService {
       final errorData = jsonDecode(response.body);
       throw Exception(errorData["error"] ?? "Failed to create payment intent");
     }
+  }
+
+  static String _parseError(String body, String fallback) {
+    try {
+      final decoded = jsonDecode(body);
+      if (decoded is Map && decoded.containsKey("error")) {
+        return decoded["error"];
+      }
+    } catch (_) {}
+    return fallback;
   }
 }
 

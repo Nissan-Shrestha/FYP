@@ -762,6 +762,9 @@ def clothing_item_detail(request, item_id):
         return Response({"error": "Clothing item not found"}, status=404)
 
     if request.method == "PATCH":
+        if _is_item_locked(item):
+            return Response({"error": "This item belongs to a wardrobe that is currently featured or pending review and cannot be modified."}, status=403)
+            
         fields = ["name", "category", "season", "occasion", "size", "material", "color", "brand"]
         for field in fields:
             if field in request.data:
@@ -800,6 +803,9 @@ def clothing_item_detail(request, item_id):
         item.save()
         return Response(ClothingItemSerializer(item, context={"request": request}).data, status=200)
 
+    if _is_item_locked(item):
+        return Response({"error": "This item belongs to a wardrobe that is currently featured or pending review and cannot be deleted."}, status=403)
+
     item.delete()
     return Response(status=204)
 
@@ -834,6 +840,32 @@ def wardrobes(request):
     return Response(WardrobeSerializer(wardrobe, context={"request": request}).data, status=201)
 
 
+def _is_wardrobe_locked(wardrobe):
+    """
+    Checks if a wardrobe is 'locked' because it has an active featured request.
+    A wardrobe is locked if it is PENDING or recently APPROVED.
+    """
+    from datetime import timedelta
+    three_days_ago = timezone.now() - timedelta(days=3)
+    
+    return FeaturedWardrobeRequest.objects.filter(
+        wardrobe=wardrobe
+    ).filter(
+        models.Q(status='pending', is_paid=True) | 
+        models.Q(status='approved', updated_at__gte=three_days_ago)
+    ).exists()
+
+
+def _is_item_locked(item):
+    """
+    Checks if an item is 'locked' because it belongs to at least one locked wardrobe.
+    """
+    for wardrobe in item.wardrobes.all():
+        if _is_wardrobe_locked(wardrobe):
+            return True
+    return False
+
+
 @api_view(["PATCH", "DELETE"])
 def wardrobe_detail(request, wardrobe_id):
     firebase_uid, err = get_firebase_uid(request)
@@ -865,6 +897,9 @@ def wardrobe_detail(request, wardrobe_id):
     if Wardrobe.objects.filter(owner=profile, name__iexact=new_name).exclude(id=wardrobe.id).exists():
         return Response({"error": "Wardrobe name already exists"}, status=400)
 
+    if _is_wardrobe_locked(wardrobe):
+        return Response({"error": "This wardrobe is currently featured or pending review and cannot be renamed."}, status=403)
+
     wardrobe.name = new_name
     wardrobe.save(update_fields=["name", "updated_at"])
     return Response(WardrobeSerializer(wardrobe, context={"request": request}).data, status=200)
@@ -888,6 +923,9 @@ def wardrobe_items(request, wardrobe_id):
     if request.method == "GET":
         queryset = wardrobe.items.filter(owner=profile).order_by("-created_at")
         return Response(ClothingItemSerializer(queryset, many=True, context={"request": request}).data)
+
+    if _is_wardrobe_locked(wardrobe):
+        return Response({"error": "This wardrobe is currently featured or pending review and cannot be modified."}, status=403)
 
     item_ids = request.data.get("item_ids", [])
     if not isinstance(item_ids, list):
@@ -930,6 +968,9 @@ def remove_item_from_wardrobe(request, wardrobe_id, item_id):
             {"error": "Items cannot be removed from the default wardrobe"},
             status=400,
         )
+
+    if _is_wardrobe_locked(wardrobe):
+        return Response({"error": "This wardrobe is currently featured or pending review and cannot be modified."}, status=403)
 
     try:
         item = ClothingItem.objects.get(id=item_id, owner=profile)
@@ -1498,6 +1539,10 @@ def create_featured_wardrobe_payment_intent(request):
     except Wardrobe.DoesNotExist:
         return Response({"error": "Wardrobe not found"}, status=404)
 
+    # NEW: Ensure wardrobe is not empty before allowing feature request
+    if wardrobe.items.count() == 0:
+        return Response({"error": "You cannot feature an empty wardrobe. Add some items first!"}, status=400)
+
     from datetime import timedelta
     three_days_ago = timezone.now() - timedelta(days=3)
 
@@ -1634,6 +1679,18 @@ def admin_featured_wardrobe_requests(request):
         if new_status == "approved":
             feat_req.requester.is_featured = True
             feat_req.requester.save()
+
+        if new_status == "rejected":
+            # Automatic Refund
+            try:
+                stripe.api_key = os.getenv("STRIPE_SECRET_KEY")
+                if feat_req.is_paid and feat_req.stripe_payment_intent_id:
+                    stripe.Refund.create(
+                        payment_intent=feat_req.stripe_payment_intent_id,
+                    )
+                    print(f"REFUND SUCCESS: Request {feat_req.id} refunded.")
+            except Exception as e:
+                print(f"REFUND ERROR: {str(e)}")
 
         return Response({"message": f"Request marked as {new_status}"})
     except FeaturedWardrobeRequest.DoesNotExist:
