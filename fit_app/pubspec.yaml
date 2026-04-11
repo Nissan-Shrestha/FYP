@@ -48,6 +48,7 @@ dependencies:
   url_launcher: ^6.3.2
   fl_chart: ^0.71.0
   intl: ^0.20.0
+  flutter_stripe: ^12.5.0
 
 dev_dependencies:
   flutter_test:

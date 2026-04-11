@@ -314,6 +314,8 @@ class FeaturedWardrobeRequest(models.Model):
         default='pending',
     )
     admin_feedback = models.TextField(null=True, blank=True)
+    is_paid = models.BooleanField(default=False)
+    stripe_payment_intent_id = models.CharField(max_length=255, null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 

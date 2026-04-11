@@ -494,7 +494,7 @@ class _WardrobeViewScreenState extends State<WardrobeViewScreen> {
 
     if (confirmed != true || !mounted) return;
 
-    final success = await vm.requestFeaturedWardrobe(widget.wardrobeId);
+    final success = await vm.processFeaturedWardrobePayment(widget.wardrobeId);
 
     if (!mounted) return;
 
@@ -502,8 +502,8 @@ class _WardrobeViewScreenState extends State<WardrobeViewScreen> {
       SnackBar(
         content: Text(
           success
-              ? "Featured Wardrobe request sent!"
-              : (vm.error ?? "Failed to send request"),
+              ? "Payment successful! Your request will be reviewed shortly."
+              : (vm.lastActionError ?? "Failed to process payment"),
         ),
         backgroundColor: success ? const Color(0xff0AAE00) : Colors.redAccent,
       ),

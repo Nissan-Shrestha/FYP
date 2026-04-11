@@ -6,6 +6,7 @@ import 'package:fit_app/models/clothing_option_model.dart';
 import 'package:fit_app/models/featured_wardrobe_model.dart';
 import 'package:fit_app/services/wardrobe_service.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_stripe/flutter_stripe.dart';
 
 class WardrobeViewmodel extends ChangeNotifier {
   List<WardrobeModel> wardrobes = [];
@@ -25,6 +26,7 @@ class WardrobeViewmodel extends ChangeNotifier {
   bool isSubmitting = false;
 
   String? error;
+  String? lastActionError;
 
   Future<void> fetchClothingOptions() async {
     try {
@@ -127,7 +129,7 @@ class WardrobeViewmodel extends ChangeNotifier {
   }) async {
     try {
       isSubmitting = true;
-      error = null;
+      lastActionError = null;
       notifyListeners();
 
       final wardrobe = await WardrobeService.createWardrobe(name: name);
@@ -143,7 +145,7 @@ class WardrobeViewmodel extends ChangeNotifier {
 
       return wardrobe;
     } catch (e) {
-      error = e.toString();
+      lastActionError = e.toString();
       return null;
     } finally {
       isSubmitting = false;
@@ -157,7 +159,7 @@ class WardrobeViewmodel extends ChangeNotifier {
   }) async {
     try {
       isSubmitting = true;
-      error = null;
+      lastActionError = null;
       notifyListeners();
 
       final updated = await WardrobeService.renameWardrobe(
@@ -176,7 +178,7 @@ class WardrobeViewmodel extends ChangeNotifier {
 
       return updated;
     } catch (e) {
-      error = e.toString();
+      lastActionError = e.toString();
       return null;
     } finally {
       isSubmitting = false;
@@ -189,7 +191,7 @@ class WardrobeViewmodel extends ChangeNotifier {
   }) async {
     try {
       isSubmitting = true;
-      error = null;
+      lastActionError = null;
       notifyListeners();
 
       await WardrobeService.deleteWardrobe(wardrobeId: wardrobeId);
@@ -198,7 +200,7 @@ class WardrobeViewmodel extends ChangeNotifier {
       wardrobePreviewItems.remove(wardrobeId);
       return true;
     } catch (e) {
-      error = e.toString();
+      lastActionError = e.toString();
       return false;
     } finally {
       isSubmitting = false;
@@ -221,7 +223,7 @@ class WardrobeViewmodel extends ChangeNotifier {
   }) async {
     try {
       isSubmitting = true;
-      error = null;
+      lastActionError = null;
       notifyListeners();
 
       final item = await WardrobeService.createClothingItem(
@@ -259,7 +261,7 @@ class WardrobeViewmodel extends ChangeNotifier {
 
       return item;
     } catch (e) {
-      error = e.toString();
+      lastActionError = e.toString();
       return null;
     } finally {
       isSubmitting = false;
@@ -273,7 +275,7 @@ class WardrobeViewmodel extends ChangeNotifier {
   }) async {
     try {
       isSubmitting = true;
-      error = null;
+      lastActionError = null;
       notifyListeners();
 
       await WardrobeService.addItemToWardrobe(
@@ -282,7 +284,7 @@ class WardrobeViewmodel extends ChangeNotifier {
       );
       return true;
     } catch (e) {
-      error = e.toString();
+      lastActionError = e.toString();
       return false;
     } finally {
       isSubmitting = false;
@@ -448,14 +450,52 @@ class WardrobeViewmodel extends ChangeNotifier {
   Future<bool> requestFeaturedWardrobe(int wardrobeId) async {
     try {
       isSubmitting = true;
-      error = null;
+      lastActionError = null;
       notifyListeners();
 
       final request = await WardrobeService.requestFeaturedWardrobe(wardrobeId);
       featuredWardrobeRequests = [request, ...featuredWardrobeRequests];
       return true;
     } catch (e) {
-      error = e.toString();
+      lastActionError = e.toString();
+      return false;
+    } finally {
+      isSubmitting = false;
+      notifyListeners();
+    }
+  }
+
+  Future<bool> processFeaturedWardrobePayment(int wardrobeId) async {
+    try {
+      isSubmitting = true;
+      lastActionError = null;
+      notifyListeners();
+
+      // 1. Create Payment Intent on our server
+      final data = await WardrobeService.createFeaturedWardrobePaymentIntent(wardrobeId);
+      final clientSecret = data['client_secret'];
+
+      // 2. Initialize Payment Sheet
+      await Stripe.instance.initPaymentSheet(
+        paymentSheetParameters: SetupPaymentSheetParameters(
+          paymentIntentClientSecret: clientSecret,
+          merchantDisplayName: 'Antigravity Fit App',
+          style: ThemeMode.light,
+        ),
+      );
+
+      // 3. Present Payment Sheet
+      await Stripe.instance.presentPaymentSheet();
+
+      // Note: We don't need to call the backend to "Confirm" it here.
+      // Our backend Webhook will catch the success and update the request status.
+      
+      return true;
+    } on StripeException catch (e) {
+      lastActionError = e.error.localizedMessage ?? "Payment canceled or failed.";
+      return false;
+    } catch (e) {
+      lastActionError = e.toString();
       return false;
     } finally {
       isSubmitting = false;

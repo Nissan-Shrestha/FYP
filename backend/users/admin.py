@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import Profile, ClothingItem, Wardrobe, ClothingOption, Outfit
+from .models import Profile, ClothingItem, Wardrobe, ClothingOption, Outfit, FeaturedWardrobeRequest, Report, Schedule
 
 @admin.register(Profile)
 class ProfileAdmin(admin.ModelAdmin):
@@ -30,3 +30,22 @@ class OutfitAdmin(admin.ModelAdmin):
     list_display = ("name", "owner", "occasion", "created_at")
     list_filter = ("occasion",)
     search_fields = ("name", "owner__username")
+
+@admin.register(FeaturedWardrobeRequest)
+class FeaturedWardrobeRequestAdmin(admin.ModelAdmin):
+    list_display = ("requester", "wardrobe", "status", "is_paid", "created_at")
+    list_filter = ("status", "is_paid")
+    search_fields = ("requester__username", "wardrobe__name")
+    list_editable = ("status",)
+
+@admin.register(Report)
+class ReportAdmin(admin.ModelAdmin):
+    list_display = ("reporter", "outfit", "status", "created_at")
+    list_filter = ("status",)
+    search_fields = ("reporter__username", "reason")
+
+@admin.register(Schedule)
+class ScheduleAdmin(admin.ModelAdmin):
+    list_display = ("event_title", "owner", "date_time", "outfit")
+    list_filter = ("date_time",)
+    search_fields = ("event_title", "owner__username")

@@ -8,8 +8,10 @@ import re
 from google import genai
 import os
 from django.db import models
+import stripe
 
-from rest_framework.decorators import api_view
+from rest_framework.decorators import api_view, permission_classes
+from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
 from .firebase_auth import get_firebase_uid
 from .models import ClothingItem, Profile, Wardrobe, ClothingOption, Outfit, Schedule, Report, FeaturedWardrobeRequest
@@ -1477,6 +1479,122 @@ def featured_wardrobe_discovery(request):
     return Response(results)
 
 
+@api_view(["POST"])
+def create_featured_wardrobe_payment_intent(request):
+    """
+    Step 1 of Feature Request: Create a Stripe PaymentIntent.
+    Returns client_secret to the mobile app.
+    """
+    firebase_uid, err = get_firebase_uid(request)
+    if err: return err
+    profile, _ = _get_profile_by_firebase_uid(firebase_uid)
+
+    wardrobe_id = request.data.get("wardrobe_id")
+    if not wardrobe_id:
+        return Response({"error": "wardrobe_id is required"}, status=400)
+
+    try:
+        wardrobe = Wardrobe.objects.get(id=wardrobe_id, owner=profile)
+    except Wardrobe.DoesNotExist:
+        return Response({"error": "Wardrobe not found"}, status=404)
+
+    from datetime import timedelta
+    three_days_ago = timezone.now() - timedelta(days=3)
+
+    # Check for active requests that are actually PAID or recently APPROVED.
+    # We ignore unpaid 'pending' requests because those are likely cancelled/stuck attempts.
+    active_request = FeaturedWardrobeRequest.objects.filter(
+        requester=profile, 
+        wardrobe=wardrobe
+    ).filter(
+        models.Q(status='pending', is_paid=True) | 
+        models.Q(status='approved', updated_at__gte=three_days_ago)
+    ).first()
+
+    if active_request:
+        return Response({"error": "This wardrobe is already featured or has an active paid request."}, status=400)
+
+    # Clean up any old unpaid requests for this wardrobe so we don't clutter the DB
+    FeaturedWardrobeRequest.objects.filter(requester=profile, wardrobe=wardrobe, is_paid=False).delete()
+
+    # 2. Setup Stripe
+    stripe.api_key = os.getenv("STRIPE_SECRET_KEY")
+    if not stripe.api_key:
+        return Response({"error": "Stripe is not configured on the server."}, status=500)
+
+    try:
+        # Amount in cents ($1.99 = 199 cents)
+        amount = 199 
+        
+        # 3. Create Stripe PaymentIntent (Restricted to cards only)
+        intent = stripe.PaymentIntent.create(
+            amount=amount,
+            currency='usd',
+            payment_method_types=['card'],
+            metadata={
+                'profile_id': profile.id,
+                'wardrobe_id': wardrobe.id,
+                'type': 'featured_wardrobe'
+            }
+        )
+
+        # 4. Create UNPAID request placeholder
+        # This will be marked as paid=True by the webhook later
+        feat_request = FeaturedWardrobeRequest.objects.create(
+            requester=profile,
+            wardrobe=wardrobe,
+            is_paid=False,
+            stripe_payment_intent_id=intent.id
+        )
+
+        return Response({
+            'client_secret': intent.client_secret,
+            'payment_intent_id': intent.id,
+            'request_id': feat_request.id
+        })
+
+    except Exception as e:
+        return Response({'error': str(e)}, status=400)
+
+
+@api_view(["POST"])
+@permission_classes([AllowAny])
+def stripe_webhook(request):
+    """
+    Stripe Webhook: Matches PaymentIntent with WardrobeRequest and marks as PAID.
+    """
+    payload = request.body
+    sig_header = request.headers.get('STRIPE_SIGNATURE')
+    endpoint_secret = os.getenv("STRIPE_WEBHOOK_SECRET")
+
+    if not sig_header or not endpoint_secret:
+        return Response({"error": "Webhook configuration missing"}, status=400)
+
+    try:
+        event = stripe.Webhook.construct_event(
+            payload, sig_header, endpoint_secret
+        )
+    except ValueError:
+        return Response({"error": "Invalid payload"}, status=400)
+    except stripe.error.SignatureVerificationError:
+        return Response({"error": "Invalid signature"}, status=400)
+
+    # Handle the event
+    if event['type'] == 'payment_intent.succeeded':
+        intent = event['data']['object']
+        payment_intent_id = intent['id']
+
+        try:
+            feat_req = FeaturedWardrobeRequest.objects.get(stripe_payment_intent_id=payment_intent_id)
+            feat_req.is_paid = True
+            feat_req.save()
+            print(f"WEBHOOK SUCCESS: Request {feat_req.id} marked as PAID.")
+        except FeaturedWardrobeRequest.DoesNotExist:
+            print(f"WEBHOOK WARNING: PaymentIntent {payment_intent_id} not found in DB.")
+
+    return Response({"status": "success"}, status=200)
+
+
 @api_view(["GET", "POST"])
 def admin_featured_wardrobe_requests(request):
     """
@@ -1493,7 +1611,7 @@ def admin_featured_wardrobe_requests(request):
 
     if request.method == "GET":
         status_filter = request.GET.get("status")
-        queryset = FeaturedWardrobeRequest.objects.all().order_by("-created_at")
+        queryset = FeaturedWardrobeRequest.objects.filter(is_paid=True).order_by("-created_at")
         if status_filter:
             queryset = queryset.filter(status=status_filter)
         
@@ -1508,7 +1626,7 @@ def admin_featured_wardrobe_requests(request):
         return Response({"error": "request_id and status are required"}, status=400)
 
     try:
-        feat_req = FeaturedWardrobeRequest.objects.get(id=req_id)
+        feat_req = FeaturedWardrobeRequest.objects.get(id=req_id, is_paid=True)
         feat_req.status = new_status
         feat_req.admin_feedback = feedback
         feat_req.save()

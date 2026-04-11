@@ -35,6 +35,8 @@ from .views import (
     featured_wardrobe_discovery,
     admin_featured_wardrobe_requests,
     admin_wardrobe_view,
+    create_featured_wardrobe_payment_intent,
+    stripe_webhook,
 )
 
 urlpatterns = [
@@ -77,4 +79,8 @@ urlpatterns = [
     path("featured-wardrobes/discovery/", featured_wardrobe_discovery),
     path("admin/feature-requests/", admin_featured_wardrobe_requests),
     path("admin/wardrobes/<int:wardrobe_id>/", admin_wardrobe_view),
+    
+    # Payments
+    path("payments/create-intent/", create_featured_wardrobe_payment_intent),
+    path("payments/webhook/", stripe_webhook),
 ]
