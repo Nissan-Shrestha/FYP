@@ -989,7 +989,7 @@ def _is_wardrobe_locked(wardrobe):
     A wardrobe is locked if it is PENDING or recently APPROVED.
     """
     from datetime import timedelta
-    three_days_ago = timezone.now() - timedelta(days=3)
+    three_days_ago = timezone.now() - timedelta(days=1)
     
     return FeaturedWardrobeRequest.objects.filter(
         wardrobe=wardrobe
@@ -1568,7 +1568,7 @@ def featured_wardrobe_requests(request):
     if request.method == "GET":
         from datetime import timedelta
         # Limit to 3 days for Approved/Rejected, but show ALL Pending
-        three_days_ago = timezone.now() - timedelta(days=3)
+        three_days_ago = timezone.now() - timedelta(days=1)
         queryset = FeaturedWardrobeRequest.objects.filter(requester=profile).filter(
             models.Q(status='pending') | models.Q(updated_at__gte=three_days_ago)
         ).order_by("-created_at")
@@ -1588,7 +1588,7 @@ def featured_wardrobe_requests(request):
 
     # Prevent duplicates if a request is PENDING or if an APPROVED request is still within the 3-day window
     from datetime import timedelta
-    three_days_ago = timezone.now() - timedelta(days=3)
+    three_days_ago = timezone.now() - timedelta(days=1)
     
     active_request = FeaturedWardrobeRequest.objects.filter(
         requester=profile, 
@@ -1644,7 +1644,7 @@ def featured_wardrobe_discovery(request):
     
 
     from datetime import timedelta
-    three_days_ago = timezone.now() - timedelta(days=3)
+    three_days_ago = timezone.now() - timedelta(days=1)
     
     approved_requests = FeaturedWardrobeRequest.objects.filter(
         status="approved", 
@@ -1692,7 +1692,7 @@ def create_featured_wardrobe_payment_intent(request):
         return Response({"error": "You cannot feature an empty wardrobe. Add some items first!"}, status=400)
 
     from datetime import timedelta
-    three_days_ago = timezone.now() - timedelta(days=3)
+    three_days_ago = timezone.now() - timedelta(days=1)
 
     # Check for active requests that are actually PAID or recently APPROVED.
     # We ignore unpaid 'pending' requests because those are likely cancelled/stuck attempts.

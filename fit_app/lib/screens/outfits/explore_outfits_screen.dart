@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:fit_app/constants.dart';
 import 'package:fit_app/models/featured_wardrobe_model.dart';
 import 'package:fit_app/models/outfit_model.dart';
@@ -19,6 +20,8 @@ class ExploreOutfitsScreen extends StatefulWidget {
 
 class _ExploreOutfitsScreenState extends State<ExploreOutfitsScreen> {
   final ScrollController _scrollController = ScrollController();
+  final PageController _discoveryController = PageController();
+  Timer? _discoveryTimer;
 
   @override
   void initState() {
@@ -27,17 +30,51 @@ class _ExploreOutfitsScreenState extends State<ExploreOutfitsScreen> {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       context.read<OutfitViewmodel>().fetchExploreFilters();
       context.read<OutfitViewmodel>().fetchExploreOutfits(refresh: true);
-      context.read<OutfitViewmodel>().fetchFeaturedWardrobes();
+      context.read<OutfitViewmodel>().fetchFeaturedWardrobes().then((_) {
+        _startAutoScroll();
+      });
+    });
+  }
+
+  void _startAutoScroll() {
+    _discoveryTimer?.cancel();
+    _discoveryTimer = Timer.periodic(const Duration(seconds: 5), (timer) {
+      if (_discoveryController.hasClients) {
+        final totalIndices = context
+            .read<OutfitViewmodel>()
+            .communityFeaturedWardrobes
+            .length;
+        if (totalIndices == 0) return;
+
+        final currentPage = _discoveryController.page?.round() ?? 0;
+        final nextPage = currentPage + 1;
+
+        if (nextPage >= totalIndices) {
+          _discoveryController.animateToPage(
+            0,
+            duration: const Duration(milliseconds: 1000),
+            curve: Curves.easeInOutCubic,
+          );
+        } else {
+          _discoveryController.nextPage(
+            duration: const Duration(milliseconds: 1000),
+            curve: Curves.easeInOutCubic,
+          );
+        }
+      }
     });
   }
 
   @override
   void dispose() {
     _scrollController.dispose();
+    _discoveryController.dispose();
+    _discoveryTimer?.cancel();
     super.dispose();
   }
 
   void _onScroll() {
+    if (!_scrollController.hasClients) return;
     if (_scrollController.position.pixels >=
         _scrollController.position.maxScrollExtent - 200) {
       context.read<OutfitViewmodel>().fetchExploreOutfits();
@@ -115,6 +152,7 @@ class _ExploreOutfitsScreenState extends State<ExploreOutfitsScreen> {
                   color: const Color(0xFF673AB7),
                   child: ListView.builder(
                     controller: _scrollController,
+                    physics: const AlwaysScrollableScrollPhysics(),
                     padding: const EdgeInsets.all(16),
                     itemCount:
                         outfits.length +
@@ -122,7 +160,10 @@ class _ExploreOutfitsScreenState extends State<ExploreOutfitsScreen> {
                         (vm.hasMoreExplore ? 1 : 0),
                     itemBuilder: (context, index) {
                       if (wardrobes.isNotEmpty && index == 0) {
-                        return _CommunityFeaturedWardrobesSection(wardrobes: wardrobes);
+                        return _CommunityFeaturedWardrobesSection(
+                          wardrobes: wardrobes,
+                          controller: _discoveryController,
+                        );
                       }
                       final outfitIndex = wardrobes.isNotEmpty
                           ? index - 1
@@ -139,7 +180,39 @@ class _ExploreOutfitsScreenState extends State<ExploreOutfitsScreen> {
                         );
                       }
 
-                      return _ExploreOutfitCard(outfit: outfits[outfitIndex]);
+                      final outfit = outfits[outfitIndex];
+                      if (outfitIndex == 0) {
+                        return Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Padding(
+                              padding: const EdgeInsets.only(
+                                top: 24,
+                                bottom: 12,
+                              ),
+                              child: Row(
+                                children: [
+                                  const Icon(
+                                    Icons.people_rounded,
+                                    color: Colors.blueAccent,
+                                  ),
+                                  const SizedBox(width: 8),
+                                  Text(
+                                    "Shared Outfits",
+                                    style: GoogleFonts.manrope(
+                                      fontSize: 18,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            _ExploreOutfitCard(outfit: outfit),
+                          ],
+                        );
+                      }
+
+                      return _ExploreOutfitCard(outfit: outfit);
                     },
                   ),
                 ),
@@ -351,8 +424,9 @@ class _ExploreOutfitCard extends StatelessWidget {
               child: Row(
                 children: [
                   IconButton(
-                    onPressed: () =>
-                        context.read<OutfitViewmodel>().toggleSaveOutfit(outfit),
+                    onPressed: () => context
+                        .read<OutfitViewmodel>()
+                        .toggleSaveOutfit(outfit),
                     icon: Icon(
                       outfit.isSaved ? Icons.bookmark : Icons.bookmark_outline,
                       color: outfit.isSaved
@@ -394,9 +468,9 @@ class _ExploreOutfitCard extends StatelessWidget {
                           outfit.id,
                           reason,
                         );
-                        ScaffoldMessenger.of(
-                          context,
-                        ).showSnackBar(const SnackBar(content: Text("Reported")));
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(content: Text("Reported")),
+                        );
                       }
                     },
                     icon: const Icon(
@@ -418,7 +492,12 @@ class _ExploreOutfitCard extends StatelessWidget {
 
 class _CommunityFeaturedWardrobesSection extends StatelessWidget {
   final List<CommunityFeaturedWardrobeModel> wardrobes;
-  const _CommunityFeaturedWardrobesSection({required this.wardrobes});
+  final PageController controller;
+
+  const _CommunityFeaturedWardrobesSection({
+    required this.wardrobes,
+    required this.controller,
+  });
 
   Future<void> _launchUrl(String handle, String platform) async {
     final cleanHandle = handle.startsWith('@') ? handle.substring(1) : handle;
@@ -458,17 +537,15 @@ class _CommunityFeaturedWardrobesSection extends StatelessWidget {
         ),
         SizedBox(
           height: 320,
-          child: ListView.builder(
-            scrollDirection: Axis.horizontal,
+          child: PageView.builder(
+            controller: controller,
             itemCount: wardrobes.length,
-            padding: const EdgeInsets.only(bottom: 16),
             itemBuilder: (context, index) {
               final lb = wardrobes[index];
               final socials = lb.owner.socialLinks;
 
               return Container(
-                width: 250,
-                margin: const EdgeInsets.only(right: 16),
+                margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                 decoration: BoxDecoration(
                   color: Colors.white,
                   borderRadius: BorderRadius.circular(24),
@@ -507,8 +584,8 @@ class _CommunityFeaturedWardrobesSection extends StatelessWidget {
                                 final cellWidth =
                                     (constraints.maxWidth -
                                         (padding * 2) -
-                                        spacing) /
-                                    2;
+                                        (spacing * 2)) /
+                                    3;
                                 final cellHeight =
                                     (constraints.maxHeight -
                                         (padding * 2) -
@@ -524,12 +601,12 @@ class _CommunityFeaturedWardrobesSection extends StatelessWidget {
                                         const NeverScrollableScrollPhysics(),
                                     gridDelegate:
                                         SliverGridDelegateWithFixedCrossAxisCount(
-                                          crossAxisCount: 2,
+                                          crossAxisCount: 3,
                                           crossAxisSpacing: spacing,
                                           mainAxisSpacing: spacing,
                                           childAspectRatio: aspectRatio,
                                         ),
-                                    itemCount: 4,
+                                    itemCount: 6,
                                     itemBuilder: (context, i) {
                                       final item =
                                           (lb.previewItems != null &&

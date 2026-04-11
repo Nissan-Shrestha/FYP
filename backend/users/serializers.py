@@ -82,7 +82,7 @@ class ClothingItemSerializer(serializers.ModelSerializer):
     def get_is_locked(self, obj):
         # Check if any associated wardrobe is locked
         from datetime import timedelta
-        three_days_ago = timezone.now() - timedelta(days=3)
+        three_days_ago = timezone.now() - timedelta(days=1)
         return FeaturedWardrobeRequest.objects.filter(
             wardrobe__items=obj
         ).filter(
@@ -103,7 +103,7 @@ class WardrobeSerializer(serializers.ModelSerializer):
 
     def get_is_locked(self, obj):
         from datetime import timedelta
-        three_days_ago = timezone.now() - timedelta(days=3)
+        three_days_ago = timezone.now() - timedelta(days=1)
         return FeaturedWardrobeRequest.objects.filter(
             wardrobe=obj
         ).filter(
