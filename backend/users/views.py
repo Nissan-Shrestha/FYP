@@ -474,6 +474,10 @@ def toggle_save_outfit(request, outfit_id):
     try:
         outfit = Outfit.objects.get(id=outfit_id)
         
+        # Block self-saving
+        if outfit.owner == profile:
+            return Response({"error": "You cannot save your own outfit. It's already in your collection!"}, status=400)
+        
         if profile in outfit.saved_by.all():
             outfit.saved_by.remove(profile)
             is_saved = False
@@ -1272,6 +1276,11 @@ def create_report(request):
         
     try:
         outfit = Outfit.objects.get(id=outfit_id)
+        
+        # Block self-reporting
+        if outfit.owner == profile:
+            return Response({"error": "You cannot report your own outfit."}, status=400)
+
         report = Report.objects.create(
             reporter=profile,
             outfit=outfit,

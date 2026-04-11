@@ -4,6 +4,7 @@ import 'package:fit_app/models/outfit_model.dart';
 import 'package:fit_app/screens/outfits/outfit_detail_screen.dart';
 import 'package:fit_app/screens/wardrobe/wardrobe_view_screen.dart';
 import 'package:fit_app/viewmodels/outfit_viewmodel.dart';
+import 'package:fit_app/viewmodels/auth_viewmodel.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
@@ -211,6 +212,10 @@ class _ExploreOutfitCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final authVM = context.watch<AuthViewmodel>();
+    final currentUid = authVM.profile?.firebaseUid;
+    final isOwnOutfit = outfit.ownerFirebaseUid == currentUid;
+
     return Container(
       margin: const EdgeInsets.only(bottom: 24),
       decoration: BoxDecoration(
@@ -340,68 +345,71 @@ class _ExploreOutfitCard extends StatelessWidget {
           const SizedBox(height: 16),
 
           // Footer
-          Padding(
-            padding: const EdgeInsets.fromLTRB(8, 0, 8, 8),
-            child: Row(
-              children: [
-                IconButton(
-                  onPressed: () =>
-                      context.read<OutfitViewmodel>().toggleSaveOutfit(outfit),
-                  icon: Icon(
-                    outfit.isSaved ? Icons.bookmark : Icons.bookmark_outline,
-                    color: outfit.isSaved
-                        ? const Color(0xFF673AB7)
-                        : Colors.grey,
+          if (!isOwnOutfit)
+            Padding(
+              padding: const EdgeInsets.fromLTRB(8, 0, 8, 8),
+              child: Row(
+                children: [
+                  IconButton(
+                    onPressed: () =>
+                        context.read<OutfitViewmodel>().toggleSaveOutfit(outfit),
+                    icon: Icon(
+                      outfit.isSaved ? Icons.bookmark : Icons.bookmark_outline,
+                      color: outfit.isSaved
+                          ? const Color(0xFF673AB7)
+                          : Colors.grey,
+                    ),
                   ),
-                ),
-                Text(
-                  "${outfit.savesCount}",
-                  style: TextStyle(
-                    fontWeight: FontWeight.bold,
-                    color: outfit.isSaved
-                        ? const Color(0xFF673AB7)
-                        : Colors.grey,
+                  Text(
+                    "${outfit.savesCount}",
+                    style: TextStyle(
+                      fontWeight: FontWeight.bold,
+                      color: outfit.isSaved
+                          ? const Color(0xFF673AB7)
+                          : Colors.grey,
+                    ),
                   ),
-                ),
-                const Spacer(),
-                IconButton(
-                  onPressed: () async {
-                    final reason = await showDialog<String>(
-                      context: context,
-                      builder: (context) => AlertDialog(
-                        title: const Text("Report Outfit"),
-                        content: Column(
-                          mainAxisSize: MainAxisSize.min,
-                          children: ["Inappropriate", "Spam", "Other"]
-                              .map(
-                                (r) => ListTile(
-                                  title: Text(r),
-                                  onTap: () => Navigator.pop(context, r),
-                                ),
-                              )
-                              .toList(),
+                  const Spacer(),
+                  IconButton(
+                    onPressed: () async {
+                      final reason = await showDialog<String>(
+                        context: context,
+                        builder: (context) => AlertDialog(
+                          title: const Text("Report Outfit"),
+                          content: Column(
+                            mainAxisSize: MainAxisSize.min,
+                            children: ["Inappropriate", "Spam", "Other"]
+                                .map(
+                                  (r) => ListTile(
+                                    title: Text(r),
+                                    onTap: () => Navigator.pop(context, r),
+                                  ),
+                                )
+                                .toList(),
+                          ),
                         ),
-                      ),
-                    );
-                    if (reason != null && context.mounted) {
-                      await context.read<OutfitViewmodel>().reportOutfit(
-                        outfit.id,
-                        reason,
                       );
-                      ScaffoldMessenger.of(
-                        context,
-                      ).showSnackBar(const SnackBar(content: Text("Reported")));
-                    }
-                  },
-                  icon: const Icon(
-                    Icons.report_problem_outlined,
-                    size: 20,
-                    color: Colors.grey,
+                      if (reason != null && context.mounted) {
+                        await context.read<OutfitViewmodel>().reportOutfit(
+                          outfit.id,
+                          reason,
+                        );
+                        ScaffoldMessenger.of(
+                          context,
+                        ).showSnackBar(const SnackBar(content: Text("Reported")));
+                      }
+                    },
+                    icon: const Icon(
+                      Icons.report_problem_outlined,
+                      size: 20,
+                      color: Colors.grey,
+                    ),
                   ),
-                ),
-              ],
-            ),
-          ),
+                ],
+              ),
+            )
+          else
+            const SizedBox(height: 16), // Bottom padding for own outfits
         ],
       ),
     );

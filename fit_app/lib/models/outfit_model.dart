@@ -6,6 +6,7 @@ class OutfitModel {
   final String occasion;
   final bool isPublic;
   final String? ownerUsername;
+  final String? ownerFirebaseUid;
   final String? ownerProfilePicture;
   final List<ClothingItemModel> items;
   final bool ownerIsFeatured;
@@ -20,6 +21,7 @@ class OutfitModel {
     required this.occasion,
     required this.isPublic,
     this.ownerUsername,
+    this.ownerFirebaseUid,
     this.ownerProfilePicture,
     required this.items,
     this.savesCount = 0,
@@ -36,6 +38,7 @@ class OutfitModel {
       occasion: json["occasion"] as String? ?? 'General',
       isPublic: json["is_public"] as bool? ?? false,
       ownerUsername: json["owner_username"] as String?,
+      ownerFirebaseUid: json["owner_firebase_uid"] as String?,
       ownerProfilePicture: json["owner_profile_picture"] as String?,
       items: (json["items"] as List<dynamic>?)
               ?.map((item) =>
@@ -57,6 +60,7 @@ class OutfitModel {
       "occasion": occasion,
       "is_public": isPublic,
       if (ownerUsername != null) "owner_username": ownerUsername,
+      if (ownerFirebaseUid != null) "owner_firebase_uid": ownerFirebaseUid,
       "items": items.map((item) => item.toJson()).toList(),
       if (ownerSocialLinks != null) "owner_social_links": ownerSocialLinks,
       "created_at": createdAt.toIso8601String(),
@@ -69,6 +73,7 @@ class OutfitModel {
     String? occasion,
     bool? isPublic,
     String? ownerUsername,
+    String? ownerFirebaseUid,
     String? ownerProfilePicture,
     List<ClothingItemModel>? items,
     int? savesCount,
@@ -83,6 +88,7 @@ class OutfitModel {
       occasion: occasion ?? this.occasion,
       isPublic: isPublic ?? this.isPublic,
       ownerUsername: ownerUsername ?? this.ownerUsername,
+      ownerFirebaseUid: ownerFirebaseUid ?? this.ownerFirebaseUid,
       ownerProfilePicture: ownerProfilePicture ?? this.ownerProfilePicture,
       items: items ?? this.items,
       savesCount: savesCount ?? this.savesCount,
