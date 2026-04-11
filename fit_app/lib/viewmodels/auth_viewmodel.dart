@@ -4,6 +4,7 @@ import 'package:fit_app/services/profile_services.dart';
 import 'package:flutter/material.dart';
 import 'dart:io';
 import 'package:image_picker/image_picker.dart';
+import 'package:flutter_stripe/flutter_stripe.dart';
 
 class AuthViewmodel extends ChangeNotifier {
   final AuthService _authService = AuthService();
@@ -163,6 +164,48 @@ class AuthViewmodel extends ChangeNotifier {
       _profile = updatedProfile;
     } catch (e) {
       _error = e.toString();
+    } finally {
+      _isLoading = false;
+      notifyListeners();
+    }
+  }
+
+  Future<bool> upgradeToPremium() async {
+    if (_profile == null) return false;
+
+    try {
+      _isLoading = true;
+      _error = null;
+      notifyListeners();
+
+      // 1. Create Payment Intent
+      final data = await ProfileService.createPremiumPaymentIntent();
+      final clientSecret = data['client_secret'];
+
+      // 2. Initialize Payment Sheet
+      await Stripe.instance.initPaymentSheet(
+        paymentSheetParameters: SetupPaymentSheetParameters(
+          paymentIntentClientSecret: clientSecret,
+          merchantDisplayName: 'Antigravity Fit App',
+          style: ThemeMode.light,
+        ),
+      );
+
+      // 3. Present Payment Sheet
+      await Stripe.instance.presentPaymentSheet();
+
+      // 4. Success! Wait a bit for the webhook to reach the server
+      await Future.delayed(const Duration(seconds: 2));
+
+      // 5. Sync profile to get the new status
+      await syncProfile();
+      return true;
+    } on StripeException catch (e) {
+      _error = e.error.localizedMessage ?? "Payment canceled.";
+      return false;
+    } catch (e) {
+      _error = e.toString();
+      return false;
     } finally {
       _isLoading = false;
       notifyListeners();

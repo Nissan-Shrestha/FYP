@@ -479,10 +479,17 @@ class _StylistScreenState extends State<StylistScreen> {
                 onPressed: stylistVM.isLoading || stylistVM.isAnalyzing
                     ? null
                     : () async {
-                        if ((context.read<AuthViewmodel>().profile?.wardrobeCount ?? 0) == 0) {
+                        if ((context
+                                    .read<AuthViewmodel>()
+                                    .profile
+                                    ?.wardrobeCount ??
+                                0) ==
+                            0) {
                           ScaffoldMessenger.of(context).showSnackBar(
                             const SnackBar(
-                              content: Text("Your wardrobe is empty! Add some clothes first."),
+                              content: Text(
+                                "Your wardrobe is empty! Add some clothes first.",
+                              ),
                               backgroundColor: Colors.redAccent,
                             ),
                           );
@@ -540,10 +547,17 @@ class _StylistScreenState extends State<StylistScreen> {
                 onPressed: stylistVM.isLoading || stylistVM.isAnalyzing
                     ? null
                     : () async {
-                        if ((context.read<AuthViewmodel>().profile?.wardrobeCount ?? 0) == 0) {
+                        if ((context
+                                    .read<AuthViewmodel>()
+                                    .profile
+                                    ?.wardrobeCount ??
+                                0) ==
+                            0) {
                           ScaffoldMessenger.of(context).showSnackBar(
                             const SnackBar(
-                              content: Text("Add some clothes to your wardrobe first!"),
+                              content: Text(
+                                "Add some clothes to your wardrobe first!",
+                              ),
                               backgroundColor: Colors.redAccent,
                             ),
                           );
@@ -738,7 +752,10 @@ class _StylistScreenState extends State<StylistScreen> {
     );
   }
 
-  Widget _buildAnalysisResult(StylistViewmodel stylistVM, Map<String, dynamic> data) {
+  Widget _buildAnalysisResult(
+    StylistViewmodel stylistVM,
+    Map<String, dynamic> data,
+  ) {
     final List<dynamic> gaps = data['gaps'] ?? [];
     final List<dynamic> recommendations = data['recommendations'] ?? [];
     final int score = data['stylist_score'] ?? 0;
@@ -775,7 +792,11 @@ class _StylistScreenState extends State<StylistScreen> {
                   const SizedBox(width: 8),
                   IconButton(
                     onPressed: () => stylistVM.resetAnalysis(),
-                    icon: const Icon(Icons.close_rounded, size: 18, color: Colors.grey),
+                    icon: const Icon(
+                      Icons.close_rounded,
+                      size: 18,
+                      color: Colors.grey,
+                    ),
                     padding: EdgeInsets.zero,
                     constraints: const BoxConstraints(),
                   ),
@@ -1004,16 +1025,17 @@ class _IndicatorBar extends StatelessWidget {
               fontWeight: FontWeight.bold,
             ),
           ),
-          Text(
-            isPremium
-                ? "Unlimited"
-                : (canUse
-                      ? "Available"
-                      : "Limit Reached (In ${availableIn ?? 'midnight'})"),
-            style: GoogleFonts.manrope(
-              fontSize: 11.7,
-              fontWeight: FontWeight.w500,
-              color: canUse ? Colors.green.shade700 : Colors.red.shade700,
+          Flexible(
+            child: Text(
+              isPremium
+                  ? "Unlimited"
+                  : (canUse ? "Available" : (availableIn ?? 'Midnight')),
+              style: GoogleFonts.manrope(
+                fontSize: 10,
+                fontWeight: FontWeight.w500,
+                color: canUse ? Colors.green.shade700 : Colors.red.shade700,
+              ),
+              overflow: TextOverflow.ellipsis,
             ),
           ),
         ],

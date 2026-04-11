@@ -104,4 +104,17 @@ class ProfileService {
       throw Exception("Failed to update profile");
     }
   }
+
+  static Future<Map<String, dynamic>> createPremiumPaymentIntent() async {
+    final response = await http.post(
+      Uri.parse("${ApiConfig.serverBaseUrl}/api/payments/create-premium-intent/"),
+      headers: await _authHeaders(),
+    );
+
+    if (response.statusCode == 200) {
+      return jsonDecode(response.body);
+    } else {
+      throw Exception("Failed to create premium payment intent");
+    }
+  }
 }

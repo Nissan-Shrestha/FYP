@@ -1725,8 +1725,8 @@ def create_featured_wardrobe_payment_intent(request):
             currency='usd',
             payment_method_types=['card'],
             metadata={
-                'profile_id': profile.id,
-                'wardrobe_id': wardrobe.id,
+                'profile_id': str(profile.id),
+                'wardrobe_id': str(wardrobe.id),
                 'type': 'featured_wardrobe'
             }
         )
@@ -1751,6 +1751,48 @@ def create_featured_wardrobe_payment_intent(request):
 
 
 @api_view(["POST"])
+def create_premium_payment_intent(request):
+    """
+    Creates a Stripe PaymentIntent for a Premium Subscription ($4.99).
+    """
+    firebase_uid, err = get_firebase_uid(request)
+    if err:
+        return err
+
+    profile, error_response = _get_profile_by_firebase_uid(firebase_uid)
+    if error_response:
+        return error_response
+
+    # 1. Setup Stripe
+    stripe.api_key = os.getenv("STRIPE_SECRET_KEY")
+    if not stripe.api_key:
+        return Response({"error": "Stripe is not configured on the server."}, status=500)
+
+    try:
+        # Amount in cents ($4.99 = 499 cents)
+        amount = 499 
+        
+        # 2. Create Stripe PaymentIntent
+        intent = stripe.PaymentIntent.create(
+            amount=amount,
+            currency='usd',
+            payment_method_types=['card'],
+            metadata={
+                'profile_id': str(profile.id),
+                'type': 'premium_subscription'
+            }
+        )
+
+        return Response({
+            'client_secret': intent.client_secret,
+            'payment_intent_id': intent.id,
+        })
+
+    except Exception as e:
+        return Response({'error': str(e)}, status=400)
+
+
+@api_view(["POST"])
 @permission_classes([AllowAny])
 def stripe_webhook(request):
     """
@@ -1761,29 +1803,60 @@ def stripe_webhook(request):
     endpoint_secret = os.getenv("STRIPE_WEBHOOK_SECRET")
 
     if not sig_header or not endpoint_secret:
+        print(f"WEBHOOK ERROR: Missing sig_header ({bool(sig_header)}) or endpoint_secret ({bool(endpoint_secret)})", flush=True)
         return Response({"error": "Webhook configuration missing"}, status=400)
 
     try:
         event = stripe.Webhook.construct_event(
             payload, sig_header, endpoint_secret
         )
-    except ValueError:
+    except ValueError as e:
+        print(f"WEBHOOK ERROR: Invalid payload - {e}", flush=True)
         return Response({"error": "Invalid payload"}, status=400)
-    except stripe.error.SignatureVerificationError:
+    except stripe.error.SignatureVerificationError as e:
+        print(f"WEBHOOK ERROR: Invalid signature - {e}", flush=True)
+        print(f"Signature Header: {sig_header[:20]}...", flush=True)
+        print(f"Secret used: {endpoint_secret[:5]}...", flush=True)
         return Response({"error": "Invalid signature"}, status=400)
 
     # Handle the event
-    if event['type'] == 'payment_intent.succeeded':
-        intent = event['data']['object']
-        payment_intent_id = intent['id']
+    if event.type == 'payment_intent.succeeded':
+        intent = event.data.object
+        payment_intent_id = intent.id
 
         try:
-            feat_req = FeaturedWardrobeRequest.objects.get(stripe_payment_intent_id=payment_intent_id)
-            feat_req.is_paid = True
-            feat_req.save()
-            print(f"WEBHOOK SUCCESS: Request {feat_req.id} marked as PAID.")
+            # Check type from metadata
+            metadata = getattr(intent, 'metadata', {})
+            event_type = getattr(metadata, 'type', None)
+            
+            print(f"WEBHOOK: Event type recognized as {event_type}", flush=True)
+
+            if event_type == 'featured_wardrobe':
+                feat_req = FeaturedWardrobeRequest.objects.get(stripe_payment_intent_id=payment_intent_id)
+                feat_req.is_paid = True
+                feat_req.save()
+                print(f"WEBHOOK SUCCESS: Featured Wardrobe Request {feat_req.id} marked as PAID.", flush=True)
+            
+            elif event_type == 'premium_subscription':
+                profile_id = getattr(metadata, 'profile_id', None)
+                if not profile_id:
+                    raise Exception("Missing profile_id in metadata")
+                
+                profile = Profile.objects.get(id=profile_id)
+                print(f"WEBHOOK [Premium]: Found profile_id={profile_id}. Updating User {profile.username}...", flush=True)
+                profile.plan = "premium"
+                profile.premium_until = timezone.now() + timezone.timedelta(days=30)
+                profile.save()
+                print(f"WEBHOOK SUCCESS: User {profile.username} upgraded to PREMIUM for 30 days.", flush=True)
+
         except FeaturedWardrobeRequest.DoesNotExist:
-            print(f"WEBHOOK WARNING: PaymentIntent {payment_intent_id} not found in DB.")
+            print(f"WEBHOOK WARNING: PaymentIntent {payment_intent_id} (featured) not found in DB.", flush=True)
+        except Profile.DoesNotExist:
+            print(f"WEBHOOK WARNING: Profile {getattr(metadata, 'profile_id', 'unknown')} not found in DB.", flush=True)
+        except Exception as e:
+            import traceback
+            print(f"WEBHOOK INTERNAL ERROR: {str(e)}", flush=True)
+            traceback.print_exc()
 
     return Response({"status": "success"}, status=200)
 

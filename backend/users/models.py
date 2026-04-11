@@ -8,7 +8,8 @@ class Profile(models.Model):
     email = models.EmailField()
     is_admin = models.BooleanField(default=False)
 
-    plan = models.CharField(max_length=50, default="free")
+    plan = models.CharField(max_length=20, default="Free")
+    premium_until = models.DateTimeField(null=True, blank=True)
     wardrobe_count = models.IntegerField(default=0)
     wardrobe_limit = models.IntegerField(default=100)
 
@@ -27,8 +28,16 @@ class Profile(models.Model):
     created_at = models.DateTimeField(default=timezone.now)
 
     @property
-    def can_use_stylist(self):
+    def is_premium(self):
         if self.plan.lower() == "premium":
+            if self.premium_until and self.premium_until < timezone.now():
+                return False
+            return True
+        return False
+
+    @property
+    def can_use_stylist(self):
+        if self.is_premium:
             return True
         if not self.last_stylist_usage:
             return True
@@ -36,7 +45,7 @@ class Profile(models.Model):
 
     @property
     def can_use_analysis(self):
-        if self.plan.lower() == "premium":
+        if self.is_premium:
             return True
         if not self.last_analysis_usage:
             return True

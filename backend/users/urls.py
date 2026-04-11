@@ -37,6 +37,7 @@ from .views import (
     admin_featured_wardrobe_requests,
     admin_wardrobe_view,
     create_featured_wardrobe_payment_intent,
+    create_premium_payment_intent,
     stripe_webhook,
 )
 
@@ -84,5 +85,6 @@ urlpatterns = [
     
     # Payments
     path("payments/create-intent/", create_featured_wardrobe_payment_intent),
+    path("payments/create-premium-intent/", create_premium_payment_intent),
     path("payments/webhook/", stripe_webhook),
 ]

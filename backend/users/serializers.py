@@ -17,7 +17,7 @@ class ProfileSerializer(serializers.ModelSerializer):
     class Meta:
         model = Profile
         fields = [
-            "id", "firebase_uid", "username", "email", "is_admin", "plan", 
+            "id", "firebase_uid", "username", "email", "is_admin", "plan", "is_premium", "premium_until",
             "wardrobe_count", "wardrobe_limit", "outfits_count", "outfits_limit", 
             "profile_picture", "bio", "social_links", "is_featured", 
             "can_use_stylist", "stylist_available_in", "can_use_analysis", "analysis_available_in", "created_at"

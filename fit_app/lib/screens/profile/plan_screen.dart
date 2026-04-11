@@ -132,15 +132,31 @@ class _PlanCard extends StatelessWidget {
                   top: Radius.circular(22),
                 ),
               ),
-              child: Text(
-                "ACTIVE",
-                textAlign: TextAlign.center,
-                style: GoogleFonts.manrope(
-                  color: Colors.white,
-                  fontSize: 10,
-                  fontWeight: FontWeight.w900,
-                  letterSpacing: 1,
-                ),
+              child: Column(
+                children: [
+                  Text(
+                    "ACTIVE",
+                    textAlign: TextAlign.center,
+                    style: GoogleFonts.manrope(
+                      color: Colors.white,
+                      fontSize: 10,
+                      fontWeight: FontWeight.w900,
+                      letterSpacing: 1,
+                    ),
+                  ),
+                  if (plan.id == 'premium' && currentPlan == 'premium' && context.read<AuthViewmodel>().profile?.premiumUntil != null)
+                    Padding(
+                      padding: const EdgeInsets.only(top: 2),
+                      child: Text(
+                        "Until ${context.read<AuthViewmodel>().profile!.premiumUntil!.split('T')[0]}",
+                        style: GoogleFonts.manrope(
+                          color: Colors.white70,
+                          fontSize: 8,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                    ),
+                ],
               ),
             ),
           Padding(
@@ -223,9 +239,21 @@ class _PlanCard extends StatelessWidget {
                     child: ElevatedButton(
                       onPressed: plan.isCurrent
                           ? null
-                          : () {
-                              // Logic to start Stripe checkout
-                            },
+                          : () async {
+                            final success = await context.read<AuthViewmodel>().upgradeToPremium();
+                            if (success && context.mounted) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(content: Text("Welcome to Premium! Enjoy your new features.")),
+                              );
+                            } else if (context.mounted) {
+                              final err = context.read<AuthViewmodel>().error;
+                              if (err != null) {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(content: Text(err)),
+                                );
+                              }
+                            }
+                          },
                       style: ElevatedButton.styleFrom(
                         backgroundColor: plan.id == 'premium'
                             ? plan.cardColor
@@ -238,17 +266,26 @@ class _PlanCard extends StatelessWidget {
                           borderRadius: BorderRadius.circular(16),
                         ),
                       ),
-                      child: Text(
-                        plan.isCurrent
-                            ? "Active Plan"
-                            : (plan.id == 'premium'
-                                ? "Upgrade to Premium"
-                                : "Switch to Free"),
-                        style: GoogleFonts.manrope(
-                          fontWeight: FontWeight.bold,
-                          fontSize: 15,
-                        ),
-                      ),
+                      child: (context.watch<AuthViewmodel>().isLoading && plan.id == 'premium')
+                          ? const SizedBox(
+                              height: 20,
+                              width: 20,
+                              child: CircularProgressIndicator(
+                                color: Colors.white,
+                                strokeWidth: 2,
+                              ),
+                            )
+                          : Text(
+                              plan.isCurrent
+                                  ? "Active Plan"
+                                  : (plan.id == 'premium'
+                                      ? "Upgrade to Premium"
+                                      : "Switch to Free"),
+                              style: GoogleFonts.manrope(
+                                fontWeight: FontWeight.bold,
+                                fontSize: 15,
+                              ),
+                            ),
                     ),
                   ),
               ],
