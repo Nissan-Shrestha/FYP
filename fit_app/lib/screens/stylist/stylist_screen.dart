@@ -1,9 +1,12 @@
+import 'package:fit_app/constants.dart';
 import 'package:fit_app/viewmodels/stylist_viewmodel.dart';
 import '../../viewmodels/wardrobe_viewmodel.dart';
 import 'package:fit_app/viewmodels/weather_viewmodel.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
+import '../../viewmodels/auth_viewmodel.dart';
+import '../profile/plan_screen.dart';
 
 class StylistScreen extends StatefulWidget {
   const StylistScreen({super.key});
@@ -16,6 +19,7 @@ class _StylistScreenState extends State<StylistScreen> {
   String selectedOccasion = "Casual";
   bool useAutoWeather = true;
   String selectedManualWeather = "Clear Sky";
+  String selectedStylePreference = "Unisex";
 
   @override
   void initState() {
@@ -47,7 +51,10 @@ class _StylistScreenState extends State<StylistScreen> {
       appBar: AppBar(
         title: Text(
           "Personal Stylist",
-          style: GoogleFonts.manrope(fontWeight: FontWeight.bold, fontSize: 21.6),
+          style: GoogleFonts.manrope(
+            fontWeight: FontWeight.bold,
+            fontSize: 21.6,
+          ),
         ),
         backgroundColor: Colors.transparent,
         elevation: 0,
@@ -58,9 +65,11 @@ class _StylistScreenState extends State<StylistScreen> {
           final weatherVM = context.read<WeatherViewmodel>();
           final wardrobeVM = context.read<WardrobeViewmodel>();
           final stylistVM = context.read<StylistViewmodel>();
+          final authVM = context.read<AuthViewmodel>();
 
           await weatherVM.fetchWeather();
           await wardrobeVM.fetchClothingOptions();
+          await authVM.syncProfile();
           stylistVM.reset();
         },
         color: const Color(0xFF673AB7),
@@ -79,13 +88,45 @@ class _StylistScreenState extends State<StylistScreen> {
                   fontWeight: FontWeight.bold,
                 ),
               ),
-              const SizedBox(height: 12),
+              const SizedBox(height: 2),
+              Text(
+                "Influences recommended outfits only",
+                style: GoogleFonts.manrope(
+                  fontSize: 12,
+                  color: Colors.grey.shade600,
+                ),
+              ),
+              const SizedBox(height: 16),
               _buildOccasionSelector(wardrobeVM),
+              const SizedBox(height: 25),
+              Text(
+                "Style Preference",
+                style: GoogleFonts.manrope(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              const SizedBox(height: 2),
+              Text(
+                "Influences both AI styling and wardrobe analysis",
+                style: GoogleFonts.manrope(
+                  fontSize: 12,
+                  color: Colors.grey.shade600,
+                ),
+              ),
+              const SizedBox(height: 16),
+              _buildStylePreferenceSelector(),
               const SizedBox(height: 30),
+              _buildUsageIndicator(context),
+              const SizedBox(height: 12),
               _buildActionArea(stylistVM, weatherContext),
               const SizedBox(height: 20),
-              if (stylistVM.status == StylistStatus.success)
-                _buildRecommendationView(stylistVM),
+              if (stylistVM.status == StylistStatus.success) ...[
+                if (stylistVM.recommendedItems != null)
+                  _buildRecommendationView(stylistVM),
+                if (stylistVM.analysisData != null)
+                  _buildAnalysisResult(stylistVM, stylistVM.analysisData!),
+              ],
               if (stylistVM.status == StylistStatus.error)
                 _buildErrorView(stylistVM),
             ],
@@ -121,7 +162,12 @@ class _StylistScreenState extends State<StylistScreen> {
             ),
           ],
         ),
-        const SizedBox(height: 10),
+        const SizedBox(height: 2),
+        Text(
+          "Influences recommended outfits only",
+          style: GoogleFonts.manrope(fontSize: 12, color: Colors.grey.shade600),
+        ),
+        const SizedBox(height: 16),
         if (useAutoWeather)
           _buildWeatherHeader(weatherVM)
         else
@@ -271,7 +317,11 @@ class _StylistScreenState extends State<StylistScreen> {
               color: Colors.white.withValues(alpha: 0.1),
               shape: BoxShape.circle,
             ),
-            child: const Icon(Icons.wb_cloudy_rounded, color: Colors.white, size: 28),
+            child: const Icon(
+              Icons.wb_cloudy_rounded,
+              color: Colors.white,
+              size: 28,
+            ),
           ),
         const SizedBox(width: 20),
         Expanded(
@@ -308,12 +358,50 @@ class _StylistScreenState extends State<StylistScreen> {
     );
   }
 
+  Widget _buildStylePreferenceSelector() {
+    final styles = ["Masculine", "Feminine", "Unisex", "Abstract"];
+    return SizedBox(
+      height: 40,
+      child: ListView.separated(
+        scrollDirection: Axis.horizontal,
+        itemCount: styles.length,
+        separatorBuilder: (_, __) => const SizedBox(width: 10),
+        itemBuilder: (context, index) {
+          final style = styles[index];
+          final isSelected = selectedStylePreference == style;
+          return ChoiceChip(
+            label: Text(style),
+            selected: isSelected,
+            onSelected: (val) {
+              if (val) setState(() => selectedStylePreference = style);
+            },
+            selectedColor: const Color(0xFF673AB7).withValues(alpha: 0.2),
+            labelStyle: GoogleFonts.manrope(
+              color: isSelected ? const Color(0xFF673AB7) : Colors.black87,
+              fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+              fontSize: 12.6,
+            ),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(20),
+              side: BorderSide(
+                color: isSelected
+                    ? const Color(0xFF673AB7)
+                    : Colors.grey.shade300,
+              ),
+            ),
+            showCheckmark: false,
+          );
+        },
+      ),
+    );
+  }
+
   Widget _buildOccasionSelector(WardrobeViewmodel wardrobeVM) {
     final dynamicOccasions = wardrobeVM.getOptionsByType("occasion");
-    
+
     // Fallback if DB hasn't loaded or is empty
-    final list = dynamicOccasions.isNotEmpty 
-        ? dynamicOccasions 
+    final list = dynamicOccasions.isNotEmpty
+        ? dynamicOccasions
         : ["Casual", "Work", "Party", "Date", "Gym", "Formal"];
 
     return SizedBox(
@@ -349,46 +437,156 @@ class _StylistScreenState extends State<StylistScreen> {
     );
   }
 
-  Widget _buildActionArea(StylistViewmodel stylistVM, String weatherContext) {
-    return Center(
-      child: ElevatedButton(
-        onPressed: stylistVM.isLoading
-            ? null
-            : () => stylistVM.getRecommendation(
-                occasion: selectedOccasion,
-                weather: weatherContext,
-              ),
-        style: ElevatedButton.styleFrom(
-          backgroundColor: const Color(0xFF673AB7),
-          padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 15),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(30),
+  Widget _buildUsageIndicator(BuildContext context) {
+    final authVM = context.watch<AuthViewmodel>();
+    final profile = authVM.profile;
+    if (profile == null) return const SizedBox.shrink();
+
+    final bool isPremium = profile.plan.toLowerCase() == 'premium';
+
+    return Row(
+      children: [
+        Expanded(
+          child: _IndicatorBar(
+            label: "Stylist",
+            canUse: profile.canUseStylist,
+            isPremium: isPremium,
+            availableIn: profile.stylistAvailableIn,
           ),
         ),
-        child: stylistVM.isLoading
-            ? const SizedBox(
-                height: 20,
-                width: 20,
-                child: CircularProgressIndicator(
-                  color: Colors.white,
-                  strokeWidth: 2,
-                ),
-              )
-            : const Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Icon(Icons.auto_awesome, color: Colors.amber, size: 18),
-                  SizedBox(width: 10),
-                  Text(
-                    "Get Styled",
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontWeight: FontWeight.bold,
-                    ),
+        const SizedBox(width: 12),
+        Expanded(
+          child: _IndicatorBar(
+            label: "Analysis",
+            canUse: profile.canUseAnalysis,
+            isPremium: isPremium,
+            availableIn: profile.analysisAvailableIn,
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildActionArea(StylistViewmodel stylistVM, String weatherContext) {
+    return Column(
+      children: [
+        Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            // Get Styled Button
+            Expanded(
+              child: ElevatedButton(
+                onPressed: stylistVM.isLoading || stylistVM.isAnalyzing
+                    ? null
+                    : () async {
+                        if ((context.read<AuthViewmodel>().profile?.wardrobeCount ?? 0) == 0) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                              content: Text("Your wardrobe is empty! Add some clothes first."),
+                              backgroundColor: Colors.redAccent,
+                            ),
+                          );
+                          return;
+                        }
+                        await stylistVM.getRecommendation(
+                          occasion: selectedOccasion,
+                          weather: weatherContext,
+                          stylePreference: selectedStylePreference,
+                        );
+                        if (stylistVM.status == StylistStatus.success) {
+                          context.read<AuthViewmodel>().syncProfile();
+                        }
+                      },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFF673AB7),
+                  padding: const EdgeInsets.symmetric(vertical: 15),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(20),
                   ),
-                ],
+                ),
+                child: stylistVM.isLoading
+                    ? const SizedBox(
+                        height: 20,
+                        width: 20,
+                        child: CircularProgressIndicator(
+                          color: Colors.white,
+                          strokeWidth: 2,
+                        ),
+                      )
+                    : const Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(
+                            Icons.auto_awesome,
+                            color: Colors.amber,
+                            size: 16,
+                          ),
+                          SizedBox(width: 8),
+                          Text(
+                            "Get Styled",
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ],
+                      ),
               ),
-      ),
+            ),
+            const SizedBox(width: 12),
+            // Analyze Closet Button
+            Expanded(
+              child: ElevatedButton(
+                onPressed: stylistVM.isLoading || stylistVM.isAnalyzing
+                    ? null
+                    : () async {
+                        if ((context.read<AuthViewmodel>().profile?.wardrobeCount ?? 0) == 0) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                              content: Text("Add some clothes to your wardrobe first!"),
+                              backgroundColor: Colors.redAccent,
+                            ),
+                          );
+                          return;
+                        }
+                        await stylistVM.runAnalysis(
+                          stylePreference: selectedStylePreference,
+                        );
+                        if (stylistVM.status == StylistStatus.success) {
+                          context.read<AuthViewmodel>().syncProfile();
+                        }
+                      },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.white,
+                  foregroundColor: const Color(0xFF673AB7),
+                  padding: const EdgeInsets.symmetric(vertical: 15),
+                  side: const BorderSide(color: Color(0xFF673AB7)),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                ),
+                child: stylistVM.isAnalyzing
+                    ? const SizedBox(
+                        height: 20,
+                        width: 20,
+                        child: CircularProgressIndicator(strokeWidth: 2),
+                      )
+                    : const Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(Icons.search, size: 16),
+                          SizedBox(width: 8),
+                          Text(
+                            "Analyze Closet",
+                            style: TextStyle(fontWeight: FontWeight.bold),
+                          ),
+                        ],
+                      ),
+              ),
+            ),
+          ],
+        ),
+      ],
     );
   }
 
@@ -400,14 +598,25 @@ class _StylistScreenState extends State<StylistScreen> {
         if (stylistVM.lookName != null)
           Padding(
             padding: const EdgeInsets.only(bottom: 12),
-            child: Text(
-              stylistVM.lookName!.toUpperCase(),
-              style: GoogleFonts.manrope(
-                fontSize: 14.4,
-                fontWeight: FontWeight.w900,
-                letterSpacing: 2.5,
-                color: Colors.black.withValues(alpha: 0.7),
-              ),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  stylistVM.lookName!.toUpperCase(),
+                  style: GoogleFonts.manrope(
+                    fontSize: 14.4,
+                    fontWeight: FontWeight.w900,
+                    letterSpacing: 2.5,
+                    color: Colors.black.withValues(alpha: 0.7),
+                  ),
+                ),
+                IconButton(
+                  onPressed: () => stylistVM.resetRecommendation(),
+                  icon: const Icon(Icons.close_rounded, size: 20),
+                  padding: EdgeInsets.zero,
+                  constraints: const BoxConstraints(),
+                ),
+              ],
             ),
           ),
         Container(
@@ -529,9 +738,154 @@ class _StylistScreenState extends State<StylistScreen> {
     );
   }
 
+  Widget _buildAnalysisResult(StylistViewmodel stylistVM, Map<String, dynamic> data) {
+    final List<dynamic> gaps = data['gaps'] ?? [];
+    final List<dynamic> recommendations = data['recommendations'] ?? [];
+    final int score = data['stylist_score'] ?? 0;
+
+    return Container(
+      padding: const EdgeInsets.all(20),
+      margin: const EdgeInsets.only(bottom: 20),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(24),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.05),
+            blurRadius: 15,
+            offset: const Offset(0, 5),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Row(
+                children: [
+                  Text(
+                    "Closet Audit",
+                    style: GoogleFonts.manrope(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  IconButton(
+                    onPressed: () => stylistVM.resetAnalysis(),
+                    icon: const Icon(Icons.close_rounded, size: 18, color: Colors.grey),
+                    padding: EdgeInsets.zero,
+                    constraints: const BoxConstraints(),
+                  ),
+                ],
+              ),
+              Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 6,
+                ),
+                decoration: BoxDecoration(
+                  color: const Color(0xffE8F5E9),
+                  borderRadius: BorderRadius.circular(20),
+                ),
+                child: Text(
+                  "Score: $score",
+                  style: const TextStyle(
+                    color: Colors.green,
+                    fontWeight: FontWeight.bold,
+                    fontSize: 12,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
+          Text(
+            data['overview'] ?? "Your closet analysis is ready.",
+            style: GoogleFonts.manrope(
+              fontSize: 14.4,
+              color: Colors.grey.shade700,
+              height: 1.5,
+            ),
+          ),
+          const SizedBox(height: 24),
+          _buildAnalysisSection(
+            "Style Gaps",
+            gaps,
+            Icons.warning_amber_rounded,
+            Colors.orange,
+          ),
+          const SizedBox(height: 20),
+          _buildAnalysisSection(
+            "What to Buy Next",
+            recommendations,
+            Icons.shopping_bag_outlined,
+            const Color(0xFF673AB7),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildAnalysisSection(
+    String title,
+    List<dynamic> items,
+    IconData icon,
+    Color color,
+  ) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            Icon(icon, size: 18, color: color),
+            const SizedBox(width: 8),
+            Text(
+              title,
+              style: GoogleFonts.manrope(
+                fontSize: 15.3,
+                fontWeight: FontWeight.bold,
+                color: color,
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 12),
+        ...items.map(
+          (item) => Padding(
+            padding: const EdgeInsets.only(bottom: 8),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text(
+                  "  \u2022  ",
+                  style: TextStyle(fontWeight: FontWeight.bold),
+                ),
+                Expanded(
+                  child: Text(
+                    item.toString(),
+                    style: GoogleFonts.manrope(
+                      fontSize: 13.5,
+                      color: Colors.black87,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
   Widget _buildErrorView(StylistViewmodel stylistVM) {
+    final bool isLimitError = stylistVM.error?.contains("limit") ?? false;
+
     return Center(
       child: Column(
+        mainAxisSize: MainAxisSize.min,
         children: [
           const Icon(Icons.error_outline, color: Colors.red, size: 40),
           const SizedBox(height: 10),
@@ -540,6 +894,31 @@ class _StylistScreenState extends State<StylistScreen> {
             textAlign: TextAlign.center,
             style: const TextStyle(color: Colors.red),
           ),
+          if (isLimitError)
+            Padding(
+              padding: const EdgeInsets.only(top: 16),
+              child: TextButton.icon(
+                onPressed: () => Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (_) => const PlanScreen()),
+                ),
+                icon: const Icon(Icons.rocket_launch_rounded, size: 18),
+                label: const Text("View Plans & Upgrade"),
+                style: TextButton.styleFrom(
+                  foregroundColor: const Color(0xFF673AB7),
+                  backgroundColor: const Color(
+                    0xFF673AB7,
+                  ).withValues(alpha: 0.1),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 20,
+                    vertical: 10,
+                  ),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(15),
+                  ),
+                ),
+              ),
+            ),
         ],
       ),
     );
@@ -581,5 +960,64 @@ class _StylistScreenState extends State<StylistScreen> {
     };
 
     return colorMap[colorName] ?? Colors.transparent;
+  }
+}
+
+class _IndicatorBar extends StatelessWidget {
+  final String label;
+  final bool canUse;
+  final bool isPremium;
+  final String? availableIn;
+
+  const _IndicatorBar({
+    required this.label,
+    required this.canUse,
+    required this.isPremium,
+    this.availableIn,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      decoration: BoxDecoration(
+        color: canUse
+            ? Colors.green.withValues(alpha: 0.1)
+            : Colors.red.withValues(alpha: 0.1),
+        borderRadius: BorderRadius.circular(15),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(
+            isPremium
+                ? Icons.auto_awesome
+                : (canUse ? Icons.check_circle_outline : Icons.block_flipped),
+            size: 14,
+            color: canUse ? Colors.green : Colors.red,
+          ),
+          const SizedBox(width: 8),
+          Text(
+            "$label: ",
+            style: GoogleFonts.manrope(
+              fontSize: 11.7,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+          Text(
+            isPremium
+                ? "Unlimited"
+                : (canUse
+                      ? "Available"
+                      : "Limit Reached (In ${availableIn ?? 'midnight'})"),
+            style: GoogleFonts.manrope(
+              fontSize: 11.7,
+              fontWeight: FontWeight.w500,
+              color: canUse ? Colors.green.shade700 : Colors.red.shade700,
+            ),
+          ),
+        ],
+      ),
+    );
   }
 }

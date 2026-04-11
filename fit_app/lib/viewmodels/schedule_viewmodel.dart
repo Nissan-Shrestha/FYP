@@ -36,15 +36,33 @@ class ScheduleViewmodel extends ChangeNotifier {
     }
   }
 
+  bool isConflicting(DateTime dateTime) {
+    return schedules.any((s) {
+      // Check for exact date and time (hour/minute)
+      return s.dateTime.year == dateTime.year &&
+             s.dateTime.month == dateTime.month &&
+             s.dateTime.day == dateTime.day &&
+             s.dateTime.hour == dateTime.hour &&
+             s.dateTime.minute == dateTime.minute;
+    });
+  }
+
   Future<ScheduleModel?> createSchedule({
     required String eventTitle,
     required DateTime dateTime,
     required int outfitId,
+    bool force = false,
   }) async {
     try {
       isLoading = true;
       error = null;
       notifyListeners();
+
+      // Client-side conflict check (if data is loaded for this date)
+      if (!force && isConflicting(dateTime)) {
+        error = "Conflict: You already have an outfit scheduled for this time.";
+        return null;
+      }
 
       final schedule = await ScheduleService.createSchedule(
         eventTitle: eventTitle,

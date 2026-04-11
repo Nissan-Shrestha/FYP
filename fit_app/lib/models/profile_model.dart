@@ -14,6 +14,10 @@ class ProfileModel {
   final Map<String, dynamic>? socialLinks;
   final bool isFeatured;
   final bool isAdmin;
+  final bool canUseStylist;
+  final String? stylistAvailableIn;
+  final bool canUseAnalysis;
+  final String? analysisAvailableIn;
 
   String? get fullProfilePictureUrl {
     if (profilePicture == null) return null;
@@ -49,6 +53,10 @@ class ProfileModel {
     this.socialLinks,
     this.isFeatured = false,
     this.isAdmin = false,
+    this.canUseStylist = true,
+    this.stylistAvailableIn,
+    this.canUseAnalysis = true,
+    this.analysisAvailableIn,
   });
 
   factory ProfileModel.fromJson(Map<String, dynamic> json) {
@@ -68,6 +76,10 @@ class ProfileModel {
       socialLinks: json['social_links'] as Map<String, dynamic>?,
       isFeatured: json['is_featured'] ?? false,
       isAdmin: json['is_admin'] ?? false,
+      canUseStylist: json['can_use_stylist'] ?? true,
+      stylistAvailableIn: json['stylist_available_in'],
+      canUseAnalysis: json['can_use_analysis'] ?? true,
+      analysisAvailableIn: json['analysis_available_in'],
     );
   }
 
@@ -78,6 +90,8 @@ class ProfileModel {
     Map<String, dynamic>? socialLinks,
     bool? isFeatured,
     bool? isAdmin,
+    bool? canUseStylist,
+    String? stylistAvailableIn,
   }) {
     return ProfileModel(
       id: id,
@@ -95,6 +109,8 @@ class ProfileModel {
       socialLinks: socialLinks ?? this.socialLinks,
       isFeatured: isFeatured ?? this.isFeatured,
       isAdmin: isAdmin ?? this.isAdmin,
+      canUseStylist: canUseStylist ?? this.canUseStylist,
+      stylistAvailableIn: stylistAvailableIn ?? this.stylistAvailableIn,
     );
   }
 }

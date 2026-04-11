@@ -24,6 +24,7 @@ class StylistService {
   static Future<Map<String, dynamic>> fetchRecommendation({
     required String occasion,
     required String weather,
+    String? stylePreference,
   }) async {
     try {
       final response = await http.post(
@@ -32,6 +33,7 @@ class StylistService {
         body: jsonEncode({
           "occasion": occasion,
           "weather": weather,
+          if (stylePreference != null) "style_preference": stylePreference,
         }),
       );
 
@@ -50,6 +52,27 @@ class StylistService {
       } else {
         final errorData = jsonDecode(response.body);
         throw Exception(errorData["error"] ?? "Failed to fetch recommendation");
+      }
+    } catch (e) {
+      rethrow;
+    }
+  }
+
+  static Future<Map<String, dynamic>> analyzeWardrobe({String? stylePreference}) async {
+    try {
+      final response = await http.post(
+        Uri.parse("$_baseApi/outfits/wardrobe-analysis/"),
+        headers: await _authHeaders(),
+        body: jsonEncode({
+          if (stylePreference != null) "style_preference": stylePreference,
+        }),
+      );
+
+      if (response.statusCode == 200) {
+        return jsonDecode(response.body);
+      } else {
+        final errorData = jsonDecode(response.body);
+        throw Exception(errorData["error"] ?? "Analysis failed");
       }
     } catch (e) {
       rethrow;

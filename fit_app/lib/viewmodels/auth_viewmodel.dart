@@ -135,6 +135,19 @@ class AuthViewmodel extends ChangeNotifier {
     }
   }
 
+  Future<void> syncProfile() async {
+    if (_profile == null) return;
+    try {
+      _profile = await ProfileService.getOrCreateProfile(
+        email: _profile!.email,
+        username: null,
+      );
+      notifyListeners();
+    } catch (e) {
+      print("Profile Sync Error: $e");
+    }
+  }
+
   Future<void> updateProfile({String? bio, Map<String, dynamic>? socialLinks}) async {
     if (_profile == null) return;
 

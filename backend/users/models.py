@@ -8,7 +8,7 @@ class Profile(models.Model):
     email = models.EmailField()
     is_admin = models.BooleanField(default=False)
 
-    plan = models.CharField(max_length=50, default="Free")
+    plan = models.CharField(max_length=50, default="free")
     wardrobe_count = models.IntegerField(default=0)
     wardrobe_limit = models.IntegerField(default=100)
 
@@ -22,7 +22,50 @@ class Profile(models.Model):
     social_links = models.JSONField(null=True, blank=True, help_text="e.g. {'instagram': '@user', 'tiktok': '@user'}")
     is_featured = models.BooleanField(default=False, help_text="Set by admin to show verified/featured badge")
     
+    last_stylist_usage = models.DateTimeField(null=True, blank=True)
+    last_analysis_usage = models.DateTimeField(null=True, blank=True)
     created_at = models.DateTimeField(default=timezone.now)
+
+    @property
+    def can_use_stylist(self):
+        if self.plan.lower() == "premium":
+            return True
+        if not self.last_stylist_usage:
+            return True
+        return self.last_stylist_usage.date() != timezone.now().date()
+
+    @property
+    def can_use_analysis(self):
+        if self.plan.lower() == "premium":
+            return True
+        if not self.last_analysis_usage:
+            return True
+        return self.last_analysis_usage.date() != timezone.now().date()
+
+    @property
+    def stylist_available_in(self):
+        if self.can_use_stylist:
+            return None
+        return self._get_time_until_midnight(self.last_stylist_usage)
+
+    @property
+    def analysis_available_in(self):
+        if self.can_use_analysis:
+            return None
+        return self._get_time_until_midnight(self.last_analysis_usage)
+
+    def _get_time_until_midnight(self, last_usage):
+        now = timezone.now()
+        tomorrow = now.date() + timezone.timedelta(days=1)
+        import datetime
+        midnight = timezone.make_aware(datetime.datetime.combine(tomorrow, datetime.time.min))
+        diff = midnight - now
+        total_seconds = int(diff.total_seconds())
+        hours = total_seconds // 3600
+        minutes = (total_seconds % 3600) // 60
+        if hours > 0:
+            return f"{hours}h {minutes}m"
+        return f"{minutes}m"
 
     def __str__(self):
         return self.username

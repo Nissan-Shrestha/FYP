@@ -27,7 +27,8 @@ class _AllClothesScreenState extends State<AllClothesScreen> {
   Widget build(BuildContext context) {
     final wardrobeVM = context.watch<WardrobeViewmodel>();
     final items = wardrobeVM.clothingItems.where((item) {
-      return _selectedCategory == "All" || item.category == _selectedCategory;
+      if (_selectedCategory == "All") return true;
+      return item.category.trim().toLowerCase() == _selectedCategory.trim().toLowerCase();
     }).toList();
 
     return Scaffold(
@@ -59,15 +60,14 @@ class _AllClothesScreenState extends State<AllClothesScreen> {
   }
 
   Widget _buildFilters(WardrobeViewmodel vm) {
-    final categories = [
-      "All",
-      "Top",
-      "Bottom",
-      "Shoes",
-      "Outerwear",
-      "Dress",
-      "Accessory",
-    ];
+    // Dynamically get unique categories from all items
+    final Set<String> uniqueCategories = {"All"};
+    for (var item in vm.clothingItems) {
+      if (item.category.trim().isNotEmpty) {
+        uniqueCategories.add(capitalize(item.category.trim()));
+      }
+    }
+    final categories = uniqueCategories.toList()..sort((a, b) => a == "All" ? -1 : (b == "All" ? 1 : a.compareTo(b)));
 
     return Container(
       color: Colors.white,

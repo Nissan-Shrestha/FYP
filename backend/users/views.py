@@ -95,6 +95,12 @@ def schedules(request):
     if not date_time:
         return Response({"error": "Invalid date_time format"}, status=400)
 
+    # CHECK FOR CONFLICTS
+    if Schedule.objects.filter(owner=profile, date_time=date_time).exists():
+        return Response({
+            "error": "You already have an outfit scheduled for this exact time and date. Please choose a different slot."
+        }, status=400)
+
     schedule = Schedule.objects.create(
         owner=profile,
         event_title=event_title,
@@ -212,9 +218,17 @@ def stylist_recommend(request):
     if error_response:
         return error_response
 
+    # Limit check for Free users
+    if profile.plan.lower() == "free":
+        if profile.last_stylist_usage and profile.last_stylist_usage.date() == timezone.now().date():
+            return Response({
+                "error": "You've reached your daily limit (1 suggestion/day) for the AI Stylist. Upgrade to Premium for unlimted styling!"
+            }, status=403)
+
     # 1. Get Context from Request
     occasion = request.data.get("occasion", "Casual")
     weather = request.data.get("weather", "Moderate") # e.g. "15°C, Sunny"
+    style_preference = request.data.get("style_preference", "Unisex")
     
     # 2. Fetch User Wardrobe
     items = ClothingItem.objects.filter(owner=profile)
@@ -258,17 +272,18 @@ def stylist_recommend(request):
         import re
         # 4.5 MODERN SDK CLIENT INITIALIZATION (Forcing v1 Production API)
         client = genai.Client(
-            api_key=api_key, 
-            http_options={'api_version': 'v1'}
+            api_key=api_key
         )
         
         # 5. CONSTRUCT THE PROMPT
         prompt = f"""
-        Act as a professional fashion stylist. 
-        Context: The user is going to a '{occasion}' event. The current weather is '{weather}'.
-        
-        Available Wardrobe:
-        {json.dumps(wardrobe_data)}
+    You are a high-end fashion AI personal stylist.
+    The user wants an outfit for the following occasion: {occasion}.
+    Current weather/condition: {weather}.
+    Preferred Style Aesthetic: {style_preference}. (Tailor your suggestions precisely to this vibe)
+    
+    Here is the user's wardrobe:
+    {json.dumps(wardrobe_data)}
         
         Mandatory Styling Rules:
         1. Select a functional and stylish outfit from the available items.
@@ -348,6 +363,10 @@ def stylist_recommend(request):
         # Security: Filter items to only those belonging to user
         final_items_qs = ClothingItem.objects.filter(id__in=suggested_ids, owner=profile)
         
+        # Update usage timestamp
+        profile.last_stylist_usage = timezone.now()
+        profile.save(update_fields=["last_stylist_usage"])
+
         return Response({
             "look_name": result.get("look_name", "Curated Look"),
             "items": ClothingItemSerializer(final_items_qs, many=True, context={"request": request}).data,
@@ -355,8 +374,113 @@ def stylist_recommend(request):
         })
         
     except Exception as e:
-        print(f"Stylist AI Error: {e}")
+        print(f"Stylist AI Error: {str(e)}")
         return Response({"error": "The stylist is having trouble deciding. Try again later!"}, status=500)
+
+@api_view(['POST'])
+def wardrobe_analysis(request):
+    firebase_uid, err = get_firebase_uid(request)
+    if err:
+        return err
+    
+    profile, error_response = _get_profile_by_firebase_uid(firebase_uid)
+    if error_response:
+        return error_response
+    
+    # 1. HARD LIMIT CHECK (Free Users: 1 per day)
+    if not profile.can_use_analysis:
+        return Response({
+            "error": f"Daily limit reached. Available in {profile.analysis_available_in}.",
+            "available_in": profile.analysis_available_in
+        }, status=403)
+
+    # 2. GATHER WARDROBE DATA
+    items = ClothingItem.objects.filter(owner=profile)
+    if not items.exists():
+        return Response({"error": "Add some clothes to your wardrobe first so I can analyze them!"}, status=400)
+
+    style_preference = request.data.get("style_preference", "Unisex")
+
+    wardrobe_list = []
+    for item in items:
+        wardrobe_list.append({
+            "type": item.item_type,
+            "category": item.category,
+            "color": item.color,
+            "occasion": item.occasion,
+            "layer": item.layer_level,
+            "material": item.material,
+            "season": item.season,
+        })
+
+    # 3. CONSTRUCT PROMPT
+    prompt = f"""
+    Act as a professional fashion consultant and wardrobe auditor.
+    Analyze the user's current collection and provide a professional summary of what they are missing.
+    The user's preferred style aesthetic is: '{style_preference}'.
+    Base your audit and "gaps" on making their wardrobe perfect for this specific '{style_preference}' style.
+    Identify gaps in categories, colors, or occasions.
+    
+    User's Collection Summary:
+    {json.dumps(wardrobe_list)}
+
+    Output Format (STRICT JSON):
+    {{
+      "overview": "A brief summary of their current style based on the collection counts.",
+      "gaps": ["List item 1", "List item 2", "List item 3"],
+      "recommendations": ["Product advice 1", "Product advice 2"],
+      "stylist_score": 85
+    }}
+    
+    Rules:
+    - Focus on 'Essential Gaps' (e.g. 'You have no Outerwear', or 'Too much Black, try some Navy').
+    - Keep tips concise and extremely professional.
+    - Result MUST be valid JSON.
+    """
+
+    # 4. AI INVOCATION
+    api_key = os.getenv("GEMINI_API_KEY")
+    if not api_key:
+        return Response({"error": "Analysis is currently unavailable (API Key missing)."}, status=500)
+    
+    try:
+        client = genai.Client(api_key=api_key)
+        
+        # Simple retry logic
+        import time
+        response = None
+        for attempt in range(3):
+            try:
+                response = client.models.generate_content(
+                    model='gemini-2.5-flash-lite',
+                    contents=prompt,
+                )
+                break
+            except:
+                if attempt == 2: raise
+                time.sleep(1)
+
+        if not response or not response.text:
+             return Response({"error": "The stylist is silent. Try again later!"}, status=500)
+
+        # JSON Extraction
+        raw_text = response.text.replace("```json", "").replace("```", "").strip()
+        start_idx = raw_text.find('{')
+        end_idx = raw_text.rfind('}')
+        if start_idx == -1 or end_idx == -1:
+            raise ValueError("Invalid JSON response from AI")
+            
+        result = json.loads(raw_text[start_idx:end_idx+1])
+
+        # 5. SUCCESS! Update usage timestamp
+        profile.last_analysis_usage = timezone.now()
+        profile.save(update_fields=["last_analysis_usage"])
+
+        return Response(result)
+
+    except Exception as e:
+        print(f"Wardrobe Analysis Error: {str(e)}")
+        return Response({"error": "Analysis failed. Please try again in a bit!"}, status=500)
 
 
 
@@ -687,6 +811,12 @@ def clothing_items(request):
         queryset = ClothingItem.objects.filter(owner=profile).order_by("-created_at")
         return Response(ClothingItemSerializer(queryset, many=True, context={"request": request}).data)
 
+    # Limit Check for Free Plan
+    if profile.plan.lower() == "free" and profile.clothing_items.count() >= 25:
+        return Response({
+            "error": "Free plan limit reached (25 items). Please upgrade to Premium for unlimited storage!"
+        }, status=403)
+
     default_wardrobe = _ensure_default_wardrobe(profile)
 
     serializer = ClothingItemSerializer(data=request.data, context={"request": request})
@@ -829,6 +959,15 @@ def wardrobes(request):
     if request.method == "GET":
         queryset = Wardrobe.objects.filter(owner=profile).order_by("-is_default", "name")
         return Response(WardrobeSerializer(queryset, many=True, context={"request": request}).data)
+
+    # Limit Check for Free Plan
+    # Only count non-default wardrobes towards the 5-wardrobe limit? 
+    # Or total? The Plan Screen just said "5 Wardrobes". 
+    # I'll count total (including default).
+    if profile.plan.lower() == "free" and profile.wardrobes.count() >= 5:
+        return Response({
+            "error": "Free plan limit reached (5 wardrobes). Please upgrade to Premium for unlimited storage!"
+        }, status=403)
 
     name = (request.data.get("name") or "").strip()
     if not name:

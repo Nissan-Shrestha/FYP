@@ -9,6 +9,7 @@ import 'package:provider/provider.dart';
 import '../auth/login_screen.dart';
 import 'plan_screen.dart';
 import 'statistics_screen.dart';
+import 'package:fit_app/screens/profile/featured_requests_screen.dart';
 
 const Color primaryPurple = Color(0xFF673AB7);
 const Color backgroundGrey = Color(0xffF8F9FA);
@@ -26,6 +27,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       context.read<WardrobeViewmodel>().fetchFeaturedWardrobeRequests();
+      context.read<AuthViewmodel>().syncProfile();
     });
   }
 
@@ -706,14 +708,30 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     icon: Icons.public_outlined,
                     onTap: () => _showEditSocialsSheet(context, authVM),
                   ),
-
-                  if (wardrobeVM.featuredWardrobeRequests.isNotEmpty) ...[
-                    const SizedBox(height: 24),
-                    _sectionHeader("Featured Wardrobes"),
-                    ...wardrobeVM.featuredWardrobeRequests.map(
-                      (req) => _FeatureRequestCard(request: req),
+                  _settingTile(
+                    title: "Feature Status",
+                    subtitle: "Check your featured wardrobe requests",
+                    icon: Icons.star_border_rounded,
+                    onTap: () => Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => const FeaturedRequestsScreen(),
+                      ),
                     ),
-                  ],
+                    trailing:
+                        wardrobeVM.featuredWardrobeRequests.any(
+                          (r) => r.status == 'pending',
+                        )
+                        ? Container(
+                            width: 8,
+                            height: 8,
+                            decoration: const BoxDecoration(
+                              color: Colors.orange,
+                              shape: BoxShape.circle,
+                            ),
+                          )
+                        : null,
+                  ),
 
                   const SizedBox(height: 40),
 
@@ -829,118 +847,22 @@ class _ProfileScreenState extends State<ProfileScreen> {
         ),
         title: Text(
           title,
-          style: GoogleFonts.manrope(fontWeight: FontWeight.bold, fontSize: 13.5),
+          style: GoogleFonts.manrope(
+            fontWeight: FontWeight.bold,
+            fontSize: 13.5,
+          ),
         ),
         subtitle: Text(
           subtitle,
-          style: GoogleFonts.manrope(fontSize: 10.8, color: Colors.grey.shade500),
+          style: GoogleFonts.manrope(
+            fontSize: 10.8,
+            color: Colors.grey.shade500,
+          ),
         ),
         trailing:
             trailing ??
             Icon(Icons.chevron_right_rounded, color: Colors.grey.shade400),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-      ),
-    );
-  }
-}
-
-class _FeatureRequestCard extends StatelessWidget {
-  final FeaturedWardrobeModel request;
-
-  const _FeatureRequestCard({required this.request});
-
-  @override
-  Widget build(BuildContext context) {
-    Color statusColor;
-    IconData statusIcon;
-
-    switch (request.status) {
-      case 'approved':
-        statusColor = const Color(0xff0AAE00);
-        statusIcon = Icons.check_circle_rounded;
-        break;
-      case 'rejected':
-        statusColor = Colors.redAccent;
-        statusIcon = Icons.cancel_rounded;
-        break;
-      default:
-        statusColor = const Color(0xffFFB800);
-        statusIcon = Icons.info_rounded;
-    }
-
-    return Container(
-      margin: const EdgeInsets.only(bottom: 12),
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(24),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.02),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
-          ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Container(
-                padding: const EdgeInsets.all(8),
-                decoration: BoxDecoration(
-                  color: statusColor.withValues(alpha: 0.1),
-                  shape: BoxShape.circle,
-                ),
-                child: Icon(statusIcon, color: statusColor, size: 16),
-              ),
-              const SizedBox(width: 12),
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    "Wardrobe: ${request.wardrobeName ?? 'ID #${request.wardrobe}'}",
-                    style: GoogleFonts.manrope(
-                      fontWeight: FontWeight.bold,
-                      fontSize: 12.6,
-                    ),
-                  ),
-                  Text(
-                    request.status.toUpperCase(),
-                    style: GoogleFonts.manrope(
-                      fontSize: 9,
-                      fontWeight: FontWeight.w900,
-                      color: statusColor,
-                      letterSpacing: 0.5,
-                    ),
-                  ),
-                ],
-              ),
-            ],
-          ),
-          if (request.adminFeedback != null &&
-              request.adminFeedback!.isNotEmpty)
-            Padding(
-              padding: const EdgeInsets.only(top: 16),
-              child: Container(
-                padding: const EdgeInsets.all(12),
-                width: double.infinity,
-                decoration: BoxDecoration(
-                  color: backgroundGrey,
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: Text(
-                  "Feedback: ${request.adminFeedback}",
-                  style: GoogleFonts.manrope(
-                    fontSize: 10.8,
-                    color: Colors.grey.shade700,
-                    fontStyle: FontStyle.italic,
-                  ),
-                ),
-              ),
-            ),
-        ],
       ),
     );
   }

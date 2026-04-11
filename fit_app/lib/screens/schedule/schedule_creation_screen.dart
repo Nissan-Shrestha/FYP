@@ -24,6 +24,7 @@ class _ScheduleCreationScreenState extends State<ScheduleCreationScreen> {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       context.read<OutfitViewmodel>().fetchOutfits();
+      context.read<ScheduleViewmodel>().setSelectedDate(_selectedDate);
     });
   }
 
@@ -48,6 +49,10 @@ class _ScheduleCreationScreenState extends State<ScheduleCreationScreen> {
     );
     if (picked != null) {
       setState(() => _selectedDate = picked);
+      // Fetch schedules for the newly picked date to detect conflicts localy
+      if (mounted) {
+        context.read<ScheduleViewmodel>().setSelectedDate(picked);
+      }
     }
   }
 
@@ -195,7 +200,33 @@ class _ScheduleCreationScreenState extends State<ScheduleCreationScreen> {
               _buildEmptyOutfits()
             else
               _buildOutfitSelector(outfits),
-            const SizedBox(height: 48),
+            const SizedBox(height: 32),
+            if (scheduleVM.isConflicting(DateTime(
+              _selectedDate.year,
+              _selectedDate.month,
+              _selectedDate.day,
+              _selectedTime.hour,
+              _selectedTime.minute,
+            )))
+              Padding(
+                padding: const EdgeInsets.only(bottom: 12),
+                child: Row(
+                  children: [
+                    const Icon(Icons.warning_amber_rounded, color: Colors.orange, size: 18),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        "You already have an outfit scheduled for this time.",
+                        style: GoogleFonts.manrope(
+                          color: Colors.orange.shade800,
+                          fontSize: 12.6,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
             SizedBox(
               width: double.infinity,
               height: 54,

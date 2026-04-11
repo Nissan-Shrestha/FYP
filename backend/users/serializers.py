@@ -12,13 +12,32 @@ class ProfileSerializer(serializers.ModelSerializer):
     profile_picture = serializers.SerializerMethodField()
     is_featured = serializers.SerializerMethodField()
 
+    can_use_stylist = serializers.SerializerMethodField()
+
     class Meta:
         model = Profile
-        fields = ["id", "firebase_uid", "username", "email", "is_admin", "plan", "wardrobe_count", "wardrobe_limit", "outfits_count", "outfits_limit", "profile_picture", "bio", "social_links", "is_featured", "created_at"]
+        fields = [
+            "id", "firebase_uid", "username", "email", "is_admin", "plan", 
+            "wardrobe_count", "wardrobe_limit", "outfits_count", "outfits_limit", 
+            "profile_picture", "bio", "social_links", "is_featured", 
+            "can_use_stylist", "stylist_available_in", "can_use_analysis", "analysis_available_in", "created_at"
+        ]
+
+    def get_stylist_available_in(self, obj):
+        return obj.stylist_available_in
+
+    def get_can_use_stylist(self, obj):
+        return obj.can_use_stylist
+
+    def get_analysis_available_in(self, obj):
+        return obj.analysis_available_in
+
+    def get_can_use_analysis(self, obj):
+        return obj.can_use_analysis
 
     def get_is_featured(self, obj):
-        # The badge is EXCLUSIVE to Premium users who have been approved by Admin
-        return obj.plan.lower() == "premium" and obj.is_featured
+        # The badge is shown if the user is featured by Admin, regardless of plan.
+        return obj.is_featured
 
     def get_profile_picture(self, obj):
         if not obj.profile_picture:
@@ -122,7 +141,7 @@ class OutfitSerializer(serializers.ModelSerializer):
 
     def get_owner_is_featured(self, obj):
         # Sync the badge logic for outfits too
-        return obj.owner.plan.lower() == "premium" and obj.owner.is_featured
+        return obj.owner.is_featured
 
     def get_saves_count(self, obj):
         return obj.saved_by.count()

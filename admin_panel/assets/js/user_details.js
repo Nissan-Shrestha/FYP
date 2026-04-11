@@ -56,13 +56,16 @@ function renderHeader(profile) {
     if (profile.social_links) {
         const links = profile.social_links;
         if (links.instagram) {
-            socialEl.innerHTML += `<a href="https://instagram.com/${links.instagram.replace('@','')}" target="_blank" class="text-white text-decoration-none small"><i class="bi bi-instagram me-1"></i>${links.instagram}</a>`;
+            const handle = String(links.instagram).replace('@', '');
+            socialEl.innerHTML += `<a href="https://instagram.com/${handle}" target="_blank" class="text-white text-decoration-none small"><i class="bi bi-instagram me-1"></i>${links.instagram}</a>`;
         }
         if (links.twitter) {
-            socialEl.innerHTML += `<a href="https://twitter.com/${links.twitter.replace('@','')}" target="_blank" class="text-white text-decoration-none small"><i class="bi bi-twitter-x me-1"></i>${links.twitter}</a>`;
+            const handle = String(links.twitter).replace('@', '');
+            socialEl.innerHTML += `<a href="https://twitter.com/${handle}" target="_blank" class="text-white text-decoration-none small"><i class="bi bi-twitter-x me-1"></i>${links.twitter}</a>`;
         }
         if (links.tiktok) {
-            socialEl.innerHTML += `<a href="https://tiktok.com/@${links.tiktok.replace('@','')}" target="_blank" class="text-white text-decoration-none small"><i class="bi bi-tiktok me-1"></i>${links.tiktok}</a>`;
+            const handle = String(links.tiktok).replace('@', '');
+            socialEl.innerHTML += `<a href="https://tiktok.com/@${handle}" target="_blank" class="text-white text-decoration-none small"><i class="bi bi-tiktok me-1"></i>${links.tiktok}</a>`;
         }
     }
 
@@ -112,12 +115,13 @@ function renderWardrobes(wardrobes) {
     wardrobes.forEach(w => {
         const item = document.createElement("div");
         item.className = "list-group-item p-3";
+        const dateStr = w.created_at ? new Date(w.created_at).toLocaleDateString() : 'N/A';
         item.innerHTML = `
             <div class="d-flex justify-content-between align-items-center">
                 <div class="fw-bold">${w.name} ${w.is_default ? '<span class="badge bg-secondary border ms-1">Default</span>' : ''}</div>
-                <span class="badge bg-light text-dark border">${w.items.length} items</span>
+                <span class="badge bg-light text-dark border">${w.item_count || 0} items</span>
             </div>
-            <div class="small text-muted mt-1">Created: ${new Date(w.created_at).toLocaleDateString()}</div>
+            <div class="small text-muted mt-1">Created: ${dateStr}</div>
         `;
         list.appendChild(item);
     });
@@ -143,7 +147,7 @@ function renderClothingItems(items) {
                 <img src="${imageUrl}" class="card-img-top item-img" alt="${item.name}">
                 <div class="card-body p-3">
                     <h6 class="fw-bold mb-1">${item.name}</h6>
-                    <div class="small text-muted mb-2">${item.category} | ${item.season}</div>
+                    <div class="small text-muted mb-2">${item.category || 'Uncategorized'} | ${item.season || 'All Seasons'}</div>
                     <div class="d-flex justify-content-between align-items-center mt-auto">
                         <span class="badge bg-light text-dark border">${item.brand || 'Generic'}</span>
                     </div>

@@ -16,6 +16,7 @@ class StylistViewmodel extends ChangeNotifier {
   Future<void> getRecommendation({
     required String occasion,
     required String weather,
+    String? stylePreference,
   }) async {
     try {
       status = StylistStatus.loading;
@@ -25,6 +26,7 @@ class StylistViewmodel extends ChangeNotifier {
       final result = await StylistService.fetchRecommendation(
         occasion: occasion,
         weather: weather,
+        stylePreference: stylePreference,
       );
 
       recommendedItems = result["items"] as List<ClothingItemModel>;
@@ -39,12 +41,54 @@ class StylistViewmodel extends ChangeNotifier {
     }
   }
 
+  Map<String, dynamic>? analysisData;
+  bool isAnalyzing = false;
+
+  Future<void> runAnalysis({String? stylePreference}) async {
+    try {
+      isAnalyzing = true;
+      error = null;
+      notifyListeners();
+
+      final result = await StylistService.analyzeWardrobe(
+        stylePreference: stylePreference,
+      );
+      analysisData = result;
+      status = StylistStatus.success;
+    } catch (e) {
+      error = e.toString().replaceAll("Exception: ", "");
+      status = StylistStatus.error;
+    } finally {
+      isAnalyzing = false;
+      notifyListeners();
+    }
+  }
+
+  void resetRecommendation() {
+    recommendedItems = null;
+    stylistTip = null;
+    lookName = null;
+    if (analysisData == null) {
+      status = StylistStatus.initial;
+    }
+    notifyListeners();
+  }
+
+  void resetAnalysis() {
+    analysisData = null;
+    if (recommendedItems == null) {
+      status = StylistStatus.initial;
+    }
+    notifyListeners();
+  }
+
   void reset() {
     recommendedItems = null;
     stylistTip = null;
     lookName = null;
-    error = null;
+    analysisData = null;
     status = StylistStatus.initial;
+    error = null;
     notifyListeners();
   }
 }
