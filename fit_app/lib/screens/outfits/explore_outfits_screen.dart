@@ -10,6 +10,7 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 
 class ExploreOutfitsScreen extends StatefulWidget {
   const ExploreOutfitsScreen({super.key});
@@ -468,6 +469,7 @@ class _ExploreOutfitCard extends StatelessWidget {
                           outfit.id,
                           reason,
                         );
+                        if (!context.mounted) return;
                         ScaffoldMessenger.of(context).showSnackBar(
                           const SnackBar(content: Text("Reported")),
                         );
@@ -501,13 +503,64 @@ class _CommunityFeaturedWardrobesSection extends StatelessWidget {
 
   Future<void> _launchUrl(String handle, String platform) async {
     final cleanHandle = handle.startsWith('@') ? handle.substring(1) : handle;
-    final url = platform == 'instagram'
-        ? 'https://instagram.com/$cleanHandle'
-        : 'https://twitter.com/$cleanHandle';
+    String url;
+    switch (platform.toLowerCase()) {
+      case 'instagram':
+        url = 'https://instagram.com/$cleanHandle';
+        break;
+      case 'twitter':
+        url = 'https://twitter.com/$cleanHandle';
+        break;
+      case 'tiktok':
+        url = 'https://tiktok.com/@$cleanHandle';
+        break;
+      default:
+        return;
+    }
     final uri = Uri.parse(url);
     if (await canLaunchUrl(uri)) {
       await launchUrl(uri, mode: LaunchMode.externalApplication);
     }
+  }
+
+  Widget _buildSocialLinks(Map<String, dynamic>? socials) {
+    if (socials == null) return const SizedBox.shrink();
+
+    List<Widget> icons = [];
+
+    if (socials['instagram']?.isNotEmpty == true) {
+      icons.add(_SocialIcon(
+        icon: FontAwesomeIcons.instagram,
+        color: Colors.pinkAccent,
+        onTap: () => _launchUrl(socials['instagram'], 'instagram'),
+      ));
+    }
+
+    if (socials['twitter']?.isNotEmpty == true) {
+      icons.add(_SocialIcon(
+        icon: FontAwesomeIcons.twitter,
+        color: Colors.lightBlueAccent,
+        onTap: () => _launchUrl(socials['twitter'], 'twitter'),
+      ));
+    }
+
+    if (socials['tiktok']?.isNotEmpty == true) {
+      icons.add(_SocialIcon(
+        icon: FontAwesomeIcons.tiktok,
+        color: Colors.black,
+        onTap: () => _launchUrl(socials['tiktok'], 'tiktok'),
+      ));
+    }
+
+    if (icons.isEmpty) return const SizedBox.shrink();
+
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: icons.map((w) => Padding(
+        padding: const EdgeInsets.only(left: 8),
+        child: w,
+      )).toList(),
+    );
   }
 
   @override
@@ -731,34 +784,7 @@ class _CommunityFeaturedWardrobesSection extends StatelessWidget {
                                       ),
                                     ),
                                   ),
-                                  if (socials != null) ...[
-                                    if (socials['instagram']?.isNotEmpty ==
-                                        true)
-                                      _SocialTag(
-                                        icon: Icons.camera_alt_outlined,
-                                        label: 'Instagram',
-                                        color: Colors.purple.shade50,
-                                        iconColor: Colors.purple,
-                                        onTap: () => _launchUrl(
-                                          socials['instagram'],
-                                          'instagram',
-                                        ),
-                                      ),
-                                    if (socials['twitter']?.isNotEmpty == true)
-                                      Padding(
-                                        padding: const EdgeInsets.only(left: 4),
-                                        child: _SocialTag(
-                                          icon: Icons.alternate_email,
-                                          label: 'Twitter',
-                                          color: Colors.blue.shade50,
-                                          iconColor: Colors.blue,
-                                          onTap: () => _launchUrl(
-                                            socials['twitter'],
-                                            'twitter',
-                                          ),
-                                        ),
-                                      ),
-                                  ],
+                                  _buildSocialLinks(socials),
                                 ],
                               ),
                             ],
@@ -777,50 +803,28 @@ class _CommunityFeaturedWardrobesSection extends StatelessWidget {
   }
 }
 
-class _SocialTag extends StatelessWidget {
-  final IconData icon;
-  final String label;
+class _SocialIcon extends StatelessWidget {
+  final dynamic icon;
   final Color color;
-  final Color iconColor;
   final VoidCallback onTap;
 
-  const _SocialTag({
+  const _SocialIcon({
     required this.icon,
-    required this.label,
     required this.color,
-    required this.iconColor,
     required this.onTap,
   });
 
   @override
   Widget build(BuildContext context) {
-    return Material(
-      color: Colors.transparent,
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(12),
-        child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-          decoration: BoxDecoration(
-            color: color,
-            borderRadius: BorderRadius.circular(12),
-          ),
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Icon(icon, size: 12, color: iconColor),
-              const SizedBox(width: 4),
-              Text(
-                label,
-                style: TextStyle(
-                  fontSize: 9,
-                  color: iconColor,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-            ],
-          ),
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.all(6),
+        decoration: BoxDecoration(
+          color: color.withValues(alpha: 0.1),
+          shape: BoxShape.circle,
         ),
+        child: FaIcon(icon, color: color, size: 14),
       ),
     );
   }

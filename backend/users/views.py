@@ -740,61 +740,72 @@ def _process_background_removal(image_file):
 
 @api_view(["GET", "POST", "PATCH"])
 def get_or_create_profile(request):
-    print(f"\n--- LOG: Profile Request Received [{request.method}] ---", flush=True)
-    firebase_uid, err = get_firebase_uid(request)
-    if err:
-        print(f"--- LOG: Auth Error: {err.data} ---", flush=True)
-        return err
+    try:
+        print(f"\n--- LOG: Profile Request Received [{request.method}] ---", flush=True)
+        firebase_uid, err = get_firebase_uid(request)
+        if err:
+            print(f"--- LOG: Auth Error: {err.data} ---", flush=True)
+            return err
 
-    print(f"--- LOG: UID verified: {firebase_uid} ---", flush=True)
+        print(f"--- LOG: UID verified: {firebase_uid} ---", flush=True)
 
-    # Use defaults to prevent IntegrityError on fresh signup
-    # We use data from request if available, otherwise placeholders
-    initial_email = request.data.get("email", f"{firebase_uid[:10]}@example.com")
-    initial_username = request.data.get("username", f"user_{firebase_uid[:8]}")
+        # Use defaults to prevent IntegrityError on fresh signup
+        initial_email = request.data.get("email", f"{firebase_uid[:10]}@example.com")
+        initial_username = request.data.get("username", f"user_{firebase_uid[:8]}")
+        fcm_token = request.data.get("fcm_token")
 
-    print(f"--- LOG: Attempting get_or_create for {firebase_uid}... ---", flush=True)
-    profile, created = Profile.objects.get_or_create(
-        firebase_uid=firebase_uid,
-        defaults={
-            "email": initial_email,
-            "username": initial_username,
-        }
-    )
+        print(f"--- LOG: Attempting get_or_create for {firebase_uid}... ---", flush=True)
+        profile, created = Profile.objects.get_or_create(
+            firebase_uid=firebase_uid,
+            defaults={
+                "email": initial_email,
+                "username": initial_username,
+                "fcm_token": fcm_token,
+            }
+        )
 
-    # Ensure every user has the required default wardrobe.
-    _ensure_default_wardrobe(profile)
+        if not created and fcm_token:
+            profile.fcm_token = fcm_token
+            profile.save()
 
-    # Update fields based on request method
-    if request.method in ["POST", "PATCH"]:
-        email = request.data.get("email")
-        username = request.data.get("username")
-        if email:
-            profile.email = email
-        if username:
-            profile.username = username
+        # Ensure every user has the required default wardrobe.
+        _ensure_default_wardrobe(profile)
 
-        # HANDLE IMAGE UPLOAD (works for both)
-        if request.FILES.get("profile_picture"):
-            profile.profile_picture = request.FILES["profile_picture"]
+        # Update fields based on request method
+        if request.method in ["POST", "PATCH"]:
+            email = request.data.get("email")
+            username = request.data.get("username")
+            if email:
+                profile.email = email
+            if username:
+                profile.username = username
 
-        # HANDLE NEW FIELDS
-        if "bio" in request.data:
-            profile.bio = request.data["bio"]
-        if "social_links" in request.data:
-            social_links = request.data["social_links"]
-            if isinstance(social_links, str):
-                try:
-                    profile.social_links = json.loads(social_links)
-                except json.JSONDecodeError:
-                    pass
-            elif isinstance(social_links, dict):
-                profile.social_links = social_links
+            # HANDLE IMAGE UPLOAD (works for both)
+            if request.FILES.get("profile_picture"):
+                profile.profile_picture = request.FILES["profile_picture"]
 
-        profile.save()
+            # HANDLE NEW FIELDS
+            if "bio" in request.data:
+                profile.bio = request.data["bio"]
+            if "social_links" in request.data:
+                social_links = request.data["social_links"]
+                if isinstance(social_links, str):
+                    try:
+                        profile.social_links = json.loads(social_links)
+                    except json.JSONDecodeError:
+                        pass
+                elif isinstance(social_links, dict):
+                    profile.social_links = social_links
 
-    serializer = ProfileSerializer(profile, context={"request": request})
-    return Response(serializer.data)
+            profile.save()
+
+        serializer = ProfileSerializer(profile, context={"request": request})
+        return Response(serializer.data)
+    except Exception as e:
+        import traceback
+        print("\n!!! ERROR IN get_or_create_profile !!!")
+        print(traceback.format_exc())
+        return Response({"error": str(e)}, status=500)
 
 
 @api_view(["GET", "POST"])
@@ -1311,6 +1322,10 @@ def admin_user_update(request, firebase_uid):
     except Profile.DoesNotExist:
         return Response({"error": "User not found"}, status=404)
 
+    # Protect superadmins from being modified by non-superadmins
+    if user_to_update.is_superadmin and not profile_req.is_superadmin:
+        return Response({"error": "Only a superadmin can modify another superadmin."}, status=403)
+
     # Basic updates
     if "username" in request.data:
         user_to_update.username = request.data["username"]
@@ -1319,12 +1334,70 @@ def admin_user_update(request, firebase_uid):
         user_to_update.plan = request.data["plan"]
         
     if "is_admin" in request.data:
-        # In a real app, you might prevent revoking the last admin here
+        # Prevent demoting a superadmin
+        if user_to_update.is_superadmin:
+            return Response({"error": "Superadmins cannot be demoted."}, status=403)
         user_to_update.is_admin = bool(request.data["is_admin"])
 
     user_to_update.save()
     serializer = ProfileSerializer(user_to_update, context={"request": request})
     return Response(serializer.data)
+
+
+@api_view(["DELETE"])
+def admin_user_delete(request, firebase_uid):
+    """
+    Permanently deletes a user from both Django DB and Firebase Auth.
+    Admin access only. Superadmins cannot be deleted.
+    """
+    firebase_uid_req, err = get_firebase_uid(request)
+    if err:
+        return err
+
+    profile_req, error_response = _get_profile_by_firebase_uid(firebase_uid_req)
+    if error_response:
+        return error_response
+
+    if not profile_req.is_admin:
+        return Response({"error": "Admin access required"}, status=403)
+
+    try:
+        user_to_delete = Profile.objects.get(firebase_uid=firebase_uid)
+    except Profile.DoesNotExist:
+        return Response({"error": "User not found"}, status=404)
+
+    # Prevent deleting superadmins
+    if user_to_delete.is_superadmin:
+        return Response({"error": "Superadmins cannot be deleted."}, status=403)
+
+    # Prevent admins from deleting themselves
+    if user_to_delete.firebase_uid == profile_req.firebase_uid:
+        return Response({"error": "You cannot delete your own account from the admin panel."}, status=403)
+
+    deleted_username = user_to_delete.username
+
+    # 1. Delete profile picture file if exists
+    if user_to_delete.profile_picture:
+        user_to_delete.profile_picture.delete(save=False)
+
+    # 2. Delete all clothing item images
+    for item in ClothingItem.objects.filter(owner=user_to_delete):
+        if item.image:
+            item.image.delete(save=False)
+
+    # 3. Delete Django profile (cascades to wardrobes, outfits, schedules, etc.)
+    user_to_delete.delete()
+
+    # 4. Delete from Firebase Auth
+    try:
+        from firebase_admin import auth
+        auth.revoke_refresh_tokens(firebase_uid)
+        auth.delete_user(firebase_uid)
+    except Exception as e:
+        # Profile is already deleted from DB, log the Firebase error
+        print(f"Warning: Could not delete Firebase user {firebase_uid}: {e}")
+
+    return Response({"message": f"User '{deleted_username}' has been permanently deleted."})
 
 
 @api_view(["DELETE"])
@@ -1531,6 +1604,11 @@ def admin_moderation_reset(request, firebase_uid):
         
     try:
         target_profile = Profile.objects.get(firebase_uid=firebase_uid)
+
+        # Protect superadmins from moderation
+        if target_profile.is_superadmin:
+            return Response({"error": "Superadmins cannot be moderated."}, status=403)
+
         target = request.data.get("target")
         
         if target == "username":
@@ -1901,6 +1979,14 @@ def admin_featured_wardrobe_requests(request):
             feat_req.requester.is_featured = True
             feat_req.requester.save()
 
+            from .utils import send_push_notification
+            send_push_notification(
+                fcm_token=feat_req.requester.fcm_token,
+                title="Wardrobe Approved! 🌟",
+                body=f"Congratulations! Your wardrobe '{feat_req.wardrobe.name}' is now live in Discovery.",
+                data={"type": "feature_approval", "request_id": str(feat_req.id)}
+            )
+
         if new_status == "rejected":
             # Automatic Refund
             try:
@@ -1910,6 +1996,14 @@ def admin_featured_wardrobe_requests(request):
                         payment_intent=feat_req.stripe_payment_intent_id,
                     )
                     print(f"REFUND SUCCESS: Request {feat_req.id} refunded.")
+
+                    from .utils import send_push_notification
+                    send_push_notification(
+                        fcm_token=feat_req.requester.fcm_token,
+                        title="Wardrobe Review Update",
+                        body=f"Your feature request for '{feat_req.wardrobe.name}' was not approved this time. A full refund has been issued.",
+                        data={"type": "feature_rejection"}
+                    )
             except Exception as e:
                 print(f"REFUND ERROR: {str(e)}")
 

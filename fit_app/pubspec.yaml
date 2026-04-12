@@ -37,6 +37,7 @@ dependencies:
   google_fonts: ^6.3.3
   firebase_core: ^4.3.0
   firebase_auth: ^6.1.3
+  firebase_messaging: ^16.1.3
   provider: ^6.1.5+1
   http: ^1.6.0
   image_picker: ^1.2.1
@@ -49,6 +50,8 @@ dependencies:
   fl_chart: ^0.71.0
   intl: ^0.20.0
   flutter_stripe: ^12.5.0
+  flutter_launcher_icons: ^0.14.4
+  font_awesome_flutter: ^11.0.0
 
 dev_dependencies:
   flutter_test:
@@ -103,3 +106,11 @@ flutter:
   #
   # For details regarding fonts from package dependencies,
   # see https://flutter.dev/to/font-from-package
+flutter_launcher_icons:
+  android: "launcher_icon"
+  ios: true
+  image_path: "assets/icons/fit logo.jpg"
+  min_sdk_android: 21
+  adaptive_icon_background: "#FFFFFF"
+  adaptive_icon_foreground: "assets/icons/fit logo.jpg"
+

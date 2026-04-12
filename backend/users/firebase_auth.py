@@ -55,11 +55,15 @@ def get_firebase_uid(request):
     token = auth_header.split(" ", 1)[1].strip()
 
     try:
-        decoded = auth.verify_id_token(token)
+        decoded = auth.verify_id_token(token, check_revoked=True)
         return decoded["uid"], None
+    except auth.RevokedIdTokenError:
+        return None, Response({"error": "Account has been deleted or disabled. Please log in again."}, status=401)
     except auth.ExpiredIdTokenError:
         return None, Response({"error": "Token has expired. Please log in again."}, status=401)
     except auth.InvalidIdTokenError:
         return None, Response({"error": "Invalid token."}, status=401)
+    except auth.UserNotFoundError:
+        return None, Response({"error": "Account no longer exists."}, status=401)
     except Exception as e:
         return None, Response({"error": f"Authentication failed: {str(e)}"}, status=401)

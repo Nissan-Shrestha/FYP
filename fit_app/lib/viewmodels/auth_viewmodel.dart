@@ -5,6 +5,8 @@ import 'package:flutter/material.dart';
 import 'dart:io';
 import 'package:image_picker/image_picker.dart';
 import 'package:flutter_stripe/flutter_stripe.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
+import 'package:fit_app/main.dart';
 
 class AuthViewmodel extends ChangeNotifier {
   final AuthService _authService = AuthService();
@@ -39,6 +41,7 @@ class AuthViewmodel extends ChangeNotifier {
           email: user.email ?? "",
           username: username, // from textfield
         );
+        await requestNotificationPermission();
       }
     } catch (e) {
       _error = e.toString();
@@ -62,6 +65,7 @@ class AuthViewmodel extends ChangeNotifier {
           email: user.email ?? "",
           username: null, // important
         );
+        await requestNotificationPermission();
       }
     } catch (e) {
       _error = e.toString();
@@ -128,11 +132,46 @@ class AuthViewmodel extends ChangeNotifier {
     final user = _authService.currentUser;
 
     if (user != null) {
-      _profile = await ProfileService.getOrCreateProfile(
-        email: user.email ?? "",
-        username: null,
-      );
+      try {
+        _profile = await ProfileService.getOrCreateProfile(
+          email: user.email ?? "",
+          username: null,
+        );
+        await requestNotificationPermission();
+      } catch (e) {
+        // Profile sync failed — user may have been deleted by admin
+        debugPrint("Profile check failed, signing out: $e");
+        await _authService.signOut();
+        _profile = null;
+      }
       notifyListeners();
+    }
+  }
+
+  Future<void> requestNotificationPermission() async {
+    try {
+      NotificationSettings settings = await FirebaseMessaging.instance.requestPermission(
+        alert: true,
+        badge: true,
+        sound: true,
+      );
+
+      if (settings.authorizationStatus == AuthorizationStatus.authorized || 
+          settings.authorizationStatus == AuthorizationStatus.provisional) {
+        // Sync again to make sure fcm_token is sent if it wasn't available before
+        await syncProfile();
+      } else if (settings.authorizationStatus == AuthorizationStatus.denied) {
+        // Inform the user why they might want them
+        scaffoldMessengerKey.currentState?.showSnackBar(
+          const SnackBar(
+            content: Text("Notifications disabled. You'll miss out on daily style reminders! 🔔"),
+            backgroundColor: Colors.orange,
+            behavior: SnackBarBehavior.floating,
+          )
+        );
+      }
+    } catch (e) {
+      debugPrint("Error requesting notification permission: $e");
     }
   }
 
@@ -145,7 +184,7 @@ class AuthViewmodel extends ChangeNotifier {
       );
       notifyListeners();
     } catch (e) {
-      print("Profile Sync Error: $e");
+      debugPrint("Profile Sync Error: $e");
     }
   }
 

@@ -39,7 +39,12 @@ function renderHeader(profile) {
     document.getElementById("user-display-name").innerText = profile.username;
     document.getElementById("user-email").innerText = profile.email;
     document.getElementById("user-plan-badge").innerText = profile.plan;
-    document.getElementById("user-role-badge").innerText = profile.is_admin ? "Administrator" : "Regular User";
+    document.getElementById("user-role-badge").innerText = profile.is_superadmin ? "Superadmin" : (profile.is_admin ? "Administrator" : "Regular User");
+    if (profile.is_superadmin) {
+        const roleBadgeEl = document.getElementById("user-role-badge");
+        roleBadgeEl.style.background = "linear-gradient(135deg, #d4af37, #f5d060)";
+        roleBadgeEl.style.color = "#333";
+    }
 
     // NEW: Render Bio
     const bioEl = document.getElementById("user-bio");

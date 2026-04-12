@@ -1,16 +1,19 @@
-import 'package:fit_app/constants.dart';
-import 'package:fit_app/models/featured_wardrobe_model.dart';
 import 'package:fit_app/viewmodels/auth_viewmodel.dart';
 import 'package:fit_app/viewmodels/wardrobe_viewmodel.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:provider/provider.dart';
+import 'package:url_launcher/url_launcher.dart';
+import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import '../auth/login_screen.dart';
 import 'plan_screen.dart';
 import 'statistics_screen.dart';
 import 'package:fit_app/screens/profile/featured_requests_screen.dart';
 import 'package:fit_app/screens/profile/change_password_screen.dart';
+
+String capitalize(String s) =>
+    s.isEmpty ? s : s[0].toUpperCase() + s.substring(1);
 
 const Color primaryPurple = Color(0xFF673AB7);
 const Color backgroundGrey = Color(0xffF8F9FA);
@@ -128,8 +131,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 child: ElevatedButton(
                   onPressed: () async {
                     final newName = controller.text.trim();
-                    if (newName.isNotEmpty)
+                    if (newName.isNotEmpty) {
                       await authVM.updateUsername(newName);
+                    }
                     if (!context.mounted) return;
                     Navigator.pop(context);
                   },
@@ -330,6 +334,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
     final twitterController = TextEditingController(
       text: authVM.profile!.socialLinks?['twitter'] ?? '',
     );
+    final tiktokController = TextEditingController(
+      text: authVM.profile!.socialLinks?['tiktok'] ?? '',
+    );
 
     showModalBottomSheet(
       context: context,
@@ -401,6 +408,21 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   ),
                 ),
               ),
+              const SizedBox(height: 20),
+              _sheetLabel("TikTok"),
+              const SizedBox(height: 8),
+              TextField(
+                controller: tiktokController,
+                style: GoogleFonts.manrope(fontWeight: FontWeight.w500),
+                decoration: InputDecoration(
+                  prefixIcon: const Icon(Icons.music_note_outlined),
+                  prefixText: "@",
+                  hintText: "username",
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(16),
+                  ),
+                ),
+              ),
               const SizedBox(height: 32),
               SizedBox(
                 width: double.infinity,
@@ -423,6 +445,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
                           twitterController.text,
                           "twitter.com/",
                         ).replaceFirst("x.com/", ""),
+                        'tiktok': clean(
+                          tiktokController.text,
+                          "tiktok.com/",
+                        ),
                       },
                     );
                     if (!context.mounted) return;
@@ -459,6 +485,94 @@ class _ProfileScreenState extends State<ProfileScreen> {
       color: Colors.black87,
     ),
   );
+
+  Future<void> _launchSocialURL(String platform, String handle) async {
+    Uri url;
+    switch (platform.toLowerCase()) {
+      case 'instagram':
+        url = Uri.parse('https://instagram.com/$handle');
+        break;
+      case 'twitter':
+      case 'x':
+        url = Uri.parse('https://twitter.com/$handle');
+        break;
+      case 'tiktok':
+        url = Uri.parse('https://tiktok.com/@$handle');
+        break;
+      default:
+        return;
+    }
+
+    if (await canLaunchUrl(url)) {
+      await launchUrl(url, mode: LaunchMode.externalApplication);
+    } else {
+      if (mounted) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text("Could not launch $platform")));
+      }
+    }
+  }
+
+  Widget _buildSocialLinks(Map<String, dynamic>? socials) {
+    if (socials == null ||
+        socials.values.every((v) => v == null || v.toString().isEmpty)) {
+      return Container();
+    }
+
+    List<Widget> links = [];
+
+    if (socials['instagram']?.toString().isNotEmpty ?? false) {
+      links.add(
+        _socialIcon(
+          FontAwesomeIcons.instagram,
+          () => _launchSocialURL('instagram', socials['instagram']),
+          Colors.pinkAccent,
+        ),
+      );
+    }
+
+    if (socials['twitter']?.toString().isNotEmpty ?? false) {
+      links.add(
+        _socialIcon(
+          FontAwesomeIcons.twitter,
+          () => _launchSocialURL('twitter', socials['twitter']),
+          Colors.lightBlueAccent,
+        ),
+      );
+    }
+
+    if (socials['tiktok']?.toString().isNotEmpty ?? false) {
+      links.add(
+        _socialIcon(
+          FontAwesomeIcons.tiktok,
+          () => _launchSocialURL('tiktok', socials['tiktok']),
+          Colors.black,
+        ),
+      );
+    }
+
+    if (links.isEmpty) return Container();
+
+    return Padding(
+      padding: const EdgeInsets.only(top: 12),
+      child: Wrap(spacing: 16, children: links),
+    );
+  }
+
+  Widget _socialIcon(dynamic icon, VoidCallback onTap, Color color) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.all(10),
+        decoration: BoxDecoration(
+          color: color.withValues(alpha: 0.1),
+          shape: BoxShape.circle,
+        ),
+        child: FaIcon(icon, color: color, size: 20),
+      ),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -622,6 +736,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
                               ),
                             ),
                           ),
+
+                        // Social Links
+                        _buildSocialLinks(profile.socialLinks),
+
                         const SizedBox(height: 24),
 
                         // Quick Stats

@@ -20,6 +20,7 @@ class ProfileModel {
   final String? stylistAvailableIn;
   final bool canUseAnalysis;
   final String? analysisAvailableIn;
+  final String? fcmToken;
 
   String? get fullProfilePictureUrl {
     if (profilePicture == null) return null;
@@ -61,6 +62,7 @@ class ProfileModel {
     this.stylistAvailableIn,
     this.canUseAnalysis = true,
     this.analysisAvailableIn,
+    this.fcmToken,
   });
 
   factory ProfileModel.fromJson(Map<String, dynamic> json) {
@@ -86,6 +88,7 @@ class ProfileModel {
       stylistAvailableIn: json['stylist_available_in'],
       canUseAnalysis: json['can_use_analysis'] ?? true,
       analysisAvailableIn: json['analysis_available_in'],
+      fcmToken: json['fcm_token'],
     );
   }
 

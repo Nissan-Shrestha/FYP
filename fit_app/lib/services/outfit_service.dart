@@ -4,6 +4,7 @@ import 'package:fit_app/constants.dart';
 import 'package:fit_app/models/featured_wardrobe_model.dart';
 import 'package:fit_app/models/outfit_model.dart';
 import 'package:http/http.dart' as http;
+import 'package:fit_app/services/session_guard.dart';
 
 class OutfitService {
   static String get _baseApi => "${ApiConfig.serverBaseUrl}/api";
@@ -32,6 +33,7 @@ class OutfitService {
         final List<dynamic> data = jsonDecode(response.body);
         return data.map((json) => OutfitModel.fromJson(json)).toList();
       }
+      if (response.statusCode == 401) { checkForceLogout(response, null); }
     } catch (_) {
       return [];
     }

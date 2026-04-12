@@ -1,10 +1,13 @@
 import 'dart:convert';
 import 'dart:io';
 
+import 'package:flutter/foundation.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:fit_app/constants.dart';
 import 'package:fit_app/models/profile_model.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:http/http.dart' as http;
+import 'package:fit_app/services/session_guard.dart';
 
 class ProfileService {
   static String get baseUrl => "${ApiConfig.serverBaseUrl}/api/profile/";
@@ -34,6 +37,13 @@ class ProfileService {
     final Map<String, dynamic> body = {"email": email};
     if (username != null) body["username"] = username;
 
+    try {
+      final fcmToken = await FirebaseMessaging.instance.getToken();
+      if (fcmToken != null) body["fcm_token"] = fcmToken;
+    } catch (e) {
+      debugPrint("FCM Token Error: $e");
+    }
+
     final response = await http.post(
       Uri.parse(baseUrl),
       headers: await _authHeaders(),
@@ -42,6 +52,9 @@ class ProfileService {
 
     if (response.statusCode == 200) {
       return ProfileModel.fromJson(jsonDecode(response.body));
+    } else if (response.statusCode == 401) {
+      checkForceLogout(response, null);
+      throw Exception("Session expired");
     } else {
       throw Exception("Profile error: ${response.body}");
     }

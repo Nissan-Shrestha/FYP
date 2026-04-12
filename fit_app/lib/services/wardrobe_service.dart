@@ -8,6 +8,7 @@ import 'package:fit_app/models/clothing_item_model.dart';
 import 'package:fit_app/models/clothing_option_model.dart';
 import 'package:fit_app/models/featured_wardrobe_model.dart';
 import 'package:http/http.dart' as http;
+import 'package:fit_app/services/session_guard.dart';
 
 class WardrobeService {
   static String get _baseApi => "${ApiConfig.serverBaseUrl}/api";
@@ -56,6 +57,7 @@ class WardrobeService {
           .map((json) => WardrobeModel.fromJson(json as Map<String, dynamic>))
           .toList();
     }
+    if (response.statusCode == 401) { checkForceLogout(response, null); }
     throw Exception("Failed to fetch wardrobes");
   }
 
@@ -113,6 +115,7 @@ class WardrobeService {
           .map((json) => ClothingItemModel.fromJson(json as Map<String, dynamic>))
           .toList();
     }
+    if (response.statusCode == 401) { checkForceLogout(response, null); }
     throw Exception("Failed to fetch clothing items");
   }
 

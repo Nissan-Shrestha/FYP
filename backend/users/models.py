@@ -7,6 +7,7 @@ class Profile(models.Model):
     username = models.CharField(max_length=150)
     email = models.EmailField()
     is_admin = models.BooleanField(default=False)
+    is_superadmin = models.BooleanField(default=False, help_text="Superadmins cannot be demoted by regular admins")
 
     plan = models.CharField(max_length=20, default="Free")
     premium_until = models.DateTimeField(null=True, blank=True)
@@ -26,6 +27,7 @@ class Profile(models.Model):
     last_stylist_usage = models.DateTimeField(null=True, blank=True)
     last_analysis_usage = models.DateTimeField(null=True, blank=True)
     created_at = models.DateTimeField(default=timezone.now)
+    fcm_token = models.CharField(max_length=512, null=True, blank=True)
 
     @property
     def is_premium(self):

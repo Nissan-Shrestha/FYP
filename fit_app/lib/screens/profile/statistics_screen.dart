@@ -329,8 +329,9 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
               sideTitles: SideTitles(
                 showTitles: true,
                 getTitlesWidget: (value, meta) {
-                  if (value.toInt() >= seasonNames.length)
+                  if (value.toInt() >= seasonNames.length) {
                     return const SizedBox();
+                  }
                   String name = seasonNames[value.toInt()];
                   return Padding(
                     padding: const EdgeInsets.only(top: 8),

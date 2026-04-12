@@ -48,10 +48,19 @@ function renderUsers(users) {
     users.forEach(user => {
         const row = document.createElement("tr");
         const planBadgeClass = user.plan.toLowerCase() === "premium" ? "bg-success" : "bg-info text-dark";
-        const roleBadge = user.is_admin ? '<span class="badge bg-danger">Admin</span>' : '<span class="badge bg-light text-dark border">User</span>';
+        let roleBadge;
+        if (user.is_superadmin) {
+            roleBadge = '<span class="badge" style="background: linear-gradient(135deg, #d4af37, #f5d060); color: #333;">Superadmin</span>';
+        } else if (user.is_admin) {
+            roleBadge = '<span class="badge bg-danger">Admin</span>';
+        } else {
+            roleBadge = '<span class="badge bg-light text-dark border">User</span>';
+        }
         const joinDate = user.created_at ? new Date(user.created_at).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' }) : "N/A";
         
         const avatarUrl = user.profile_picture || "https://img.icons8.com/color/96/test-account.png";
+
+        const deleteBtn = user.is_superadmin ? '' : `<button class="btn btn-sm btn-outline-danger" onclick="deleteUser('${user.firebase_uid}', '${user.username.replace(/'/g, "\\'")}')"><i class="bi bi-trash"></i></button>`;
 
         row.innerHTML = `
             <td>
@@ -68,6 +77,7 @@ function renderUsers(users) {
                 <div class="btn-group">
                     <button class="btn btn-sm btn-outline-primary" onclick="openEditModal('${user.firebase_uid}')" title="Edit User"><i class="bi bi-pencil"></i></button>
                     <a href="user_details.html?uid=${user.firebase_uid}" class="btn btn-sm btn-outline-secondary" title="View Details"><i class="bi bi-eye"></i></a>
+                    ${deleteBtn}
                 </div>
             </td>
         `;
@@ -83,6 +93,17 @@ function openEditModal(firebaseUid) {
     document.getElementById("edit-username").value = user.username;
     document.getElementById("edit-plan").value = user.plan;
     document.getElementById("edit-is-admin").checked = user.is_admin;
+
+    // Disable admin toggle for superadmins (they cannot be demoted)
+    const adminCheckbox = document.getElementById("edit-is-admin");
+    const superadminWarning = document.getElementById("superadmin-warning");
+    if (user.is_superadmin) {
+        adminCheckbox.disabled = true;
+        if (superadminWarning) superadminWarning.classList.remove("d-none");
+    } else {
+        adminCheckbox.disabled = false;
+        if (superadminWarning) superadminWarning.classList.add("d-none");
+    }
 
     const modal = new bootstrap.Modal(document.getElementById('editUserModal'));
     modal.show();
@@ -116,11 +137,35 @@ async function handleEditSubmit(e) {
             const modal = bootstrap.Modal.getInstance(modalEl);
             modal.hide();
         } else {
-            alert("Failed to update user.");
+            const data = await response.json();
+            alert(data.error || "Failed to update user.");
         }
     } catch (error) {
         console.error("Error updating user:", error);
     }
 }
 
+async function deleteUser(firebaseUid, username) {
+    if (!confirm(`Are you sure you want to permanently delete user "${username}"?\n\nThis will remove ALL their data (wardrobes, clothing items, outfits, schedules) and their Firebase account. This action cannot be undone.`)) {
+        return;
+    }
 
+    try {
+        const response = await fetch(`${API_BASE_URL}/admin/users/${firebaseUid}/delete/`, {
+            method: "DELETE",
+            headers: getAuthHeaders()
+        });
+
+        const data = await response.json();
+
+        if (response.ok) {
+            alert(data.message || "User deleted successfully.");
+            fetchUsers();
+        } else {
+            alert(data.error || "Failed to delete user.");
+        }
+    } catch (error) {
+        console.error("Error deleting user:", error);
+        alert("An error occurred while deleting the user.");
+    }
+}

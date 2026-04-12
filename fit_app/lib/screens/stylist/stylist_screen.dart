@@ -1,4 +1,3 @@
-import 'package:fit_app/constants.dart';
 import 'package:fit_app/viewmodels/stylist_viewmodel.dart';
 import '../../viewmodels/wardrobe_viewmodel.dart';
 import 'package:fit_app/viewmodels/weather_viewmodel.dart';
@@ -501,6 +500,7 @@ class _StylistScreenState extends State<StylistScreen> {
                           stylePreference: selectedStylePreference,
                         );
                         if (stylistVM.status == StylistStatus.success) {
+                          if (!mounted) return;
                           context.read<AuthViewmodel>().syncProfile();
                         }
                       },
@@ -567,6 +567,7 @@ class _StylistScreenState extends State<StylistScreen> {
                           stylePreference: selectedStylePreference,
                         );
                         if (stylistVM.status == StylistStatus.success) {
+                          if (!mounted) return;
                           context.read<AuthViewmodel>().syncProfile();
                         }
                       },

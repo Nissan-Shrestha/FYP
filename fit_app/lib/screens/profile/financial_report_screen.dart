@@ -118,7 +118,7 @@ class _FinancialReportScreenState extends State<FinancialReportScreen> {
                           },
                           selectedColor: const Color(
                             0xFF673AB7,
-                          ).withOpacity(0.1),
+                          ).withValues(alpha: 0.1),
                           labelStyle: GoogleFonts.manrope(
                             fontSize: 10.8,
                             fontWeight: isSelected

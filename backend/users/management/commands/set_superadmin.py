@@ -11,10 +11,11 @@ class Command(BaseCommand):
         email = kwargs['email']
         try:
             profile = Profile.objects.get(email=email)
-            if profile.is_admin:
-                self.stdout.write(self.style.WARNING(f"User {email} is already an admin!"))
+            if profile.is_superadmin:
+                self.stdout.write(self.style.WARNING(f"User {email} is already a superadmin!"))
             else:
-                profile.is_admin = True
+                profile.is_superadmin = True
+                profile.is_admin = True  # Superadmins are always admins too
                 profile.save()
                 self.stdout.write(self.style.SUCCESS(f"Successfully promoted {email} to Super Admin!"))
         except Profile.DoesNotExist:
