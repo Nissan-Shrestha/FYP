@@ -16,7 +16,6 @@ class StylistViewmodel extends ChangeNotifier {
   Future<void> getRecommendation({
     required String occasion,
     required String weather,
-    String? stylePreference,
   }) async {
     try {
       status = StylistStatus.loading;
@@ -26,7 +25,6 @@ class StylistViewmodel extends ChangeNotifier {
       final result = await StylistService.fetchRecommendation(
         occasion: occasion,
         weather: weather,
-        stylePreference: stylePreference,
       );
 
       recommendedItems = result["items"] as List<ClothingItemModel>;

@@ -24,7 +24,6 @@ class StylistService {
   static Future<Map<String, dynamic>> fetchRecommendation({
     required String occasion,
     required String weather,
-    String? stylePreference,
   }) async {
     try {
       final response = await http.post(
@@ -33,7 +32,6 @@ class StylistService {
         body: jsonEncode({
           "occasion": occasion,
           "weather": weather,
-          if (stylePreference != null) "style_preference": stylePreference,
         }),
       );
 

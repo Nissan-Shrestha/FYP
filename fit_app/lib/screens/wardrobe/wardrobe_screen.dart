@@ -225,7 +225,10 @@ class _WardrobeScreenState extends State<WardrobeScreen> {
         titleSpacing: 20,
         title: Text(
           "Wardrobe",
-          style: GoogleFonts.manrope(fontSize: 21.6, fontWeight: FontWeight.bold),
+          style: GoogleFonts.manrope(
+            fontSize: 21.6,
+            fontWeight: FontWeight.bold,
+          ),
         ),
         actions: [
           IconButton(
@@ -243,209 +246,214 @@ class _WardrobeScreenState extends State<WardrobeScreen> {
           const SizedBox(width: 12),
         ],
       ),
-      body: SingleChildScrollView(
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 20),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const SizedBox(height: 10),
+      body: RefreshIndicator(
+        onRefresh: _loadWardrobeTabData,
+        color: const Color(0xFF673AB7),
+        child: SingleChildScrollView(
+          physics: const AlwaysScrollableScrollPhysics(),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 20),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const SizedBox(height: 10),
 
-              /// ================= ADD NEW ITEMS =================
-              Text(
-                "Add new items",
-                style: GoogleFonts.manrope(
-                  fontSize: 17.1,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-
-              const SizedBox(height: 16),
-
-              GestureDetector(
-                onTap: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(builder: (_) => const AddItemScreen()),
-                  );
-                },
-                child: Container(
-                  height: 120,
-                  width: double.infinity,
-                  decoration: BoxDecoration(
-                    color: Colors.grey.shade300,
-                    borderRadius: BorderRadius.circular(16),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withValues(alpha: 0.08),
-                        blurRadius: 6,
-                        offset: const Offset(0, 3),
-                      ),
-                    ],
-                  ),
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      const Icon(Icons.add, size: 36),
-                      const SizedBox(height: 8),
-                      Text(
-                        "Add new items",
-                        style: GoogleFonts.manrope(fontSize: 15.3),
-                      ),
-                    ],
+                /// ================= ADD NEW ITEMS =================
+                Text(
+                  "Add new items",
+                  style: GoogleFonts.manrope(
+                    fontSize: 17.1,
+                    fontWeight: FontWeight.bold,
                   ),
                 ),
-              ),
 
-              const SizedBox(height: 30),
+                const SizedBox(height: 16),
 
-              /// ================= CREATE NEW WARDROBE =================
-              GestureDetector(
-                onTap: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (_) => const CreateWardrobeScreen(),
+                GestureDetector(
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (_) => const AddItemScreen()),
+                    );
+                  },
+                  child: Container(
+                    height: 120,
+                    width: double.infinity,
+                    decoration: BoxDecoration(
+                      color: Colors.grey.shade300,
+                      borderRadius: BorderRadius.circular(16),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withValues(alpha: 0.08),
+                          blurRadius: 6,
+                          offset: const Offset(0, 3),
+                        ),
+                      ],
                     ),
-                  );
-                },
-                child: Container(
-                  height: 120, // Reduced height for better fit at top
-                  width: double.infinity,
-                  decoration: BoxDecoration(
-                    color: Colors.grey.shade300,
-                    borderRadius: BorderRadius.circular(16),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withValues(alpha: 0.08),
-                        blurRadius: 6,
-                        offset: const Offset(0, 3),
-                      ),
-                    ],
-                  ),
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      const Icon(Icons.add_box_outlined, size: 36),
-                      const SizedBox(height: 8),
-                      Text(
-                        "Create new wardrobe",
-                        style: GoogleFonts.manrope(fontSize: 15.3),
-                      ),
-                    ],
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        const Icon(Icons.add, size: 36),
+                        const SizedBox(height: 8),
+                        Text(
+                          "Add new items",
+                          style: GoogleFonts.manrope(fontSize: 15.3),
+                        ),
+                      ],
+                    ),
                   ),
                 ),
-              ),
 
-              const SizedBox(height: 40),
+                const SizedBox(height: 30),
 
-              /// ================= WARDROBE SECTION =================
-              Text(
-                "My Wardrobes",
-                style: GoogleFonts.manrope(
-                  fontSize: 17.1,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-
-              const SizedBox(height: 20),
-
-              if (wardrobeVM.isLoadingWardrobes && wardrobes.isEmpty)
-                const Center(child: CircularProgressIndicator())
-              else if (wardrobes.isEmpty)
-                Padding(
-                  padding: const EdgeInsets.symmetric(vertical: 8),
-                  child: Text(
-                    "No wardrobes found",
-                    style: GoogleFonts.manrope(fontSize: 16.2),
-                  ),
-                )
-              else
-                GridView.builder(
-                  shrinkWrap: true,
-                  physics: const NeverScrollableScrollPhysics(),
-                  itemCount: wardrobes.length,
-                  gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                    crossAxisCount: 2,
-                    mainAxisSpacing: 20,
-                    crossAxisSpacing: 18,
-                    childAspectRatio:
-                        (MediaQuery.of(context).size.width / 2) / 280,
-                  ),
-                  itemBuilder: (context, index) {
-                    final wardrobe = wardrobes[index];
-                    final previewItems =
-                        wardrobeVM.wardrobePreviewItems[wardrobe.id] ??
-                        const [];
-                    final previewImageUrls = previewItems
-                        .map((item) => item.image)
-                        .whereType<String>()
-                        .map(
-                          (path) => path.startsWith("http")
-                              ? path
-                              : "${ApiConfig.serverBaseUrl}$path",
-                        )
-                        .take(4)
-                        .toList();
-                    return WardrobeCategoryCard(
-                      title: wardrobe.name,
-                      isDefault: wardrobe.isDefault,
-                      itemCount: wardrobe.itemCount,
-                      hasItems: previewItems.isNotEmpty,
-                      previewImageUrls: previewImageUrls,
-                      onTap: () {
-                        context.read<WardrobeViewmodel>().fetchItemsForWardrobe(
-                          wardrobeId: wardrobe.id,
-                        );
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (_) => WardrobeViewScreen(
-                              wardrobeId: wardrobe.id,
-                              wardrobeName: wardrobe.name,
-                              isDefaultWardrobe: wardrobe.isDefault,
-                            ),
-                          ),
-                        );
-                      },
-                      onLongPress: () => _showWardrobeActions(
-                        wardrobeId: wardrobe.id,
-                        wardrobeName: wardrobe.name,
-                        isDefaultWardrobe: wardrobe.isDefault,
+                /// ================= CREATE NEW WARDROBE =================
+                GestureDetector(
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => const CreateWardrobeScreen(),
                       ),
                     );
                   },
-                ),
-
-              if (wardrobeVM.error != null)
-                Padding(
-                  padding: const EdgeInsets.only(top: 16),
-                  child: Row(
-                    children: [
-                      const Icon(Icons.error_outline, color: Colors.red),
-                      const SizedBox(width: 8),
-                      Expanded(
-                        child: Text(
-                          wardrobeVM.error!,
-                          maxLines: 2,
-                          overflow: TextOverflow.ellipsis,
-                          style: const TextStyle(color: Colors.red),
+                  child: Container(
+                    height: 120, // Reduced height for better fit at top
+                    width: double.infinity,
+                    decoration: BoxDecoration(
+                      color: Colors.grey.shade300,
+                      borderRadius: BorderRadius.circular(16),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withValues(alpha: 0.08),
+                          blurRadius: 6,
+                          offset: const Offset(0, 3),
                         ),
-                      ),
-                      TextButton(
-                        onPressed: firebaseUid == null
-                            ? null
-                            : () {
-                                _loadWardrobeTabData();
-                              },
-                        child: const Text("Retry"),
-                      ),
-                    ],
+                      ],
+                    ),
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        const Icon(Icons.add_box_outlined, size: 36),
+                        const SizedBox(height: 8),
+                        Text(
+                          "Create new wardrobe",
+                          style: GoogleFonts.manrope(fontSize: 15.3),
+                        ),
+                      ],
+                    ),
                   ),
                 ),
 
-              const SizedBox(height: 40),
-            ],
+                const SizedBox(height: 40),
+
+                /// ================= WARDROBE SECTION =================
+                Text(
+                  "My Wardrobes",
+                  style: GoogleFonts.manrope(
+                    fontSize: 17.1,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+
+                const SizedBox(height: 20),
+
+                if (wardrobeVM.isLoadingWardrobes && wardrobes.isEmpty)
+                  const Center(child: CircularProgressIndicator())
+                else if (wardrobes.isEmpty)
+                  Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 8),
+                    child: Text(
+                      "No wardrobes found",
+                      style: GoogleFonts.manrope(fontSize: 16.2),
+                    ),
+                  )
+                else
+                  GridView.builder(
+                    shrinkWrap: true,
+                    physics: const NeverScrollableScrollPhysics(),
+                    itemCount: wardrobes.length,
+                    gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                      crossAxisCount: 2,
+                      mainAxisSpacing: 20,
+                      crossAxisSpacing: 18,
+                      childAspectRatio:
+                          (MediaQuery.of(context).size.width / 2) / 280,
+                    ),
+                    itemBuilder: (context, index) {
+                      final wardrobe = wardrobes[index];
+                      final previewItems =
+                          wardrobeVM.wardrobePreviewItems[wardrobe.id] ??
+                          const [];
+                      final previewImageUrls = previewItems
+                          .map((item) => item.image)
+                          .whereType<String>()
+                          .map(
+                            (path) => path.startsWith("http")
+                                ? path
+                                : "${ApiConfig.serverBaseUrl}$path",
+                          )
+                          .take(4)
+                          .toList();
+                      return WardrobeCategoryCard(
+                        title: wardrobe.name,
+                        isDefault: wardrobe.isDefault,
+                        itemCount: wardrobe.itemCount,
+                        hasItems: previewItems.isNotEmpty,
+                        previewImageUrls: previewImageUrls,
+                        onTap: () {
+                          context
+                              .read<WardrobeViewmodel>()
+                              .fetchItemsForWardrobe(wardrobeId: wardrobe.id);
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (_) => WardrobeViewScreen(
+                                wardrobeId: wardrobe.id,
+                                wardrobeName: wardrobe.name,
+                                isDefaultWardrobe: wardrobe.isDefault,
+                              ),
+                            ),
+                          );
+                        },
+                        onLongPress: () => _showWardrobeActions(
+                          wardrobeId: wardrobe.id,
+                          wardrobeName: wardrobe.name,
+                          isDefaultWardrobe: wardrobe.isDefault,
+                        ),
+                      );
+                    },
+                  ),
+
+                if (wardrobeVM.error != null)
+                  Padding(
+                    padding: const EdgeInsets.only(top: 16),
+                    child: Row(
+                      children: [
+                        const Icon(Icons.error_outline, color: Colors.red),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: Text(
+                            wardrobeVM.error!,
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis,
+                            style: const TextStyle(color: Colors.red),
+                          ),
+                        ),
+                        TextButton(
+                          onPressed: firebaseUid == null
+                              ? null
+                              : () {
+                                  _loadWardrobeTabData();
+                                },
+                          child: const Text("Retry"),
+                        ),
+                      ],
+                    ),
+                  ),
+
+                const SizedBox(height: 40),
+              ],
+            ),
           ),
         ),
       ),
@@ -551,7 +559,10 @@ class WardrobeCategoryCard extends StatelessWidget {
         const SizedBox(height: 10),
         Text(
           isDefault ? "${capitalize(title)} (Default)" : capitalize(title),
-          style: GoogleFonts.manrope(fontSize: 14.4, fontWeight: FontWeight.w600),
+          style: GoogleFonts.manrope(
+            fontSize: 14.4,
+            fontWeight: FontWeight.w600,
+          ),
           textAlign: TextAlign.center,
         ),
         Text(

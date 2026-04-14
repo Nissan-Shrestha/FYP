@@ -286,9 +286,15 @@ class _ProfileScreenState extends State<ProfileScreen> {
               TextField(
                 controller: bioController,
                 maxLines: 3,
+                maxLength: 150,
                 style: GoogleFonts.manrope(fontWeight: FontWeight.w500),
                 decoration: InputDecoration(
                   hintText: "Tell us about your style...",
+                  counterStyle: GoogleFonts.manrope(
+                    fontSize: 10,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.grey,
+                  ),
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(16),
                   ),
@@ -328,6 +334,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
   }
 
   void _showEditSocialsSheet(BuildContext context, AuthViewmodel authVM) {
+    final wardrobeVM = context.read<WardrobeViewmodel>();
+    final isLocked = wardrobeVM.featuredWardrobeRequests.any(
+      (req) => req.status == 'pending' || req.status == 'approved',
+    );
+
     final instagramController = TextEditingController(
       text: authVM.profile!.socialLinks?['instagram'] ?? '',
     );
@@ -378,11 +389,43 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   ),
                 ),
               ),
+              if (isLocked) ...[
+                const SizedBox(height: 16),
+                Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: Colors.orange.shade50,
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: Colors.orange.shade100),
+                  ),
+                  child: Row(
+                    children: [
+                      Icon(
+                        Icons.lock_clock_outlined,
+                        color: Colors.orange.shade700,
+                        size: 20,
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Text(
+                          "Social links cannot be changed while your wardrobe is featured or pending review.",
+                          style: GoogleFonts.manrope(
+                            fontSize: 11.7,
+                            color: Colors.orange.shade900,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
               const SizedBox(height: 32),
               _sheetLabel("Instagram"),
               const SizedBox(height: 8),
               TextField(
                 controller: instagramController,
+                enabled: !isLocked,
                 style: GoogleFonts.manrope(fontWeight: FontWeight.w500),
                 decoration: InputDecoration(
                   prefixIcon: const Icon(Icons.camera_alt_outlined),
@@ -398,6 +441,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
               const SizedBox(height: 8),
               TextField(
                 controller: twitterController,
+                enabled: !isLocked,
                 style: GoogleFonts.manrope(fontWeight: FontWeight.w500),
                 decoration: InputDecoration(
                   prefixIcon: const Icon(Icons.alternate_email),
@@ -413,6 +457,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
               const SizedBox(height: 8),
               TextField(
                 controller: tiktokController,
+                enabled: !isLocked,
                 style: GoogleFonts.manrope(fontWeight: FontWeight.w500),
                 decoration: InputDecoration(
                   prefixIcon: const Icon(Icons.music_note_outlined),
@@ -428,35 +473,40 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 width: double.infinity,
                 height: 56,
                 child: ElevatedButton(
-                  onPressed: () async {
-                    String clean(String val, String domain) {
-                      String res = val.trim();
-                      if (res.contains(domain)) res = res.split(domain).last;
-                      return res.replaceAll("@", "").replaceAll("/", "");
-                    }
+                  onPressed: isLocked
+                      ? null
+                      : () async {
+                          String clean(String val, String domain) {
+                            String res = val.trim();
+                            if (res.contains(domain)) {
+                              res = res.split(domain).last;
+                            }
+                            return res.replaceAll("@", "").replaceAll("/", "");
+                          }
 
-                    await authVM.updateProfile(
-                      socialLinks: {
-                        'instagram': clean(
-                          instagramController.text,
-                          "instagram.com/",
-                        ),
-                        'twitter': clean(
-                          twitterController.text,
-                          "twitter.com/",
-                        ).replaceFirst("x.com/", ""),
-                        'tiktok': clean(
-                          tiktokController.text,
-                          "tiktok.com/",
-                        ),
-                      },
-                    );
-                    if (!context.mounted) return;
-                    Navigator.pop(context);
-                  },
+                          await authVM.updateProfile(
+                            socialLinks: {
+                              'instagram': clean(
+                                instagramController.text,
+                                "instagram.com/",
+                              ),
+                              'twitter': clean(
+                                twitterController.text,
+                                "twitter.com/",
+                              ).replaceFirst("x.com/", ""),
+                              'tiktok': clean(
+                                tiktokController.text,
+                                "tiktok.com/",
+                              ),
+                            },
+                          );
+                          if (!context.mounted) return;
+                          Navigator.pop(context);
+                        },
                   style: ElevatedButton.styleFrom(
                     backgroundColor: primaryPurple,
                     foregroundColor: Colors.white,
+                    disabledBackgroundColor: Colors.grey.shade300,
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(16),
                     ),
@@ -574,6 +624,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
     );
   }
 
+  Future<void> _onRefresh() async {
+    await context.read<AuthViewmodel>().syncProfile();
+    await context.read<WardrobeViewmodel>().fetchFeaturedWardrobeRequests();
+  }
+
   @override
   Widget build(BuildContext context) {
     final authVM = Provider.of<AuthViewmodel>(context);
@@ -586,320 +641,330 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
     return Scaffold(
       backgroundColor: backgroundGrey,
-      body: CustomScrollView(
-        slivers: [
-          SliverAppBar(
-            expandedHeight: 120,
-            floating: false,
-            pinned: true,
-            elevation: 0,
-            backgroundColor: Colors.white,
-            surfaceTintColor: Colors.white,
-            flexibleSpace: FlexibleSpaceBar(
-              title: Text(
-                "My Profile",
-                style: GoogleFonts.manrope(
-                  fontWeight: FontWeight.w900,
-                  fontSize: 18,
-                  color: Colors.black,
+      body: RefreshIndicator(
+        onRefresh: _onRefresh,
+        color: primaryPurple,
+        child: CustomScrollView(
+          physics: const AlwaysScrollableScrollPhysics(),
+          slivers: [
+            SliverAppBar(
+              expandedHeight: 120,
+              floating: false,
+              pinned: true,
+              elevation: 0,
+              backgroundColor: Colors.white,
+              surfaceTintColor: Colors.white,
+              flexibleSpace: FlexibleSpaceBar(
+                title: Text(
+                  "My Profile",
+                  style: GoogleFonts.manrope(
+                    fontWeight: FontWeight.w900,
+                    fontSize: 18,
+                    color: Colors.black,
+                  ),
                 ),
+                centerTitle: true,
               ),
-              centerTitle: true,
             ),
-          ),
-          SliverToBoxAdapter(
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 20),
-              child: Column(
-                children: [
-                  const SizedBox(height: 20),
+            SliverToBoxAdapter(
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 20),
+                child: Column(
+                  children: [
+                    const SizedBox(height: 20),
 
-                  // Header Card
-                  Container(
-                    width: double.infinity,
-                    padding: const EdgeInsets.all(24),
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(32),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withValues(alpha: 0.04),
-                          blurRadius: 20,
-                          offset: const Offset(0, 10),
-                        ),
-                      ],
-                    ),
-                    child: Column(
-                      children: [
-                        Stack(
-                          alignment: Alignment.bottomRight,
-                          children: [
-                            GestureDetector(
-                              onTap: () =>
-                                  _showProfilePictureSheet(context, authVM),
-                              child: Container(
-                                padding: const EdgeInsets.all(4),
+                    // Header Card
+                    Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.all(24),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(32),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withValues(alpha: 0.04),
+                            blurRadius: 20,
+                            offset: const Offset(0, 10),
+                          ),
+                        ],
+                      ),
+                      child: Column(
+                        children: [
+                          Stack(
+                            alignment: Alignment.bottomRight,
+                            children: [
+                              GestureDetector(
+                                onTap: () =>
+                                    _showProfilePictureSheet(context, authVM),
+                                child: Container(
+                                  padding: const EdgeInsets.all(4),
+                                  decoration: BoxDecoration(
+                                    shape: BoxShape.circle,
+                                    border: Border.all(
+                                      color: primaryPurple.withValues(
+                                        alpha: 0.2,
+                                      ),
+                                      width: 2,
+                                    ),
+                                  ),
+                                  child: CircleAvatar(
+                                    radius: 48,
+                                    backgroundColor: backgroundGrey,
+                                    backgroundImage:
+                                        profile.fullProfilePictureUrl != null
+                                        ? NetworkImage(
+                                            profile.fullProfilePictureUrl!,
+                                          )
+                                        : null,
+                                    child: profile.profilePicture == null
+                                        ? Icon(
+                                            Icons.person_rounded,
+                                            color: Colors.grey.shade400,
+                                            size: 48,
+                                          )
+                                        : null,
+                                  ),
+                                ),
+                              ),
+                              Container(
+                                padding: const EdgeInsets.all(6),
                                 decoration: BoxDecoration(
+                                  color: primaryPurple,
                                   shape: BoxShape.circle,
                                   border: Border.all(
-                                    color: primaryPurple.withValues(alpha: 0.2),
+                                    color: Colors.white,
                                     width: 2,
                                   ),
                                 ),
-                                child: CircleAvatar(
-                                  radius: 48,
-                                  backgroundColor: backgroundGrey,
-                                  backgroundImage:
-                                      profile.fullProfilePictureUrl != null
-                                      ? NetworkImage(
-                                          profile.fullProfilePictureUrl!,
-                                        )
-                                      : null,
-                                  child: profile.profilePicture == null
-                                      ? Icon(
-                                          Icons.person_rounded,
-                                          color: Colors.grey.shade400,
-                                          size: 48,
-                                        )
-                                      : null,
-                                ),
-                              ),
-                            ),
-                            Container(
-                              padding: const EdgeInsets.all(6),
-                              decoration: BoxDecoration(
-                                color: primaryPurple,
-                                shape: BoxShape.circle,
-                                border: Border.all(
+                                child: const Icon(
+                                  Icons.camera_alt,
                                   color: Colors.white,
-                                  width: 2,
+                                  size: 14,
                                 ),
                               ),
-                              child: const Icon(
-                                Icons.camera_alt,
-                                color: Colors.white,
-                                size: 14,
+                            ],
+                          ),
+                          const SizedBox(height: 16),
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Text(
+                                capitalize(profile.username),
+                                style: GoogleFonts.manrope(
+                                  fontSize: 19.8,
+                                  fontWeight: FontWeight.w800,
+                                ),
                               ),
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 16),
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Text(
-                              capitalize(profile.username),
-                              style: GoogleFonts.manrope(
-                                fontSize: 19.8,
-                                fontWeight: FontWeight.w800,
+                              const SizedBox(width: 8),
+                              IconButton(
+                                onPressed: () =>
+                                    _showEditUsernameSheet(context, authVM),
+                                icon: const Icon(
+                                  Icons.edit_note_rounded,
+                                  size: 20,
+                                  color: Colors.grey,
+                                ),
+                                visualDensity: VisualDensity.compact,
                               ),
-                            ),
-                            const SizedBox(width: 8),
-                            IconButton(
-                              onPressed: () =>
-                                  _showEditUsernameSheet(context, authVM),
-                              icon: const Icon(
-                                Icons.edit_note_rounded,
-                                size: 20,
-                                color: Colors.grey,
-                              ),
-                              visualDensity: VisualDensity.compact,
-                            ),
-                          ],
-                        ),
-                        if (profile.bio != null && profile.bio!.isNotEmpty)
-                          Padding(
-                            padding: const EdgeInsets.only(top: 8, bottom: 4),
-                            child: Text(
-                              profile.bio!,
-                              textAlign: TextAlign.center,
-                              style: GoogleFonts.manrope(
-                                fontSize: 12.6,
-                                color: Colors.grey.shade600,
-                                height: 1.4,
-                              ),
-                            ),
-                          )
-                        else
-                          Padding(
-                            padding: const EdgeInsets.only(top: 8, bottom: 4),
-                            child: GestureDetector(
-                              onTap: () => _showEditBioSheet(context, authVM),
+                            ],
+                          ),
+                          if (profile.bio != null && profile.bio!.isNotEmpty)
+                            Padding(
+                              padding: const EdgeInsets.only(top: 8, bottom: 4),
                               child: Text(
-                                "Add a bio to tell people about your style",
+                                profile.bio!,
                                 textAlign: TextAlign.center,
                                 style: GoogleFonts.manrope(
-                                  fontSize: 11.7,
-                                  color: primaryPurple,
-                                  fontWeight: FontWeight.w600,
+                                  fontSize: 12.6,
+                                  color: Colors.grey.shade600,
+                                  height: 1.4,
+                                ),
+                              ),
+                            )
+                          else
+                            Padding(
+                              padding: const EdgeInsets.only(top: 8, bottom: 4),
+                              child: GestureDetector(
+                                onTap: () => _showEditBioSheet(context, authVM),
+                                child: Text(
+                                  "Add a bio to tell people about your style",
+                                  textAlign: TextAlign.center,
+                                  style: GoogleFonts.manrope(
+                                    fontSize: 11.7,
+                                    color: primaryPurple,
+                                    fontWeight: FontWeight.w600,
+                                  ),
                                 ),
                               ),
                             ),
+
+                          // Social Links
+                          _buildSocialLinks(profile.socialLinks),
+
+                          const SizedBox(height: 24),
+
+                          // Quick Stats
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                            children: [
+                              _statItem("Outfits", "${profile.outfitsCount}"),
+                              Container(
+                                width: 1,
+                                height: 30,
+                                color: Colors.grey.shade100,
+                              ),
+                              _statItem(
+                                "Wardrobes",
+                                "${profile.wardrobeCount}",
+                              ),
+                              Container(
+                                width: 1,
+                                height: 30,
+                                color: Colors.grey.shade100,
+                              ),
+                              _statItem(
+                                "Plan",
+                                profile.plan.toUpperCase(),
+                                isPlan: true,
+                              ),
+                            ],
                           ),
+                        ],
+                      ),
+                    ),
 
-                        // Social Links
-                        _buildSocialLinks(profile.socialLinks),
+                    const SizedBox(height: 24),
 
-                        const SizedBox(height: 24),
-
-                        // Quick Stats
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                          children: [
-                            _statItem("Outfits", "${profile.outfitsCount}"),
-                            Container(
-                              width: 1,
-                              height: 30,
-                              color: Colors.grey.shade100,
-                            ),
-                            _statItem("Wardrobes", "${profile.wardrobeCount}"),
-                            Container(
-                              width: 1,
-                              height: 30,
-                              color: Colors.grey.shade100,
-                            ),
-                            _statItem(
-                              "Plan",
-                              profile.plan.toUpperCase(),
-                              isPlan: true,
-                            ),
-                          ],
+                    // Sections
+                    _sectionHeader("Wardrobe Insights"),
+                    _settingTile(
+                      title: "Statistics & Performance",
+                      subtitle: "View your usage patterns",
+                      icon: Icons.analytics_outlined,
+                      onTap: () => Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => const StatisticsScreen(),
                         ),
-                      ],
+                      ),
                     ),
-                  ),
+                    _settingTile(
+                      title: "Active Plan",
+                      subtitle: "Manage your limits and features",
+                      icon: Icons.workspace_premium_outlined,
+                      onTap: () => Navigator.push(
+                        context,
+                        MaterialPageRoute(builder: (_) => const PlanScreen()),
+                      ),
+                      trailing: Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 10,
+                          vertical: 4,
+                        ),
+                        decoration: BoxDecoration(
+                          color: primaryPurple.withValues(alpha: 0.1),
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: Text(
+                          profile.plan,
+                          style: TextStyle(
+                            color: primaryPurple,
+                            fontSize: 9.9,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ),
+                    ),
 
-                  const SizedBox(height: 24),
+                    const SizedBox(height: 24),
+                    _sectionHeader("Security"),
+                    _settingTile(
+                      title: "Change Password",
+                      subtitle: "Update your account credentials",
+                      icon: Icons.lock_person_outlined,
+                      onTap: () => Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => const ChangePasswordScreen(),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 24),
 
-                  // Sections
-                  _sectionHeader("Wardrobe Insights"),
-                  _settingTile(
-                    title: "Statistics & Performance",
-                    subtitle: "View your usage patterns",
-                    icon: Icons.analytics_outlined,
-                    onTap: () => Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (_) => const StatisticsScreen(),
-                      ),
+                    _sectionHeader("Preferences"),
+                    _settingTile(
+                      title: "Update Bio",
+                      subtitle: "Your style philosophy",
+                      icon: Icons.auto_awesome_outlined,
+                      onTap: () => _showEditBioSheet(context, authVM),
                     ),
-                  ),
-                  _settingTile(
-                    title: "Active Plan",
-                    subtitle: "Manage your limits and features",
-                    icon: Icons.workspace_premium_outlined,
-                    onTap: () => Navigator.push(
-                      context,
-                      MaterialPageRoute(builder: (_) => const PlanScreen()),
+                    _settingTile(
+                      title: "Edit Social Links",
+                      subtitle: "Instagram, Twitter/X",
+                      icon: Icons.public_outlined,
+                      onTap: () => _showEditSocialsSheet(context, authVM),
                     ),
-                    trailing: Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 10,
-                        vertical: 4,
+                    _settingTile(
+                      title: "Feature Status",
+                      subtitle: "Check your featured wardrobe requests",
+                      icon: Icons.star_border_rounded,
+                      onTap: () => Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => const FeaturedRequestsScreen(),
+                        ),
                       ),
-                      decoration: BoxDecoration(
-                        color: primaryPurple.withValues(alpha: 0.1),
-                        borderRadius: BorderRadius.circular(8),
+                      trailing:
+                          wardrobeVM.featuredWardrobeRequests.any(
+                            (r) => r.status == 'pending',
+                          )
+                          ? Container(
+                              width: 8,
+                              height: 8,
+                              decoration: const BoxDecoration(
+                                color: Colors.orange,
+                                shape: BoxShape.circle,
+                              ),
+                            )
+                          : null,
+                    ),
+
+                    const SizedBox(height: 40),
+
+                    // Logout Button
+                    TextButton.icon(
+                      onPressed: () => _logout(context, authVM),
+                      icon: const Icon(
+                        Icons.logout_rounded,
+                        color: Colors.redAccent,
                       ),
-                      child: Text(
-                        profile.plan,
-                        style: TextStyle(
-                          color: primaryPurple,
-                          fontSize: 9.9,
+                      label: Text(
+                        "Logout of Device",
+                        style: GoogleFonts.manrope(
+                          color: Colors.redAccent,
                           fontWeight: FontWeight.bold,
                         ),
                       ),
-                    ),
-                  ),
-
-                  const SizedBox(height: 24),
-                  _sectionHeader("Security"),
-                  _settingTile(
-                    title: "Change Password",
-                    subtitle: "Update your account credentials",
-                    icon: Icons.lock_person_outlined,
-                    onTap: () => Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (_) => const ChangePasswordScreen(),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 24),
-
-                  _sectionHeader("Preferences"),
-                  _settingTile(
-                    title: "Update Bio",
-                    subtitle: "Your style philosophy",
-                    icon: Icons.auto_awesome_outlined,
-                    onTap: () => _showEditBioSheet(context, authVM),
-                  ),
-                  _settingTile(
-                    title: "Edit Social Links",
-                    subtitle: "Instagram, Twitter/X",
-                    icon: Icons.public_outlined,
-                    onTap: () => _showEditSocialsSheet(context, authVM),
-                  ),
-                  _settingTile(
-                    title: "Feature Status",
-                    subtitle: "Check your featured wardrobe requests",
-                    icon: Icons.star_border_rounded,
-                    onTap: () => Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (_) => const FeaturedRequestsScreen(),
-                      ),
-                    ),
-                    trailing:
-                        wardrobeVM.featuredWardrobeRequests.any(
-                          (r) => r.status == 'pending',
-                        )
-                        ? Container(
-                            width: 8,
-                            height: 8,
-                            decoration: const BoxDecoration(
-                              color: Colors.orange,
-                              shape: BoxShape.circle,
-                            ),
-                          )
-                        : null,
-                  ),
-
-                  const SizedBox(height: 40),
-
-                  // Logout Button
-                  TextButton.icon(
-                    onPressed: () => _logout(context, authVM),
-                    icon: const Icon(
-                      Icons.logout_rounded,
-                      color: Colors.redAccent,
-                    ),
-                    label: Text(
-                      "Logout of Device",
-                      style: GoogleFonts.manrope(
-                        color: Colors.redAccent,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    style: TextButton.styleFrom(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 24,
-                        vertical: 12,
-                      ),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(16),
-                        side: BorderSide(
-                          color: Colors.redAccent.withValues(alpha: 0.2),
+                      style: TextButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 24,
+                          vertical: 12,
+                        ),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(16),
+                          side: BorderSide(
+                            color: Colors.redAccent.withValues(alpha: 0.2),
+                          ),
                         ),
                       ),
                     ),
-                  ),
-                  const SizedBox(height: 48),
-                ],
+                    const SizedBox(height: 48),
+                  ],
+                ),
               ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }

@@ -74,7 +74,7 @@ class ClothingItemSerializer(serializers.ModelSerializer):
         return obj.image.url
 
     def get_wear_count(self, obj):
-        # Only count schedules that have already passed (today or earlier)
+        # Only count schedules that have actually passed (precisely by the minute)
         return Schedule.objects.filter(
             outfit__items=obj,
             date_time__lte=timezone.now()
@@ -136,6 +136,7 @@ class OutfitSerializer(serializers.ModelSerializer):
     owner_firebase_uid = serializers.CharField(source="owner.firebase_uid", read_only=True)
     owner_profile_picture = serializers.ImageField(source="owner.profile_picture", read_only=True)
     owner_social_links = serializers.JSONField(source="owner.social_links", read_only=True)
+    owner_bio = serializers.CharField(source="owner.bio", read_only=True)
     owner_is_featured = serializers.SerializerMethodField()
     saves_count = serializers.SerializerMethodField()
     is_saved = serializers.SerializerMethodField()

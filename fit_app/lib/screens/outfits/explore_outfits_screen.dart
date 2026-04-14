@@ -118,105 +118,120 @@ class _ExploreOutfitsScreenState extends State<ExploreOutfitsScreen> {
           final outfits = vm.exploreOutfits;
           final wardrobes = vm.communityFeaturedWardrobes;
 
-          if (outfits.isEmpty && wardrobes.isEmpty) {
-            return Center(
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Icon(
-                    Icons.explore_outlined,
-                    size: 64,
-                    color: Colors.grey.shade300,
-                  ),
-                  const SizedBox(height: 16),
-                  Text(
-                    "Nothing here yet",
-                    style: GoogleFonts.manrope(
-                      fontSize: 21.6,
-                      color: Colors.grey,
-                    ),
-                  ),
-                ],
-              ),
-            );
-          }
-
           return Column(
             children: [
               _buildFilterBar(vm),
               Expanded(
-                child: RefreshIndicator(
-                  onRefresh: () async {
-                    await vm.fetchExploreOutfits(refresh: true);
-                    await vm.fetchFeaturedWardrobes();
-                  },
-                  color: const Color(0xFF673AB7),
-                  child: ListView.builder(
-                    controller: _scrollController,
-                    physics: const AlwaysScrollableScrollPhysics(),
-                    padding: const EdgeInsets.all(16),
-                    itemCount:
-                        outfits.length +
-                        (wardrobes.isNotEmpty ? 1 : 0) +
-                        (vm.hasMoreExplore ? 1 : 0),
-                    itemBuilder: (context, index) {
-                      if (wardrobes.isNotEmpty && index == 0) {
-                        return _CommunityFeaturedWardrobesSection(
-                          wardrobes: wardrobes,
-                          controller: _discoveryController,
-                        );
-                      }
-                      final outfitIndex = wardrobes.isNotEmpty
-                          ? index - 1
-                          : index;
-
-                      if (outfitIndex == outfits.length) {
-                        return const Padding(
-                          padding: EdgeInsets.symmetric(vertical: 32),
-                          child: Center(
-                            child: CircularProgressIndicator(
-                              color: Color(0xFF673AB7),
-                            ),
-                          ),
-                        );
-                      }
-
-                      final outfit = outfits[outfitIndex];
-                      if (outfitIndex == 0) {
-                        return Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
+                child: outfits.isEmpty && wardrobes.isEmpty
+                    ? Center(
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
                           children: [
-                            Padding(
-                              padding: const EdgeInsets.only(
-                                top: 24,
-                                bottom: 12,
+                            Icon(
+                              Icons.explore_outlined,
+                              size: 64,
+                              color: Colors.grey.shade300,
+                            ),
+                            const SizedBox(height: 16),
+                            Text(
+                              "Nothing here yet",
+                              style: GoogleFonts.manrope(
+                                fontSize: 21.6,
+                                color: Colors.grey,
                               ),
-                              child: Row(
-                                children: [
-                                  const Icon(
-                                    Icons.people_rounded,
-                                    color: Colors.blueAccent,
+                            ),
+                            const SizedBox(height: 16),
+                            ElevatedButton(
+                              onPressed: () =>
+                                  vm.fetchExploreOutfits(refresh: true),
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: const Color(0xFF673AB7),
+                                foregroundColor: Colors.white,
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 24,
+                                  vertical: 12,
+                                ),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                              ),
+                              child: const Text("Refresh"),
+                            ),
+                          ],
+                        ),
+                      )
+                    : RefreshIndicator(
+                        onRefresh: () async {
+                          await vm.fetchExploreOutfits(refresh: true);
+                          await vm.fetchFeaturedWardrobes();
+                        },
+                        color: const Color(0xFF673AB7),
+                        child: ListView.builder(
+                          controller: _scrollController,
+                          physics: const AlwaysScrollableScrollPhysics(),
+                          padding: const EdgeInsets.all(16),
+                          itemCount:
+                              outfits.length +
+                              (wardrobes.isNotEmpty ? 1 : 0) +
+                              (vm.hasMoreExplore ? 1 : 0),
+                          itemBuilder: (context, index) {
+                            if (wardrobes.isNotEmpty && index == 0) {
+                              return _CommunityFeaturedWardrobesSection(
+                                wardrobes: wardrobes,
+                                controller: _discoveryController,
+                              );
+                            }
+                            final outfitIndex = wardrobes.isNotEmpty
+                                ? index - 1
+                                : index;
+
+                            if (outfitIndex == outfits.length) {
+                              return const Padding(
+                                padding: EdgeInsets.symmetric(vertical: 32),
+                                child: Center(
+                                  child: CircularProgressIndicator(
+                                    color: Color(0xFF673AB7),
                                   ),
-                                  const SizedBox(width: 8),
-                                  Text(
-                                    "Shared Outfits",
-                                    style: GoogleFonts.manrope(
-                                      fontSize: 18,
-                                      fontWeight: FontWeight.bold,
+                                ),
+                              );
+                            }
+
+                            final outfit = outfits[outfitIndex];
+                            if (outfitIndex == 0) {
+                              return Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Padding(
+                                    padding: const EdgeInsets.only(
+                                      top: 24,
+                                      bottom: 12,
+                                    ),
+                                    child: Row(
+                                      children: [
+                                        const Icon(
+                                          Icons.people_rounded,
+                                          color: Colors.blueAccent,
+                                        ),
+                                        const SizedBox(width: 8),
+                                        Text(
+                                          "Shared Outfits",
+                                          style: GoogleFonts.manrope(
+                                            fontSize: 18,
+                                            fontWeight: FontWeight.bold,
+                                          ),
+                                        ),
+                                      ],
                                     ),
                                   ),
+                                  _ExploreOutfitCard(outfit: outfit),
                                 ],
-                              ),
-                            ),
-                            _ExploreOutfitCard(outfit: outfit),
-                          ],
-                        );
-                      }
+                              );
+                            }
 
-                      return _ExploreOutfitCard(outfit: outfit);
-                    },
-                  ),
-                ),
+                            return _ExploreOutfitCard(outfit: outfit);
+                          },
+                        ),
+                      ),
               ),
             ],
           );
@@ -340,6 +355,20 @@ class _ExploreOutfitCard extends StatelessWidget {
                           color: Colors.grey.shade600,
                         ),
                       ),
+                      if (outfit.ownerBio?.isNotEmpty == true)
+                        Padding(
+                          padding: const EdgeInsets.only(top: 4),
+                          child: Text(
+                            outfit.ownerBio!,
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis,
+                            style: GoogleFonts.manrope(
+                              fontSize: 10.8,
+                              color: Colors.grey.shade500,
+                              fontStyle: FontStyle.italic,
+                            ),
+                          ),
+                        ),
                     ],
                   ),
                 ),
@@ -529,37 +558,44 @@ class _CommunityFeaturedWardrobesSection extends StatelessWidget {
     List<Widget> icons = [];
 
     if (socials['instagram']?.isNotEmpty == true) {
-      icons.add(_SocialIcon(
-        icon: FontAwesomeIcons.instagram,
-        color: Colors.pinkAccent,
-        onTap: () => _launchUrl(socials['instagram'], 'instagram'),
-      ));
+      icons.add(
+        _SocialIcon(
+          icon: FontAwesomeIcons.instagram,
+          color: Colors.pinkAccent,
+          onTap: () => _launchUrl(socials['instagram'], 'instagram'),
+        ),
+      );
     }
 
     if (socials['twitter']?.isNotEmpty == true) {
-      icons.add(_SocialIcon(
-        icon: FontAwesomeIcons.twitter,
-        color: Colors.lightBlueAccent,
-        onTap: () => _launchUrl(socials['twitter'], 'twitter'),
-      ));
+      icons.add(
+        _SocialIcon(
+          icon: FontAwesomeIcons.twitter,
+          color: Colors.lightBlueAccent,
+          onTap: () => _launchUrl(socials['twitter'], 'twitter'),
+        ),
+      );
     }
 
     if (socials['tiktok']?.isNotEmpty == true) {
-      icons.add(_SocialIcon(
-        icon: FontAwesomeIcons.tiktok,
-        color: Colors.black,
-        onTap: () => _launchUrl(socials['tiktok'], 'tiktok'),
-      ));
+      icons.add(
+        _SocialIcon(
+          icon: FontAwesomeIcons.tiktok,
+          color: Colors.black,
+          onTap: () => _launchUrl(socials['tiktok'], 'tiktok'),
+        ),
+      );
     }
 
     if (icons.isEmpty) return const SizedBox.shrink();
 
     return Row(
       mainAxisSize: MainAxisSize.min,
-      children: icons.map((w) => Padding(
-        padding: const EdgeInsets.only(left: 8),
-        child: w,
-      )).toList(),
+      children: icons
+          .map(
+            (w) => Padding(padding: const EdgeInsets.only(left: 8), child: w),
+          )
+          .toList(),
     );
   }
 

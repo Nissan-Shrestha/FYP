@@ -20,8 +20,9 @@ class OutfitViewmodel extends ChangeNotifier {
   bool isLoadingMoreExplore = false;
 
   String? selectedOccasion;
-  String? selectedSeason;
   List<String> availableOccasions = [];
+
+  int _exploreFetchId = 0;
 
   Future<void> fetchExploreFilters() async {
     availableOccasions = await OutfitService.fetchExploreFilters();
@@ -45,16 +46,21 @@ class OutfitViewmodel extends ChangeNotifier {
 
   Future<void> fetchExploreOutfits({bool refresh = false}) async {
     if (refresh) {
-      currentExplorePage = 1;
-      hasMoreExplore = true;
-      exploreOutfits = [];
+      // Don't clear yet, wait until we pass the guard to avoid empty screen on blocked request
+      // But we need to reset pagination state
+    } else {
+      if (!hasMoreExplore || isLoadingExplore || isLoadingMoreExplore) return;
     }
 
-    if (!hasMoreExplore || isLoadingExplore || isLoadingMoreExplore) return;
+    final fetchId = ++_exploreFetchId;
 
     try {
-      if (currentExplorePage == 1) {
+      if (refresh || currentExplorePage == 1) {
         isLoadingExplore = true;
+        currentExplorePage = 1;
+        hasMoreExplore = true;
+        // Now clear the old results since we are definitely starting a new fetch
+        exploreOutfits = [];
       } else {
         isLoadingMoreExplore = true;
       }
@@ -64,8 +70,11 @@ class OutfitViewmodel extends ChangeNotifier {
       final response = await OutfitService.fetchExploreOutfits(
         page: currentExplorePage,
         occasion: selectedOccasion,
-        season: selectedSeason,
       );
+
+      // If a newer fetch has started, ignore this one
+      if (_exploreFetchId != fetchId) return;
+
       final List<OutfitModel> results = response["results"];
       hasMoreExplore = response["has_more"];
 
@@ -79,17 +88,19 @@ class OutfitViewmodel extends ChangeNotifier {
         currentExplorePage++;
       }
     } catch (e) {
+      if (_exploreFetchId != fetchId) return;
       error = e.toString();
     } finally {
-      isLoadingExplore = false;
-      isLoadingMoreExplore = false;
-      notifyListeners();
+      if (_exploreFetchId == fetchId) {
+        isLoadingExplore = false;
+        isLoadingMoreExplore = false;
+        notifyListeners();
+      }
     }
   }
 
-  void setFilters({String? occasion, String? season}) {
+  void setFilters({String? occasion}) {
     selectedOccasion = occasion;
-    selectedSeason = season;
     fetchExploreOutfits(refresh: true);
   }
 
@@ -112,15 +123,18 @@ class OutfitViewmodel extends ChangeNotifier {
 
       updateList(outfits);
       updateList(exploreOutfits);
-      
+
       if (isSaved) {
         if (!savedOutfits.any((o) => o.id == outfit.id)) {
-          savedOutfits.insert(0, outfit.copyWith(isSaved: isSaved, savesCount: savesCount));
+          savedOutfits.insert(
+            0,
+            outfit.copyWith(isSaved: isSaved, savesCount: savesCount),
+          );
         }
       } else {
         savedOutfits.removeWhere((o) => o.id == outfit.id);
       }
-      
+
       notifyListeners();
     }
   }
@@ -247,4 +261,3 @@ class OutfitViewmodel extends ChangeNotifier {
     }
   }
 }
-

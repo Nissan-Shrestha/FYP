@@ -27,25 +27,25 @@ class LocationService {
       // Try to get actual position
       return await Geolocator.getCurrentPosition(
         locationSettings: const LocationSettings(
-          accuracy: LocationAccuracy.low,
+          accuracy: LocationAccuracy.medium, // Medium is usually faster and enough for weather
           distanceFilter: 0,
         ),
-      ).timeout(const Duration(seconds: 5));
+      ).timeout(const Duration(seconds: 10)); // Increased timeout
     } catch (e) {
-      // Inform the user we are falling back
-      scaffoldMessengerKey.currentState?.showSnackBar(
-        const SnackBar(
-          content: Text("GPS unavailable or denied. Showing weather for London 🇬🇧"),
-          backgroundColor: Colors.blueGrey,
-          behavior: SnackBarBehavior.floating,
-        )
-      );
-
-      // UNIVERSAL FALLBACK: Default to London
+      // UNIVERSAL FALLBACK: Try last known first (it's often accurate enough for weather)
       final lastKnown = await Geolocator.getLastKnownPosition();
       if (lastKnown != null) {
         return lastKnown;
       }
+
+      // Inform the user ONLY if we actually have to fall back to London
+      scaffoldMessengerKey.currentState?.showSnackBar(
+        const SnackBar(
+          content: Text("GPS unavailable. Showing weather for London 🇬🇧"),
+          backgroundColor: Colors.blueGrey,
+          behavior: SnackBarBehavior.floating,
+        )
+      );
 
       return Position(
         latitude: 51.5074,

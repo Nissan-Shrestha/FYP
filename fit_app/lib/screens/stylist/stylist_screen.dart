@@ -107,7 +107,7 @@ class _StylistScreenState extends State<StylistScreen> {
               ),
               const SizedBox(height: 2),
               Text(
-                "Influences both AI styling and wardrobe analysis",
+                "Influences wardrobe analysis only",
                 style: GoogleFonts.manrope(
                   fontSize: 12,
                   color: Colors.grey.shade600,
@@ -497,7 +497,6 @@ class _StylistScreenState extends State<StylistScreen> {
                         await stylistVM.getRecommendation(
                           occasion: selectedOccasion,
                           weather: weatherContext,
-                          stylePreference: selectedStylePreference,
                         );
                         if (stylistVM.status == StylistStatus.success) {
                           if (!mounted) return;
@@ -714,31 +713,12 @@ class _StylistScreenState extends State<StylistScreen> {
                           ),
                           maxLines: 1,
                         ),
-                        Row(
-                          children: [
-                            Container(
-                              width: 10,
-                              height: 10,
-                              decoration: BoxDecoration(
-                                shape: BoxShape.circle,
-                                color: _parseColor(item.color),
-                                border: item.color.toLowerCase() == "white"
-                                    ? Border.all(
-                                        color: Colors.grey.shade400,
-                                        width: 0.5,
-                                      )
-                                    : null,
-                              ),
-                            ),
-                            const SizedBox(width: 5),
-                            Text(
-                              item.color,
-                              style: const TextStyle(
-                                fontSize: 9,
-                                color: Colors.grey,
-                              ),
-                            ),
-                          ],
+                        Text(
+                          item.color,
+                          style: const TextStyle(
+                            fontSize: 9,
+                            color: Colors.grey,
+                          ),
                         ),
                       ],
                     ),
@@ -944,44 +924,6 @@ class _StylistScreenState extends State<StylistScreen> {
         ],
       ),
     );
-  }
-
-  Color _parseColor(String colorName) {
-    const colorMap = {
-      'Black': Colors.black,
-      'White': Colors.white,
-      'Grey': Colors.grey,
-      'Light Grey': Color(0xFFD3D3D3),
-      'Dark Grey': Color(0xFFA9A9A9),
-      'Charcoal': Color(0xFF36454F),
-      'Navy Blue': Color(0xFF000080),
-      'Royal Blue': Color(0xFF4169E1),
-      'Blue': Colors.blue,
-      'Light Blue': Color(0xFFADD8E6),
-      'Sky Blue': Color(0xFF87CEEB),
-      'Red': Colors.red,
-      'Dark Red': Color(0xFF8B0000),
-      'Maroon': Color(0xFF800000),
-      'Burgundy': Color(0xFF800020),
-      'Green': Colors.green,
-      'Olive Green': Color(0xFF808000),
-      'Forest Green': Color(0xFF228B22),
-      'Beige': Color(0xFFF5F5DC),
-      'Brown': Colors.brown,
-      'Dark Brown': Color(0xFF3D2B1F),
-      'Camel': Color(0xFFC19A6B),
-      'Tan': Color(0xFFD2B48C),
-      'Yellow': Colors.yellow,
-      'Mustard': Color(0xFFFFDB58),
-      'Orange': Colors.orange,
-      'Purple': Colors.purple,
-      'Pink': Colors.pink,
-      'Teal': Color(0xFF008080),
-      'Gold': Color(0xFFFFD700),
-      'Silver': Color(0xFFC0C0C0),
-    };
-
-    return colorMap[colorName] ?? Colors.transparent;
   }
 }
 

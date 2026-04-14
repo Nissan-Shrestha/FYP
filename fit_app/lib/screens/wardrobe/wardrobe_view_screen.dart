@@ -88,6 +88,13 @@ class _WardrobeViewScreenState extends State<WardrobeViewScreen> {
                 .where((item) => !selectedIds.contains(item.id))
                 .toList();
 
+            final displayedName =
+                vm.wardrobes
+                    .where((w) => w.id == widget.wardrobeId)
+                    .firstOrNull
+                    ?.name ??
+                widget.wardrobeName;
+
             return SafeArea(
               child: SizedBox(
                 height: MediaQuery.of(sheetContext).size.height * 0.7,
@@ -104,7 +111,7 @@ class _WardrobeViewScreenState extends State<WardrobeViewScreen> {
                     ),
                     const SizedBox(height: 12),
                     Text(
-                      "Add Items to ${capitalize(widget.wardrobeName)}",
+                      "Add Items to ${capitalize(displayedName)}",
                       style: GoogleFonts.manrope(
                         fontSize: 18,
                         fontWeight: FontWeight.bold,
@@ -326,12 +333,18 @@ class _WardrobeViewScreenState extends State<WardrobeViewScreen> {
   }
 
   Future<void> _confirmRemoveFromWardrobe(ClothingItemModel item) async {
+    final wardrobeVM = context.read<WardrobeViewmodel>();
+    final currentWardrobe = wardrobeVM.wardrobes
+        .where((w) => w.id == widget.wardrobeId)
+        .firstOrNull;
+    final displayedName = currentWardrobe?.name ?? widget.wardrobeName;
+
     final shouldRemove = await showDialog<bool>(
       context: context,
       builder: (dialogContext) => AlertDialog(
         title: const Text("Remove item?"),
         content: Text(
-          'Remove "${capitalize(item.name)}" from ${capitalize(widget.wardrobeName)}?',
+          'Remove "${capitalize(item.name)}" from ${capitalize(displayedName)}?',
         ),
         actions: [
           TextButton(
@@ -525,9 +538,13 @@ class _WardrobeViewScreenState extends State<WardrobeViewScreen> {
   Widget build(BuildContext context) {
     final wardrobeVM = context.watch<WardrobeViewmodel>();
     final items = _sortedItems(wardrobeVM.selectedWardrobeItems);
-    final isWardrobeLocked = wardrobeVM.wardrobes.any(
-      (w) => w.id == widget.wardrobeId && w.isLocked,
-    );
+
+    final currentWardrobe = wardrobeVM.wardrobes
+        .where((w) => w.id == widget.wardrobeId)
+        .firstOrNull;
+
+    final displayedName = currentWardrobe?.name ?? widget.wardrobeName;
+    final isWardrobeLocked = currentWardrobe?.isLocked ?? false;
 
     return Scaffold(
       backgroundColor: const Color(0xffF2F2F2),
@@ -581,7 +598,7 @@ class _WardrobeViewScreenState extends State<WardrobeViewScreen> {
                         children: [
                           Flexible(
                             child: Text(
-                              capitalize(widget.wardrobeName),
+                              capitalize(displayedName),
                               overflow: TextOverflow.ellipsis,
                               style: GoogleFonts.manrope(
                                 fontSize: 19.8,
@@ -878,7 +895,13 @@ class _WardrobeViewScreenState extends State<WardrobeViewScreen> {
   }
 
   Future<void> _promptRenameWardrobe() async {
-    final controller = TextEditingController(text: widget.wardrobeName);
+    final wardrobeVM = context.read<WardrobeViewmodel>();
+    final currentWardrobe = wardrobeVM.wardrobes
+        .where((w) => w.id == widget.wardrobeId)
+        .firstOrNull;
+    final currentName = currentWardrobe?.name ?? widget.wardrobeName;
+
+    final controller = TextEditingController(text: currentName);
     final newName = await showDialog<String>(
       context: context,
       builder: (dialogContext) {
@@ -908,7 +931,7 @@ class _WardrobeViewScreenState extends State<WardrobeViewScreen> {
 
     if (!mounted || newName == null) return;
     final trimmed = newName.trim();
-    if (trimmed.isEmpty || trimmed == widget.wardrobeName) return;
+    if (trimmed.isEmpty || trimmed == currentName) return;
 
     final result = await context.read<WardrobeViewmodel>().renameWardrobe(
       wardrobeId: widget.wardrobeId,
@@ -929,12 +952,18 @@ class _WardrobeViewScreenState extends State<WardrobeViewScreen> {
   }
 
   Future<void> _confirmDeleteWardrobe() async {
+    final wardrobeVM = context.read<WardrobeViewmodel>();
+    final currentWardrobe = wardrobeVM.wardrobes
+        .where((w) => w.id == widget.wardrobeId)
+        .firstOrNull;
+    final displayedName = currentWardrobe?.name ?? widget.wardrobeName;
+
     final shouldDelete = await showDialog<bool>(
       context: context,
       builder: (dialogContext) => AlertDialog(
         title: const Text("Delete wardrobe?"),
         content: Text(
-          'Delete "${capitalize(widget.wardrobeName)}"? Items will not be deleted, only removed from this wardrobe.',
+          'Delete "${capitalize(displayedName)}"? Items will not be deleted, only removed from this wardrobe.',
         ),
         actions: [
           TextButton(

@@ -12,7 +12,8 @@ class OutfitService {
   static Future<String> _getIdToken() async {
     final user = FirebaseAuth.instance.currentUser;
     if (user == null) throw Exception("User not logged in");
-    return await user.getIdToken() ?? (throw Exception("Could not get ID token"));
+    return await user.getIdToken() ??
+        (throw Exception("Could not get ID token"));
   }
 
   static Future<Map<String, String>> _authHeaders({bool json = true}) async {
@@ -33,7 +34,9 @@ class OutfitService {
         final List<dynamic> data = jsonDecode(response.body);
         return data.map((json) => OutfitModel.fromJson(json)).toList();
       }
-      if (response.statusCode == 401) { checkForceLogout(response, null); }
+      if (response.statusCode == 401) {
+        checkForceLogout(response, null);
+      }
     } catch (_) {
       return [];
     }
@@ -43,15 +46,19 @@ class OutfitService {
   static Future<Map<String, dynamic>> fetchExploreOutfits({
     int page = 1,
     String? occasion,
-    String? season,
   }) async {
     try {
-      String url = "$_baseApi/outfits/explore/?page=$page";
-      if (occasion != null && occasion.isNotEmpty) url += "&occasion=$occasion";
-      if (season != null && season.isNotEmpty) url += "&season=$season";
+      final queryParams = {
+        "page": page.toString(),
+        if (occasion != null && occasion.isNotEmpty) "occasion": occasion,
+      };
+
+      final uri = Uri.parse(
+        "$_baseApi/outfits/explore/",
+      ).replace(queryParameters: queryParams);
 
       final response = await http.get(
-        Uri.parse(url),
+        uri,
         headers: await _authHeaders(json: false),
       );
       if (response.statusCode == 200) {
@@ -175,15 +182,13 @@ class OutfitService {
     final response = await http.post(
       Uri.parse("$_baseApi/outfits/report/"),
       headers: await _authHeaders(),
-      body: jsonEncode({
-        "outfit_id": outfitId,
-        "reason": reason,
-      }),
+      body: jsonEncode({"outfit_id": outfitId, "reason": reason}),
     );
     return response.statusCode == 201;
   }
 
-  static Future<List<CommunityFeaturedWardrobeModel>> fetchFeaturedWardrobes() async {
+  static Future<List<CommunityFeaturedWardrobeModel>>
+  fetchFeaturedWardrobes() async {
     try {
       final response = await http.get(
         Uri.parse("$_baseApi/featured-wardrobes/discovery/"),
@@ -191,7 +196,9 @@ class OutfitService {
       );
       if (response.statusCode == 200) {
         final List<dynamic> data = jsonDecode(response.body);
-        return data.map((json) => CommunityFeaturedWardrobeModel.fromJson(json)).toList();
+        return data
+            .map((json) => CommunityFeaturedWardrobeModel.fromJson(json))
+            .toList();
       }
     } catch (_) {
       return [];
@@ -199,4 +206,3 @@ class OutfitService {
     return [];
   }
 }
-

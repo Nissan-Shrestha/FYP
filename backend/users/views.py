@@ -228,7 +228,6 @@ def stylist_recommend(request):
     # 1. Get Context from Request
     occasion = request.data.get("occasion", "Casual")
     weather = request.data.get("weather", "Moderate") # e.g. "15°C, Sunny"
-    style_preference = request.data.get("style_preference", "Unisex")
     
     # 2. Fetch User Wardrobe
     items = ClothingItem.objects.filter(owner=profile)
@@ -280,7 +279,6 @@ def stylist_recommend(request):
     You are a high-end fashion AI personal stylist.
     The user wants an outfit for the following occasion: {occasion}.
     Current weather/condition: {weather}.
-    Preferred Style Aesthetic: {style_preference}. (Tailor your suggestions precisely to this vibe)
     
     Here is the user's wardrobe:
     {json.dumps(wardrobe_data)}
@@ -434,6 +432,8 @@ def wardrobe_analysis(request):
     
     Rules:
     - Focus on 'Essential Gaps' (e.g. 'You have no Outerwear', or 'Too much Black, try some Navy').
+    - CORE AUDIT: Check if any fundamental categories are COMPLETELY MISSING (Tops, Bottoms, or Shoes). If a user has zero items in a core category, this MUST be the top priority in your 'gaps' and 'recommendations'.
+    - ACCESSORIES: Specifically look for a lack of accessories (watches, bags, hats, belts) that would elevate their preferred aesthetic. Suggest missing pieces that would complete their looks.
     - Keep tips concise and extremely professional.
     - Result MUST be valid JSON.
     """
@@ -562,7 +562,6 @@ def explore_outfits(request):
     
     # Apply Filters
     occasion = request.GET.get("occasion")
-    season = request.GET.get("season")
     if occasion:
         outfits = outfits.filter(occasion__iexact=occasion)
     
@@ -649,7 +648,9 @@ def get_explore_filters(request):
     # Get all 'occasion' type options
     occasions = list(ClothingOption.objects.filter(type='occasion').values_list('name', flat=True).distinct())
     
-    return Response({"occasions": sorted(occasions)}, status=200)
+    return Response({
+        "occasions": sorted(occasions)
+    }, status=200)
 from rembg import remove
 from django.core.files.base import ContentFile
 import io
@@ -738,6 +739,23 @@ def _process_background_removal(image_file):
         return image_file
 
 
+def _is_profile_social_locked(profile):
+    """
+    Checks if a profile is 'locked' from updating social links because it has 
+    an active featured request (Pending or recently Approved).
+    """
+    from datetime import timedelta
+    from django.utils import timezone
+    three_days_ago = timezone.now() - timedelta(days=1)
+    
+    return FeaturedWardrobeRequest.objects.filter(
+        requester=profile
+    ).filter(
+        models.Q(status='pending', is_paid=True) | 
+        models.Q(status='approved', updated_at__gte=three_days_ago)
+    ).exists()
+
+
 @api_view(["GET", "POST", "PATCH"])
 def get_or_create_profile(request):
     try:
@@ -788,6 +806,9 @@ def get_or_create_profile(request):
             if "bio" in request.data:
                 profile.bio = request.data["bio"]
             if "social_links" in request.data:
+                if _is_profile_social_locked(profile):
+                    return Response({"error": "Social links cannot be updated while you have an active or pending wardrobe feature request."}, status=403)
+                
                 social_links = request.data["social_links"]
                 if isinstance(social_links, str):
                     try:
@@ -834,6 +855,7 @@ def clothing_items(request):
     if not serializer.is_valid():
         return Response(serializer.errors, status=400)
 
+    # Determine item type/layering early to adjust requirements
     required_fields = [
         "name",
         "category",
@@ -1645,10 +1667,10 @@ def featured_wardrobe_requests(request):
 
     if request.method == "GET":
         from datetime import timedelta
-        # Limit to 3 days for Approved/Rejected, but show ALL Pending
+        # Limit to 3 days for Approved/Rejected, but show ALL Pending that are actually PAID
         three_days_ago = timezone.now() - timedelta(days=1)
         queryset = FeaturedWardrobeRequest.objects.filter(requester=profile).filter(
-            models.Q(status='pending') | models.Q(updated_at__gte=three_days_ago)
+            models.Q(status='pending', is_paid=True) | models.Q(updated_at__gte=three_days_ago)
         ).order_by("-created_at")
         
         serializer = FeaturedWardrobeRequestSerializer(queryset, many=True)

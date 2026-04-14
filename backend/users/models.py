@@ -20,7 +20,7 @@ class Profile(models.Model):
     profile_picture = models.ImageField(upload_to="profile_pics/", null=True, blank=True)
     
     # New discovery/social fields
-    bio = models.TextField(null=True, blank=True)
+    bio = models.CharField(max_length=150, null=True, blank=True)
     social_links = models.JSONField(null=True, blank=True, help_text="e.g. {'instagram': '@user', 'tiktok': '@user'}")
     is_featured = models.BooleanField(default=False, help_text="Set by admin to show verified/featured badge")
     

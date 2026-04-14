@@ -11,6 +11,7 @@ class OutfitModel {
   final List<ClothingItemModel> items;
   final bool ownerIsFeatured;
   final Map<String, dynamic>? ownerSocialLinks;
+  final String? ownerBio;
   final int savesCount;
   final bool isSaved;
   final DateTime createdAt;
@@ -28,6 +29,7 @@ class OutfitModel {
     this.isSaved = false,
     this.ownerIsFeatured = false,
     this.ownerSocialLinks,
+    this.ownerBio,
     required this.createdAt,
   });
 
@@ -49,6 +51,7 @@ class OutfitModel {
       isSaved: json["is_saved"] as bool? ?? false,
       ownerIsFeatured: json["owner_is_featured"] as bool? ?? false,
       ownerSocialLinks: json["owner_social_links"] as Map<String, dynamic>?,
+      ownerBio: json["owner_bio"] as String?,
       createdAt: DateTime.parse(json["created_at"] as String),
     );
   }
@@ -80,6 +83,7 @@ class OutfitModel {
     bool? isSaved,
     bool? ownerIsFeatured,
     Map<String, dynamic>? ownerSocialLinks,
+    String? ownerBio,
     DateTime? createdAt,
   }) {
     return OutfitModel(
@@ -95,6 +99,7 @@ class OutfitModel {
       isSaved: isSaved ?? this.isSaved,
       ownerIsFeatured: ownerIsFeatured ?? this.ownerIsFeatured,
       ownerSocialLinks: ownerSocialLinks ?? this.ownerSocialLinks,
+      ownerBio: ownerBio ?? this.ownerBio,
       createdAt: createdAt ?? this.createdAt,
     );
   }

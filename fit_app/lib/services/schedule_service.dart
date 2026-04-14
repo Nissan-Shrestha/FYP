@@ -50,7 +50,7 @@ class ScheduleService {
       headers: await _authHeaders(),
       body: jsonEncode({
         "event_title": eventTitle,
-        "date_time": dateTime.toIso8601String(),
+        "date_time": dateTime.toUtc().toIso8601String(),
         "outfit_id": outfitId,
       }),
     );

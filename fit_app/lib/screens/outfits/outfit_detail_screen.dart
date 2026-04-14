@@ -191,6 +191,51 @@ class _OutfitDetailScreenState extends State<OutfitDetailScreen> {
               ],
             ),
           ),
+          if (widget.readOnly &&
+              (outfit.ownerUsername != null || outfit.ownerBio != null))
+            Padding(
+              padding: const EdgeInsets.fromLTRB(20, 16, 20, 0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      if (outfit.ownerProfilePicture != null) ...[
+                        CircleAvatar(
+                          radius: 12,
+                          backgroundImage: NetworkImage(
+                            outfit.ownerProfilePicture!.startsWith("http")
+                                ? outfit.ownerProfilePicture!
+                                : "${ApiConfig.serverBaseUrl}${outfit.ownerProfilePicture!}",
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                      ],
+                      Text(
+                        "Created by ${outfit.ownerUsername ?? 'User'}",
+                        style: GoogleFonts.manrope(
+                          fontSize: 12.6,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.grey.shade800,
+                        ),
+                      ),
+                    ],
+                  ),
+                  if (outfit.ownerBio?.isNotEmpty == true)
+                    Padding(
+                      padding: const EdgeInsets.only(top: 6, left: 0),
+                      child: Text(
+                        outfit.ownerBio!,
+                        style: GoogleFonts.manrope(
+                          fontSize: 11.7,
+                          color: Colors.grey.shade600,
+                          fontStyle: FontStyle.italic,
+                        ),
+                      ),
+                    ),
+                ],
+              ),
+            ),
           const SizedBox(height: 20),
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 20),
