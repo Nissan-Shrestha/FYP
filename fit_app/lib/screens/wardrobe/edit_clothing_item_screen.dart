@@ -296,15 +296,7 @@ class _EditClothingItemScreenState extends State<EditClothingItemScreen> {
                       value: season,
                       onTap: () => _openPickerSheet(
                         title: "Select Season",
-                        options:
-                            wardrobeVM.getOptionsByType("season").isNotEmpty
-                            ? wardrobeVM.getOptionsByType("season")
-                            : const [
-                                "Summer",
-                                "Winter",
-                                "Monsoon",
-                                "All Season",
-                              ],
+                        options: wardrobeVM.getOptionsByType("season"),
                         onSelected: (v) => setState(() => season = v),
                       ),
                     ),
@@ -313,10 +305,7 @@ class _EditClothingItemScreenState extends State<EditClothingItemScreen> {
                       value: occasion,
                       onTap: () => _openPickerSheet(
                         title: "Select Occasion",
-                        options:
-                            wardrobeVM.getOptionsByType("occasion").isNotEmpty
-                            ? wardrobeVM.getOptionsByType("occasion")
-                            : const ["Casual", "Office", "Party", "Workout"],
+                        options: wardrobeVM.getOptionsByType("occasion"),
                         onSelected: (v) => setState(() => occasion = v),
                       ),
                     ),
@@ -325,10 +314,7 @@ class _EditClothingItemScreenState extends State<EditClothingItemScreen> {
                       value: category,
                       onTap: () => _openPickerSheet(
                         title: "Select Category",
-                        options:
-                            wardrobeVM.getOptionsByType("category").isNotEmpty
-                            ? wardrobeVM.getOptionsByType("category")
-                            : const ["Top", "Bottom", "Outerwear", "Footwear"],
+                        options: wardrobeVM.getOptionsByType("category"),
                         onSelected: (v) => setState(() => category = v),
                       ),
                     ),
@@ -337,9 +323,7 @@ class _EditClothingItemScreenState extends State<EditClothingItemScreen> {
                       value: size,
                       onTap: () => _openPickerSheet(
                         title: "Select Size",
-                        options: wardrobeVM.getOptionsByType("size").isNotEmpty
-                            ? wardrobeVM.getOptionsByType("size")
-                            : const ["XS", "S", "M", "L", "XL"],
+                        options: wardrobeVM.getOptionsByType("size"),
                         onSelected: (v) => setState(() => size = v),
                       ),
                     ),
@@ -348,10 +332,7 @@ class _EditClothingItemScreenState extends State<EditClothingItemScreen> {
                       value: material,
                       onTap: () => _openPickerSheet(
                         title: "Select Material",
-                        options:
-                            wardrobeVM.getOptionsByType("material").isNotEmpty
-                            ? wardrobeVM.getOptionsByType("material")
-                            : const ["Cotton", "Linen", "Denim", "Polyester"],
+                        options: wardrobeVM.getOptionsByType("material"),
                         onSelected: (v) => setState(() => material = v),
                       ),
                     ),
@@ -360,9 +341,7 @@ class _EditClothingItemScreenState extends State<EditClothingItemScreen> {
                       value: color,
                       onTap: () => _openPickerSheet(
                         title: "Select Color",
-                        options: wardrobeVM.getOptionsByType("color").isNotEmpty 
-                          ? wardrobeVM.getOptionsByType("color") 
-                          : const ["Black", "White", "Navy Blue", "Red"],
+                        options: wardrobeVM.getOptionsByType("color"),
                         onSelected: (v) => setState(() => color = v),
                       ),
                     ),

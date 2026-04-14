@@ -1271,8 +1271,27 @@ def admin_options_manage(request, option_id=None):
             return Response({"error": "Option ID required"}, status=400)
         try:
             optionTarget = ClothingOption.objects.get(id=option_id)
+            
+            # SAFE DELETE LOGIC:
+            # If we delete a category/season/etc, find all items using that name and set them to "Other"
+            # This prevents the mobile app from crashing on orphaned data.
+            field_map = {
+                'category': 'category',
+                'season': 'season',
+                'occasion': 'occasion',
+                'size': 'size',
+                'material': 'material',
+                'color': 'color'
+            }
+            
+            if optionTarget.type in field_map:
+                field_name = field_map[optionTarget.type]
+                filter_args = {f"{field_name}__iexact": optionTarget.name}
+                update_args = {field_name: "Other"}
+                ClothingItem.objects.filter(**filter_args).update(**update_args)
+
             optionTarget.delete()
-            return Response({"message": "Option deleted"})
+            return Response({"message": "Option deleted and items re-assigned to 'Other' where necessary."})
         except ClothingOption.DoesNotExist:
             return Response({"error": "Option not found"}, status=404)
 
@@ -1683,8 +1702,8 @@ def featured_wardrobe_requests(request):
         from datetime import timedelta
         # Limit to 3 days for Approved/Rejected, but show ALL Pending that are actually PAID
         three_days_ago = timezone.now() - timedelta(days=1)
-        queryset = FeaturedWardrobeRequest.objects.filter(requester=profile).filter(
-            models.Q(status='pending', is_paid=True) | models.Q(updated_at__gte=three_days_ago)
+        queryset = FeaturedWardrobeRequest.objects.filter(requester=profile, is_paid=True).filter(
+            models.Q(status='pending') | models.Q(updated_at__gte=three_days_ago)
         ).order_by("-created_at")
         
         serializer = FeaturedWardrobeRequestSerializer(queryset, many=True)
@@ -1708,7 +1727,7 @@ def featured_wardrobe_requests(request):
         requester=profile, 
         wardrobe=wardrobe
     ).filter(
-        models.Q(status='pending') | 
+        models.Q(status='pending', is_paid=True) | 
         models.Q(status='approved', updated_at__gte=three_days_ago)
     ).exists()
 

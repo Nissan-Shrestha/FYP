@@ -10,7 +10,8 @@ class ScheduleService {
   static Future<String> _getIdToken() async {
     final user = FirebaseAuth.instance.currentUser;
     if (user == null) throw Exception("User not logged in");
-    return await user.getIdToken() ?? (throw Exception("Could not get ID token"));
+    return await user.getIdToken() ??
+        (throw Exception("Could not get ID token"));
   }
 
   static Future<Map<String, String>> _authHeaders({bool json = true}) async {
@@ -71,4 +72,3 @@ class ScheduleService {
     }
   }
 }
-

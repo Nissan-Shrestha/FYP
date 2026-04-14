@@ -54,19 +54,22 @@ class Command(BaseCommand):
                 ('Backpack', 'Bag', 0),
                 ('Handbag', 'Bag', 0),
                 ('Tote Bag', 'Bag', 0),
+                
+                # MISC
+                ('Other', 'Accessory', 0),
             ],
             'season': [
-                'Spring', 'Summer', 'Autumn', 'Winter', 'All Seasons', 'Monsoon'
+                'Spring', 'Summer', 'Autumn', 'Winter', 'All Seasons', 'Monsoon', 'Other'
             ],
             'occasion': [
                 'Casual', 'Work', 'Party', 'Date', 'Gym', 'Formal', 'Wedding', 'Travel',
                 'Office', 'Business Casual', 'Gala', 'Black Tie', 'Beach', 'Poolside',
                 'Concert', 'Festival', 'Hiking', 'Camping', 'Date Night', 'Brunch',
-                'Funeral', 'Job Interview'
+                'Funeral', 'Job Interview', 'Other'
             ],
             'size': [
                 'S', 'M', 'L', 'XL', 'XXL', 'One Size', 'N/A',
-                'UK 3', 'UK 4', 'UK 5', 'UK 6', 'UK 7', 'UK 8', 'UK 9', 'UK 10', 'UK 11', 'UK 12', 'UK 13'
+                'UK 3', 'UK 4', 'UK 5', 'UK 6', 'UK 7', 'UK 8', 'UK 9', 'UK 10', 'UK 11', 'UK 12', 'UK 13', 'Other'
             ],
             'material': [
                 # Clothing Fabrics
@@ -91,11 +94,11 @@ class Command(BaseCommand):
                 'Emerald', 'Lime', 'Mint', 'Purple', 'Light Purple', 
                 'Deep Purple', 'Yellow', 'Light Yellow', 'Mustard', 'Orange', 
                 'Peach', 'Rust', 'Mauve', 'Terracotta', 'Champagne', 'Indigo', 'Coral',
-                'Multicolor', 'Floral', 'Camo', 'Animal Print'
+                'Multicolor', 'Floral', 'Camo', 'Animal Print', 'Other'
             ],
             'weather': [
                 'Clear Sky', 'Hot & Sunny', 'Cloudy', 'Windy', 'Light Rain', 
-                'Heavy Rain', 'Thunderstorm', 'Foggy', 'Snowy', 'Freezing Cold', 'Moderate'
+                'Heavy Rain', 'Thunderstorm', 'Foggy', 'Snowy', 'Freezing Cold', 'Moderate', 'Other'
             ]
         }
 
