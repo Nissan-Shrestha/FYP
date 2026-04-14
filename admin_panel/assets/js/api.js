@@ -1,5 +1,5 @@
-const API_BASE_URL = window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1" 
-    ? `http://${window.location.hostname}:8000/api` 
+const API_BASE_URL = window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1"
+    ? `http://${window.location.hostname}:8000/api`
     : `http://localhost:8000/api`;
 
 function getAuthHeaders() {
@@ -12,7 +12,7 @@ function getAuthHeaders() {
 
 function updateNavbar(admin) {
     if (!admin) return;
-    
+
     // Support multiple IDs for name container
     const nameEls = document.querySelectorAll("#admin-name, #admin-name-nav");
     const avatarImg = document.getElementById("admin-avatar");

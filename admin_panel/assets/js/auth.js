@@ -6,18 +6,18 @@ const auth = firebase.auth();
 if (document.getElementById("login-form")) {
     document.getElementById("login-form").addEventListener("submit", async (e) => {
         e.preventDefault();
-        
+
         const email = document.getElementById("floatingEmail").value;
         const password = document.getElementById("floatingPassword").value;
         const errorDiv = document.getElementById("login-error");
-        
+
         try {
             const userCredential = await auth.signInWithEmailAndPassword(email, password);
             const token = await userCredential.user.getIdToken();
-            
+
             // Store the token in localStorage
             localStorage.setItem("admin_token", token);
-            
+
             // Redirect to dashboard
             window.location.href = "index.html";
         } catch (error) {
@@ -26,6 +26,23 @@ if (document.getElementById("login-form")) {
             errorDiv.classList.remove("d-none");
         }
     });
+
+    // Password visibility toggle
+    const passwordToggle = document.getElementById("password-toggle");
+    if (passwordToggle) {
+        passwordToggle.addEventListener("click", () => {
+            const passwordInput = document.getElementById("floatingPassword");
+            const toggleIcon = document.getElementById("toggle-icon");
+
+            if (passwordInput.type === "password") {
+                passwordInput.type = "text";
+                toggleIcon.classList.replace("bi-eye-slash", "bi-eye");
+            } else {
+                passwordInput.type = "password";
+                toggleIcon.classList.replace("bi-eye", "bi-eye-slash");
+            }
+        });
+    }
 }
 
 const logoutBtn = document.getElementById("admin-logout");
@@ -35,6 +52,7 @@ if (logoutBtn) {
         try {
             await auth.signOut();
             localStorage.removeItem("admin_token");
+            sessionStorage.removeItem("admin_token");
             window.location.href = "login.html";
         } catch (error) {
             console.error("Logout failed:", error);

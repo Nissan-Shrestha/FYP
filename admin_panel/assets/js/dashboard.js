@@ -1,11 +1,5 @@
 document.addEventListener("DOMContentLoaded", () => {
     fetchDashboardData();
-    
-    // Add event listener for refresh button if it exists
-    const refreshBtn = document.querySelector('button.btn-primary');
-    if (refreshBtn) {
-        refreshBtn.addEventListener('click', fetchDashboardData);
-    }
 });
 
 async function fetchDashboardData() {
@@ -41,9 +35,12 @@ async function fetchDashboardData() {
 function updateStats(stats) {
     document.getElementById("total-users-count").innerText = stats.total_users.toLocaleString();
     document.getElementById("premium-users-count").innerText = stats.premium_users.toLocaleString();
+    document.getElementById("total-clothes-count").innerText = stats.total_clothing_items.toLocaleString();
     document.getElementById("total-outfits-count").innerText = (stats.total_public_outfits || 0).toLocaleString();
     document.getElementById("total-saves-count").innerText = (stats.total_saves || 0).toLocaleString();
     document.getElementById("pending-reports-count").innerText = (stats.pending_reports || 0).toLocaleString();
+    document.getElementById("pending-features-count").innerText = (stats.pending_feature_requests || 0).toLocaleString();
+    document.getElementById("total-schedules-count").innerText = (stats.total_schedules || 0).toLocaleString();
 }
 
 function renderRecentUsers(users) {
@@ -51,7 +48,7 @@ function renderRecentUsers(users) {
     tableBody.innerHTML = "";
 
     if (!users || users.length === 0) {
-        tableBody.innerHTML = '<tr><td colspan="5" class="text-center py-4 text-muted">No recent signups found.</td></tr>';
+        tableBody.innerHTML = '<tr><td colspan="4" class="text-center py-4 text-muted">No recent signups found.</td></tr>';
         return;
     }
 
@@ -64,9 +61,6 @@ function renderRecentUsers(users) {
             <td>${user.email}</td>
             <td><span class="badge ${planBadgeClass}">${user.plan}</span></td>
             <td>${new Date(user.created_at).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })}</td>
-            <td>
-                <button class="btn btn-sm btn-outline-secondary">Edit</button>
-            </td>
         `;
         tableBody.appendChild(row);
     });

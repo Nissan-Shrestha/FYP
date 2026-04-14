@@ -1,7 +1,8 @@
 let allRequests = [];
+let currentPage = 1;
 
 document.addEventListener("DOMContentLoaded", () => {
-    fetchRequests();
+    fetchRequests(1);
 
     // Setup form listener
     const rejectForm = document.getElementById("reject-form");
@@ -10,12 +11,13 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 });
 
-async function fetchRequests() {
+async function fetchRequests(page = 1) {
+    currentPage = page;
     const tableBody = document.getElementById("requests-table-body");
     const countBadge = document.getElementById("request-count-badge");
     
-    // Updated to use the ADMIN endpoint
-    let url = `${API_BASE_URL}/admin/feature-requests/`; 
+    // Updated to use the ADMIN endpoint with pagination
+    let url = `${API_BASE_URL}/admin/feature-requests/?page=${page}`; 
 
     try {
         const response = await fetch(url, {
@@ -27,15 +29,47 @@ async function fetchRequests() {
             return;
         }
 
-        allRequests = await response.json();
+        const data = await response.json();
+        // data: {count, next, previous, results}
+        allRequests = data.results;
         renderRequests(allRequests);
-        countBadge.innerText = `${allRequests.filter(r => r.status === 'pending').length} pending`;
+        renderPagination(data);
+        countBadge.innerText = `${data.count} requests total`;
     } catch (error) {
         console.error("Error fetching requests:", error);
         if (tableBody) {
             tableBody.innerHTML = `<tr><td colspan="5" class="text-center text-danger py-4">Error loading requests. Check if API is running at ${API_BASE_URL}.</td></tr>`;
         }
     }
+}
+
+function renderPagination(data) {
+    const paginationRoot = document.getElementById("requests-pagination");
+    if (!paginationRoot) return;
+    paginationRoot.innerHTML = "";
+
+    const totalPages = Math.ceil(data.count / 10);
+    if (totalPages <= 1) return;
+
+    // Previous Button
+    const prevLi = document.createElement("li");
+    prevLi.className = `page-item ${!data.previous ? 'disabled' : ''}`;
+    prevLi.innerHTML = `<a class="page-link" href="#" onclick="fetchRequests(${currentPage - 1})">Previous</a>`;
+    paginationRoot.appendChild(prevLi);
+
+    // Page Numbers
+    for (let i = 1; i <= totalPages; i++) {
+        const li = document.createElement("li");
+        li.className = `page-item ${i === currentPage ? 'active' : ''}`;
+        li.innerHTML = `<a class="page-link" href="#" onclick="fetchRequests(${i})">${i}</a>`;
+        paginationRoot.appendChild(li);
+    }
+
+    // Next Button
+    const nextLi = document.createElement("li");
+    nextLi.className = `page-item ${!data.next ? 'disabled' : ''}`;
+    nextLi.innerHTML = `<a class="page-link" href="#" onclick="fetchRequests(${currentPage + 1})">Next</a>`;
+    paginationRoot.appendChild(nextLi);
 }
 
 function renderRequests(requests) {
@@ -120,7 +154,7 @@ async function approveRequest(id) {
         });
 
         if (response.ok) {
-            fetchRequests();
+            fetchRequests(currentPage);
         } else {
             const err = await response.json();
             alert("Failed to approve request: " + (err.error || "Unknown error"));
@@ -158,7 +192,7 @@ async function handleRejectSubmit(e) {
         });
 
         if (response.ok) {
-            fetchRequests();
+            fetchRequests(currentPage);
             const modalEl = document.getElementById('rejectModal');
             const modal = bootstrap.Modal.getInstance(modalEl);
             modal.hide();

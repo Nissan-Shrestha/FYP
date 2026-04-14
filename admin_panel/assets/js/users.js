@@ -1,7 +1,8 @@
 let allUsers = [];
+let currentPage = 1;
 
 document.addEventListener("DOMContentLoaded", () => {
-    fetchUsers();
+    fetchUsers(1);
 
     // Setup form listener
     const editForm = document.getElementById("edit-user-form");
@@ -10,12 +11,12 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 });
 
-async function fetchUsers() {
-    // ... no changes to fetchUsers except storing data
+async function fetchUsers(page = 1) {
+    currentPage = page;
     const tableBody = document.getElementById("all-users-table-body");
     const countBadge = document.getElementById("user-count-badge");
     
-    let url = `${API_BASE_URL}/admin/users/`;
+    let url = `${API_BASE_URL}/admin/users/?page=${page}`;
 
     try {
         const response = await fetch(url, {
@@ -27,13 +28,45 @@ async function fetchUsers() {
             return;
         }
 
-        allUsers = await response.json();
+        const data = await response.json();
+        // data is now { count, next, previous, results }
+        allUsers = data.results;
         renderUsers(allUsers);
-        countBadge.innerText = `${allUsers.length} users`;
+        renderPagination(data);
+        countBadge.innerText = `${data.count} users`;
     } catch (error) {
         console.error("Error fetching users:", error);
         tableBody.innerHTML = `<tr><td colspan="6" class="text-center text-danger py-4">Error loading users data.</td></tr>`;
     }
+}
+
+function renderPagination(data) {
+    const paginationRoot = document.getElementById("users-pagination");
+    if (!paginationRoot) return;
+    paginationRoot.innerHTML = "";
+
+    const totalPages = Math.ceil(data.count / 10);
+    if (totalPages <= 1) return;
+
+    // Previous Button
+    const prevLi = document.createElement("li");
+    prevLi.className = `page-item ${!data.previous ? 'disabled' : ''}`;
+    prevLi.innerHTML = `<a class="page-link" href="#" onclick="fetchUsers(${currentPage - 1})">Previous</a>`;
+    paginationRoot.appendChild(prevLi);
+
+    // Page Numbers
+    for (let i = 1; i <= totalPages; i++) {
+        const li = document.createElement("li");
+        li.className = `page-item ${i === currentPage ? 'active' : ''}`;
+        li.innerHTML = `<a class="page-link" href="#" onclick="fetchUsers(${i})">${i}</a>`;
+        paginationRoot.appendChild(li);
+    }
+
+    // Next Button
+    const nextLi = document.createElement("li");
+    nextLi.className = `page-item ${!data.next ? 'disabled' : ''}`;
+    nextLi.innerHTML = `<a class="page-link" href="#" onclick="fetchUsers(${currentPage + 1})">Next</a>`;
+    paginationRoot.appendChild(nextLi);
 }
 
 function renderUsers(users) {
@@ -130,7 +163,7 @@ async function handleEditSubmit(e) {
 
         if (response.ok) {
             // Reload the table
-            fetchUsers();
+            fetchUsers(currentPage);
             
             // Hide modal (using bootstrap instance)
             const modalEl = document.getElementById('editUserModal');
@@ -160,7 +193,7 @@ async function deleteUser(firebaseUid, username) {
 
         if (response.ok) {
             alert(data.message || "User deleted successfully.");
-            fetchUsers();
+            fetchUsers(currentPage);
         } else {
             alert(data.error || "Failed to delete user.");
         }

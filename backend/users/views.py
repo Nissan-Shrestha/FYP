@@ -1183,6 +1183,8 @@ def admin_dashboard_data(request):
         "total_public_outfits": Outfit.objects.filter(is_public=True).count(),
         "total_saves": Outfit.objects.filter(is_public=True).aggregate(total=Count('saved_by'))['total'] or 0,
         "pending_reports": Report.objects.filter(status='pending').count(),
+        "pending_feature_requests": FeaturedWardrobeRequest.objects.filter(status='pending', is_paid=True).count(),
+        "total_schedules": Schedule.objects.count(),
     }
 
     # Get the 5 most recent profiles based on ID (as proxy for signup time)
@@ -1317,9 +1319,15 @@ def admin_user_list(request):
     if not profile.is_admin:
         return Response({"error": "Admin access required"}, status=403)
 
+    from rest_framework.pagination import PageNumberPagination
     queryset = Profile.objects.all().order_by("-id")
-    serializer = ProfileSerializer(queryset, many=True, context={"request": request})
-    return Response(serializer.data)
+    
+    paginator = PageNumberPagination()
+    paginator.page_size = 10
+    result_page = paginator.paginate_queryset(queryset, request)
+    
+    serializer = ProfileSerializer(result_page, many=True, context={"request": request})
+    return paginator.get_paginated_response(serializer.data)
 
 
 @api_view(["PATCH"])
@@ -1540,9 +1548,15 @@ def admin_report_list(request):
     if not profile.is_admin:
         return Response({"error": "Admin access required"}, status=403)
         
-    reports = Report.objects.all().order_by("-created_at")
-    serializer = ReportSerializer(reports, many=True, context={"request": request})
-    return Response(serializer.data, status=200)
+    from rest_framework.pagination import PageNumberPagination
+    queryset = Report.objects.all().order_by("-created_at")
+    
+    paginator = PageNumberPagination()
+    paginator.page_size = 10
+    result_page = paginator.paginate_queryset(queryset, request)
+    
+    serializer = ReportSerializer(result_page, many=True, context={"request": request})
+    return paginator.get_paginated_response(serializer.data)
 
 
 @api_view(["POST"])
@@ -1981,8 +1995,13 @@ def admin_featured_wardrobe_requests(request):
         if status_filter:
             queryset = queryset.filter(status=status_filter)
         
-        serializer = FeaturedWardrobeRequestSerializer(queryset, many=True)
-        return Response(serializer.data)
+        from rest_framework.pagination import PageNumberPagination
+        paginator = PageNumberPagination()
+        paginator.page_size = 10
+        result_page = paginator.paginate_queryset(queryset, request)
+        
+        serializer = FeaturedWardrobeRequestSerializer(result_page, many=True)
+        return paginator.get_paginated_response(serializer.data)
 
     req_id = request.data.get("request_id")
     new_status = request.data.get("status")
