@@ -89,7 +89,9 @@ class PlanScreen extends StatelessWidget {
               ),
             ),
             const SizedBox(height: 32),
-            ...plans.map((plan) => _PlanCard(plan: plan, currentPlan: currentPlan)),
+            ...plans.map(
+              (plan) => _PlanCard(plan: plan, currentPlan: currentPlan),
+            ),
           ],
         ),
       ),
@@ -101,6 +103,151 @@ class _PlanCard extends StatelessWidget {
   final _PlanData plan;
   final String currentPlan;
   const _PlanCard({required this.plan, required this.currentPlan});
+
+  Future<String?> _showPaymentMethodSheet(BuildContext context) {
+    return showModalBottomSheet<String>(
+      context: context,
+      backgroundColor: Colors.transparent,
+      builder: (context) => Container(
+        decoration: const BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.vertical(top: Radius.circular(32)),
+        ),
+        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 32),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Center(
+              child: Container(
+                width: 40,
+                height: 4,
+                decoration: BoxDecoration(
+                  color: Colors.grey.shade300,
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              ),
+            ),
+            const SizedBox(height: 32),
+            Text(
+              "Choose Payment Method",
+              style: GoogleFonts.manrope(
+                fontSize: 20,
+                fontWeight: FontWeight.w800,
+                color: Colors.black,
+              ),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              "Select your preferred way to pay for Premium.",
+              style: GoogleFonts.manrope(
+                fontSize: 14,
+                color: Colors.grey.shade600,
+              ),
+            ),
+            const SizedBox(height: 32),
+            _paymentOption(
+              context,
+              title: "Card / Stripe",
+              subtitle: "Visa, Mastercard, etc.",
+              icon: Icons.credit_card_rounded,
+              color: const Color(0xFF6772E5),
+              onTap: () => Navigator.pop(context, "stripe"),
+            ),
+            const SizedBox(height: 16),
+            _paymentOption(
+              context,
+              title: "Khalti Wallet",
+              subtitle: "Nepal's favorite wallet",
+              icon: Icons.account_balance_wallet_rounded,
+              color: const Color(0xFF5D2E8E),
+              onTap: () => Navigator.pop(context, "khalti"),
+            ),
+            const SizedBox(height: 24),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _handleResult(BuildContext context, bool success) {
+    if (success && context.mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text("Welcome to Premium! Enjoy your new features."),
+        ),
+      );
+    } else if (context.mounted) {
+      final err = context.read<AuthViewmodel>().error;
+      if (err != null) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text(err)));
+      }
+    }
+  }
+
+  Widget _paymentOption(
+    BuildContext context, {
+    required String title,
+    required String subtitle,
+    required IconData icon,
+    required Color color,
+    required VoidCallback onTap,
+  }) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(20),
+      child: Container(
+        padding: const EdgeInsets.all(20),
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(color: Colors.black.withValues(alpha: 0.05)),
+        ),
+        child: Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: color.withValues(alpha: 0.1),
+                shape: BoxShape.circle,
+              ),
+              child: Icon(icon, color: color, size: 24),
+            ),
+            const SizedBox(width: 20),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    title,
+                    style: GoogleFonts.manrope(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.black,
+                    ),
+                  ),
+                  Text(
+                    subtitle,
+                    style: GoogleFonts.manrope(
+                      fontSize: 12,
+                      color: Colors.grey.shade500,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            Icon(
+              Icons.arrow_forward_ios_rounded,
+              size: 14,
+              color: Colors.grey.shade400,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -144,11 +291,14 @@ class _PlanCard extends StatelessWidget {
                       letterSpacing: 1,
                     ),
                   ),
-                  if (plan.id == 'premium' && currentPlan == 'premium' && context.read<AuthViewmodel>().profile?.premiumUntil != null)
+                  if (plan.id == 'premium' && currentPlan == 'premium')
                     Padding(
                       padding: const EdgeInsets.only(top: 2),
                       child: Text(
-                        "Until ${context.read<AuthViewmodel>().profile!.premiumUntil!.split('T')[0]}",
+                        context.read<AuthViewmodel>().profile?.premiumUntil !=
+                                null
+                            ? "Until ${context.read<AuthViewmodel>().profile!.premiumUntil!.split('T')[0]}"
+                            : "Lifetime Access",
                         style: GoogleFonts.manrope(
                           color: Colors.white70,
                           fontSize: 8,
@@ -240,20 +390,27 @@ class _PlanCard extends StatelessWidget {
                       onPressed: plan.isCurrent
                           ? null
                           : () async {
-                            final success = await context.read<AuthViewmodel>().upgradeToPremium();
-                            if (success && context.mounted) {
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                const SnackBar(content: Text("Welcome to Premium! Enjoy your new features.")),
-                              );
-                            } else if (context.mounted) {
-                              final err = context.read<AuthViewmodel>().error;
-                              if (err != null) {
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  SnackBar(content: Text(err)),
+                              if (plan.id == 'premium') {
+                                final method = await _showPaymentMethodSheet(
+                                  context,
                                 );
+                                if (method == null || !context.mounted) return;
+
+                                bool success = false;
+                                if (method == "stripe") {
+                                  success = await context
+                                      .read<AuthViewmodel>()
+                                      .upgradeToPremium();
+                                } else if (method == "khalti") {
+                                  success = await context
+                                      .read<AuthViewmodel>()
+                                      .upgradeToPremiumKhalti(context);
+                                }
+
+                                if (context.mounted)
+                                  _handleResult(context, success);
                               }
-                            }
-                          },
+                            },
                       style: ElevatedButton.styleFrom(
                         backgroundColor: plan.id == 'premium'
                             ? plan.cardColor
@@ -266,7 +423,9 @@ class _PlanCard extends StatelessWidget {
                           borderRadius: BorderRadius.circular(16),
                         ),
                       ),
-                      child: (context.watch<AuthViewmodel>().isLoading && plan.id == 'premium')
+                      child:
+                          (context.watch<AuthViewmodel>().isLoading &&
+                              plan.id == 'premium')
                           ? const SizedBox(
                               height: 20,
                               width: 20,
@@ -279,8 +438,8 @@ class _PlanCard extends StatelessWidget {
                               plan.isCurrent
                                   ? "Active Plan"
                                   : (plan.id == 'premium'
-                                      ? "Upgrade to Premium"
-                                      : "Switch to Free"),
+                                        ? "Upgrade to Premium"
+                                        : "Switch to Free"),
                               style: GoogleFonts.manrope(
                                 fontWeight: FontWeight.bold,
                                 fontSize: 15,

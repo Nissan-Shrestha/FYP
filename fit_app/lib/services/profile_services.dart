@@ -130,4 +130,18 @@ class ProfileService {
       throw Exception("Failed to create premium payment intent");
     }
   }
+
+  static Future<Map<String, dynamic>> initiateKhaltiPremiumPayment() async {
+    final response = await http.post(
+      Uri.parse("${ApiConfig.serverBaseUrl}/api/payments/khalti/premium/initiate/"),
+      headers: await _authHeaders(),
+    );
+
+    if (response.statusCode == 200) {
+      return jsonDecode(response.body);
+    } else {
+      final data = jsonDecode(response.body);
+      throw Exception(data["error"] ?? "Failed to initiate Khalti payment");
+    }
+  }
 }

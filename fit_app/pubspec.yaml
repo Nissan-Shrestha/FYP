@@ -48,10 +48,15 @@ dependencies:
   flutter_dotenv: ^5.2.1
   url_launcher: ^6.3.2
   fl_chart: ^0.71.0
-  intl: ^0.20.0
+  intl: any
   flutter_stripe: ^12.5.0
+  khalti_checkout_flutter: ^1.0.0-dev.9
   flutter_launcher_icons: ^0.14.4
   font_awesome_flutter: ^11.0.0
+
+dependency_overrides:
+  intl: any
+  package_info_plus: any
 
 dev_dependencies:
   flutter_test:

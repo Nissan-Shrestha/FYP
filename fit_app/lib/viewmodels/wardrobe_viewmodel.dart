@@ -1,12 +1,16 @@
 import 'dart:io';
 
 import 'package:fit_app/models/wardrobe_model.dart';
+import 'dart:async';
 import 'package:fit_app/models/clothing_item_model.dart';
 import 'package:fit_app/models/clothing_option_model.dart';
 import 'package:fit_app/models/featured_wardrobe_model.dart';
 import 'package:fit_app/services/wardrobe_service.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_stripe/flutter_stripe.dart';
+import 'package:khalti_checkout_flutter/khalti_checkout_flutter.dart';
+import 'package:url_launcher/url_launcher.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 class WardrobeViewmodel extends ChangeNotifier {
   List<WardrobeModel> wardrobes = [];
@@ -497,6 +501,65 @@ class WardrobeViewmodel extends ChangeNotifier {
       return false;
     } catch (e) {
       lastActionError = e.toString();
+      return false;
+    } finally {
+      isSubmitting = false;
+      notifyListeners();
+    }
+  }
+
+  Future<bool> processFeaturedWardrobeKhaltiPayment(
+    BuildContext context,
+    int wardrobeId,
+  ) async {
+    try {
+      isSubmitting = true;
+      lastActionError = null;
+      notifyListeners();
+
+      // 1. Initiate payment on backend to get pidx
+      final data = await WardrobeService.initiateKhaltiPayment(wardrobeId);
+      final pidx = data['pidx'];
+
+      if (pidx == null) {
+        throw Exception("Failed to get payment identifier (pidx) from server.");
+      }
+
+      // 2. Setup SDK Config
+      final config = KhaltiPayConfig(
+        publicKey: dotenv.env['KHALTI_PUBLIC_KEY'] ?? "e5e792eafff94651ad5d43ee0ac36bbd",
+        pidx: pidx,
+        environment: Environment.test,
+      );
+
+      // 3. Start Khalti Payment
+      final completer = Completer<bool>();
+      
+      final khaltiInit = await Khalti.init(
+        payConfig: config,
+        onPaymentResult: (result, k) {
+          debugPrint("Khalti Payment Success: $result");
+          if (!completer.isCompleted) completer.complete(true);
+          k.close(context);
+        },
+        onMessage: (k, {description, statusCode, event, needsPaymentConfirmation}) {
+          debugPrint("Khalti Message: $description");
+          if (!completer.isCompleted) completer.complete(false);
+          lastActionError = description?.toString();
+          k.close(context);
+        },
+      );
+
+      khaltiInit.open(context);
+      
+      final success = await completer.future;
+
+      if (success) {
+        await fetchWardrobes();
+      }
+      return success;
+    } catch (e) {
+      lastActionError = e.toString().replaceAll("Exception: ", "");
       return false;
     } finally {
       isSubmitting = false;

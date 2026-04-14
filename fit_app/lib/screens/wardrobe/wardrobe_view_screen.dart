@@ -489,36 +489,81 @@ class _WardrobeViewScreenState extends State<WardrobeViewScreen> {
   }
 
   Future<void> _handleFeatureRequest(WardrobeViewmodel vm) async {
-    final confirmed = await showDialog<bool>(
+    final method = await showModalBottomSheet<String>(
       context: context,
-      builder: (context) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        title: Text(
-          "Featured Wardrobe",
-          style: GoogleFonts.manrope(fontWeight: FontWeight.bold),
+      backgroundColor: Colors.transparent,
+      builder: (context) => Container(
+        decoration: const BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.vertical(top: Radius.circular(32)),
         ),
-        content: const Text(
-          "Feature this wardrobe in the community Explore tab to showcase your style? This increases your profile visibility and inspiration for others!",
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context, false),
-            child: const Text("Not now"),
-          ),
-          TextButton(
-            onPressed: () => Navigator.pop(context, true),
-            style: TextButton.styleFrom(
-              foregroundColor: const Color(0xFF673AB7),
+        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 32),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Center(
+              child: Container(
+                width: 40,
+                height: 4,
+                decoration: BoxDecoration(
+                  color: Colors.grey.shade300,
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              ),
             ),
-            child: const Text("Confirm"),
-          ),
-        ],
+            const SizedBox(height: 32),
+            Text(
+              "Feature Wardrobe",
+              style: GoogleFonts.manrope(
+                fontSize: 20,
+                fontWeight: FontWeight.w800,
+                color: Colors.black,
+              ),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              "Showcase your style in the Discovery tab! \$1.99 (or equivalent) fee applies.",
+              style: GoogleFonts.manrope(
+                fontSize: 14,
+                color: Colors.grey.shade600,
+              ),
+            ),
+            const SizedBox(height: 32),
+            _paymentOption(
+              context,
+              title: "Card / Stripe",
+              subtitle: "International payments",
+              icon: Icons.credit_card_rounded,
+              color: const Color(0xFF6772E5),
+              onTap: () => Navigator.pop(context, "stripe"),
+            ),
+            const SizedBox(height: 16),
+            _paymentOption(
+              context,
+              title: "Khalti Wallet",
+              subtitle: "Available in Nepal",
+              icon: Icons.account_balance_wallet_rounded,
+              color: const Color(0xFF5D2E8E),
+              onTap: () => Navigator.pop(context, "khalti"),
+            ),
+            const SizedBox(height: 24),
+          ],
+        ),
       ),
     );
 
-    if (confirmed != true || !mounted) return;
+    if (method == null || !mounted) return;
 
-    final success = await vm.processFeaturedWardrobePayment(widget.wardrobeId);
+    bool success = false;
+    if (method == "stripe") {
+      success = await vm.processFeaturedWardrobePayment(widget.wardrobeId);
+    } else if (method == "khalti") {
+      success = await vm.processFeaturedWardrobeKhaltiPayment(
+        context,
+        widget.wardrobeId,
+      );
+    }
 
     if (!mounted) return;
 
@@ -530,6 +575,68 @@ class _WardrobeViewScreenState extends State<WardrobeViewScreen> {
               : (vm.lastActionError ?? "Failed to process payment"),
         ),
         backgroundColor: success ? const Color(0xff0AAE00) : Colors.redAccent,
+      ),
+    );
+  }
+
+  Widget _paymentOption(
+    BuildContext context, {
+    required String title,
+    required String subtitle,
+    required IconData icon,
+    required Color color,
+    required VoidCallback onTap,
+  }) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(20),
+      child: Container(
+        padding: const EdgeInsets.all(20),
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(color: Colors.black.withValues(alpha: 0.05)),
+        ),
+        child: Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: color.withValues(alpha: 0.1),
+                shape: BoxShape.circle,
+              ),
+              child: Icon(icon, color: color, size: 24),
+            ),
+            const SizedBox(width: 20),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    title,
+                    style: GoogleFonts.manrope(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.black,
+                    ),
+                  ),
+                  Text(
+                    subtitle,
+                    style: GoogleFonts.manrope(
+                      fontSize: 12,
+                      color: Colors.grey.shade500,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            Icon(
+              Icons.arrow_forward_ios_rounded,
+              size: 14,
+              color: Colors.grey.shade400,
+            ),
+          ],
+        ),
       ),
     );
   }

@@ -365,6 +365,21 @@ class WardrobeService {
     }
   }
 
+  static Future<Map<String, dynamic>> initiateKhaltiPayment(int wardrobeId) async {
+    final response = await http.post(
+      Uri.parse("$_baseApi/payments/khalti/initiate/"),
+      headers: await _authHeaders(),
+      body: jsonEncode({"wardrobe_id": wardrobeId}),
+    );
+
+    if (response.statusCode == 200) {
+      return jsonDecode(response.body);
+    } else {
+      final errorData = jsonDecode(response.body);
+      throw Exception(errorData["error"] ?? "Failed to initiate Khalti payment");
+    }
+  }
+
   static String _parseError(String body, String fallback) {
     try {
       final decoded = jsonDecode(body);

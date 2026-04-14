@@ -51,45 +51,47 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
           physics: const AlwaysScrollableScrollPhysics(),
           child: items.isEmpty
               ? SizedBox(
-                height: MediaQuery.of(context).size.height * 0.7,
-                child: _buildEmptyState(),
-              )
+                  height: MediaQuery.of(context).size.height * 0.7,
+                  child: _buildEmptyState(),
+                )
               : Padding(
-                padding: const EdgeInsets.all(20),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    _buildOverviewCards(wardrobeVM, outfitVM),
-                    const SizedBox(height: 30),
-                    _buildSectionTitle(
-                      "Top 5 Categories",
-                      subtitle:
-                          "A breakdown of your most populated categories.",
-                    ),
-                    _buildCategoryChart(wardrobeVM.getCategoryDistribution()),
-                    const SizedBox(height: 40),
-                    _buildSectionTitle(
-                      "Seasonal Distribution",
-                      subtitle: "How your closet is balanced across the year.",
-                    ),
-                    _buildSeasonChart(wardrobeVM.getSeasonDistribution()),
-                    const SizedBox(height: 40),
-                    _buildSectionTitle(
-                      "Top Colors",
-                      subtitle: "The most dominant colors in your collection.",
-                    ),
-                    _buildColorPalette(wardrobeVM.getColorDistribution()),
-                    const SizedBox(height: 40),
-                    _buildSectionTitle(
-                      "Cost Per Wear & Value",
-                      subtitle:
-                          "Items that are giving you the best return on investment.",
-                    ),
-                    _buildCostPerWearSection(wardrobeVM),
-                    const SizedBox(height: 40),
-                  ],
+                  padding: const EdgeInsets.all(20),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      _buildOverviewCards(wardrobeVM, outfitVM),
+                      const SizedBox(height: 30),
+                      _buildSectionTitle(
+                        "Top 5 Categories",
+                        subtitle:
+                            "A breakdown of your most populated categories.",
+                      ),
+                      _buildCategoryChart(wardrobeVM.getCategoryDistribution()),
+                      const SizedBox(height: 40),
+                      _buildSectionTitle(
+                        "Seasonal Distribution",
+                        subtitle:
+                            "How your closet is balanced across the year.",
+                      ),
+                      _buildSeasonChart(wardrobeVM.getSeasonDistribution()),
+                      const SizedBox(height: 40),
+                      _buildSectionTitle(
+                        "Top Colors",
+                        subtitle:
+                            "The most dominant colors in your collection.",
+                      ),
+                      _buildColorPalette(wardrobeVM.getColorDistribution()),
+                      const SizedBox(height: 40),
+                      _buildSectionTitle(
+                        "Cost Per Wear & Value",
+                        subtitle:
+                            "Items that are giving you the best return on investment.",
+                      ),
+                      _buildCostPerWearSection(wardrobeVM),
+                      const SizedBox(height: 40),
+                    ],
+                  ),
                 ),
-              ),
         ),
       ),
     );
@@ -481,7 +483,9 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
     final totalValue = wardrobeVM.totalWardrobeValue;
 
     // Best Value = Lowest CPW
-    final bestValueItems = wardrobeVM.getPricedItemsSortedByCPW(descending: false);
+    final bestValueItems = wardrobeVM.getPricedItemsSortedByCPW(
+      descending: false,
+    );
 
     // To Revisit = Highest CPW
     final needsLoveItems = pricedItems;
