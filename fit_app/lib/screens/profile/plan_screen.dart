@@ -20,7 +20,6 @@ class PlanScreen extends StatelessWidget {
         period: "Forever",
         features: [
           "Max 25 Clothing Items",
-          "Max 5 Wardrobes",
           "1 AI Suggestion / Day",
           "Community Access",
         ],
@@ -34,7 +33,6 @@ class PlanScreen extends StatelessWidget {
         period: "/ month",
         features: [
           "Unlimited Clothing Items",
-          "Unlimited Wardrobes",
           "Unlimited AI Styling",
           "Community Access",
         ],

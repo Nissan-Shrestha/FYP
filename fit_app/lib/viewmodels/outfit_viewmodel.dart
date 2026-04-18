@@ -37,7 +37,7 @@ class OutfitViewmodel extends ChangeNotifier {
 
       outfits = await OutfitService.fetchOutfits();
     } catch (e) {
-      error = e.toString();
+      error = _cleanError(e);
     } finally {
       isLoading = false;
       notifyListeners();
@@ -89,7 +89,7 @@ class OutfitViewmodel extends ChangeNotifier {
       }
     } catch (e) {
       if (_exploreFetchId != fetchId) return;
-      error = e.toString();
+      error = _cleanError(e);
     } finally {
       if (_exploreFetchId == fetchId) {
         isLoadingExplore = false;
@@ -147,7 +147,7 @@ class OutfitViewmodel extends ChangeNotifier {
 
       savedOutfits = await OutfitService.fetchSavedOutfits();
     } catch (e) {
-      error = e.toString();
+      error = _cleanError(e);
     } finally {
       isLoadingSaved = false;
       notifyListeners();
@@ -162,7 +162,7 @@ class OutfitViewmodel extends ChangeNotifier {
 
       communityFeaturedWardrobes = await OutfitService.fetchFeaturedWardrobes();
     } catch (e) {
-      error = e.toString();
+      error = _cleanError(e);
     } finally {
       isLoadingFeatured = false;
       notifyListeners();
@@ -190,7 +190,7 @@ class OutfitViewmodel extends ChangeNotifier {
       outfits = [outfit, ...outfits];
       return outfit;
     } catch (e) {
-      error = e.toString();
+      error = _cleanError(e);
       return null;
     } finally {
       isSubmitting = false;
@@ -224,7 +224,7 @@ class OutfitViewmodel extends ChangeNotifier {
       }
       return updatedOutfit;
     } catch (e) {
-      error = e.toString();
+      error = _cleanError(e);
       return null;
     } finally {
       isSubmitting = false;
@@ -242,7 +242,7 @@ class OutfitViewmodel extends ChangeNotifier {
       outfits = outfits.where((o) => o.id != outfitId).toList();
       return true;
     } catch (e) {
-      error = e.toString();
+      error = _cleanError(e);
       return false;
     } finally {
       isSubmitting = false;
@@ -256,7 +256,7 @@ class OutfitViewmodel extends ChangeNotifier {
           description: description);
       return success;
     } catch (e) {
-      error = e.toString();
+      error = _cleanError(e);
       notifyListeners();
       return false;
     }
@@ -270,9 +270,13 @@ class OutfitViewmodel extends ChangeNotifier {
           description: description);
       return success;
     } catch (e) {
-      error = e.toString();
+      error = _cleanError(e);
       notifyListeners();
       return false;
     }
+  }
+
+  String _cleanError(dynamic e) {
+    return e.toString().replaceAll("Exception: ", "").trim();
   }
 }

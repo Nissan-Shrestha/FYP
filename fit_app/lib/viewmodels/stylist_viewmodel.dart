@@ -10,6 +10,7 @@ class StylistViewmodel extends ChangeNotifier {
   String? lookName;
   String? error;
   StylistStatus status = StylistStatus.initial;
+  bool isRecommendationSaved = false;
 
   bool get isLoading => status == StylistStatus.loading;
 
@@ -20,6 +21,7 @@ class StylistViewmodel extends ChangeNotifier {
     try {
       status = StylistStatus.loading;
       error = null;
+      isRecommendationSaved = false;
       notifyListeners();
 
       final result = await StylistService.fetchRecommendation(
@@ -66,9 +68,15 @@ class StylistViewmodel extends ChangeNotifier {
     recommendedItems = null;
     stylistTip = null;
     lookName = null;
+    isRecommendationSaved = false;
     if (analysisData == null) {
       status = StylistStatus.initial;
     }
+    notifyListeners();
+  }
+
+  void markAsSaved() {
+    isRecommendationSaved = true;
     notifyListeners();
   }
 
@@ -85,6 +93,7 @@ class StylistViewmodel extends ChangeNotifier {
     stylistTip = null;
     lookName = null;
     analysisData = null;
+    isRecommendationSaved = false;
     status = StylistStatus.initial;
     error = null;
     notifyListeners();

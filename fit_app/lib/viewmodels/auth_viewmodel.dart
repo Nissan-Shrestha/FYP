@@ -131,6 +131,23 @@ class AuthViewmodel extends ChangeNotifier {
     }
   }
 
+  Future<void> deleteProfilePicture() async {
+    if (_profile == null) return;
+
+    try {
+      _isLoading = true;
+      notifyListeners();
+
+      final updatedProfile = await ProfileService.deleteProfilePicture();
+      _profile = updatedProfile;
+    } catch (e) {
+      _error = e.toString();
+    } finally {
+      _isLoading = false;
+      notifyListeners();
+    }
+  }
+
   Future<void> checkCurrentUser() async {
     final user = _authService.currentUser;
 

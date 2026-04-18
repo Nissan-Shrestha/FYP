@@ -177,18 +177,28 @@ def outfits(request):
     # Validate Outfit Composition using Type
     valid_items = ClothingItem.objects.filter(id__in=item_ids, owner=profile)
     
-    has_top = any(it.item_type == "Top" for it in valid_items)
-    has_bottom = any(it.item_type == "Bottom" for it in valid_items)
-    
-    if not has_top:
-        return Response({"error": "An outfit must include at least one Top."}, status=400)
-    if not has_bottom:
-        return Response({"error": "An outfit must include at least one Bottom."}, status=400)
+    # Strict Composition Validation
+    top_items = [it for it in valid_items if it.item_type == "Top"]
+    bottom_items = [it for it in valid_items if it.item_type == "Bottom"]
+    shoes_items = [it for it in valid_items if it.item_type == "Shoes"]
 
-    # Optional: Layering validation (Only 1 base layer top)
-    base_layer_tops = sum(1 for it in valid_items if it.item_type == "Top" and it.layer_level == 0)
-    if base_layer_tops > 1:
-        return Response({"error": "You should only wear one base layer shirt at a time."}, status=400)
+    # 1. Base Layer Top Rule (Exactly One)
+    base_layer_tops = sum(1 for it in top_items if it.layer_level == 0)
+    if base_layer_tops != 1:
+        if base_layer_tops == 0:
+            return Response({"error": "An outfit must include exactly one Base Layer top (shirt/tee)."}, status=400)
+        else:
+            return Response({"error": "You can only wear one base layer shirt at a time."}, status=400)
+
+    # 2. Bottoms Rule (Exactly One)
+    if len(bottom_items) != 1:
+        return Response({"error": "An outfit must include exactly one Bottom (pants/shorts/etc)."}, status=400)
+
+    # 3. Shoes Rule (Exactly One)
+    if len(shoes_items) != 1:
+        return Response({"error": "An outfit must include exactly one pair of Shoes."}, status=400)
+
+    # Multiple Mid-Layers (1) and Outer-Layers (2) are naturally allowed by not being restricted here.
 
     is_public = str(request.data.get("is_public", "false")).lower() == "true"
     
@@ -236,13 +246,13 @@ def stylist_recommend(request):
     if not items.exists():
         return Response({"error": "Your wardrobe is empty. Add some clothes first!"}, status=400)
     
-    # 2.5 Wardrobe Completeness Check using Types
-    has_top = items.filter(item_type="Top").exists()
+    # 2.5 Wardrobe Completeness Check using Types & Layers
+    has_base_top = items.filter(item_type="Top", layer_level=0).exists()
     has_bottom = items.filter(item_type="Bottom").exists()
     has_shoes = items.filter(item_type="Shoes").exists()
     
     missing = []
-    if not has_top: missing.append("a Top")
+    if not has_base_top: missing.append("a Base Top (Shirt/T-shirt)")
     if not has_bottom: missing.append("a Bottom")
     if not has_shoes: missing.append("Shoes")
     
@@ -287,13 +297,14 @@ def stylist_recommend(request):
         
         Mandatory Styling Rules:
         1. Select a functional and stylish outfit from the available items.
-        2. A complete outfit MUST have at least one Top and one Bottom.
-        3. A complete outfit MUST have at least one pair of Shoes.
-        4. LAYERING: If the weather is cool (below 18°C), try to layer a Mid-Layer (1) or Outer-Layer (2) on top of the Base Top (0).
-        5. ACCESSORIES: Always look for a matching Accessory (Watch, Belt, Bag, Hat, etc.) that complements the event type and colors.
-        6. COLOR HARMONY: Use classic color theory (e.g. complementary, analogous, or monochromatic) to make the user look high-end.
-        7. MATERIAL INTELLIGENCE: Prioritize breathable natural fabrics (Linen/Cotton) for hot weather (>24°C) and insulating fabrics (Wool/Denim) for cold weather (<12°C). 
-        8. PRACTICALITY & PROTECTION: DO NOT recommend Leather or Suede for 'Heavy Rain' or 'Snowy' conditions; they will be damaged! Instead, favor Synthetics (Polyester/Nylon) or Canvas for wet weather. Avoid 'Linen' in the cold – it's too thin.
+        2. COMPOSITION: An outfit MUST contain exactly 1 Base Top (Layer 0), exactly 1 Bottom, and exactly 1 pair of Shoes.
+        3. LAYERING: If the weather is cool (below 18°C) or for specific styles, you may add multiple additional tops from Mid-Layer (1) or Outer-Layer (2). Example: Shirt(0) + Sweater(1) + Jacket(2).
+        4. Do NOT suggest an outfit without a Base Top (Layer 0). 
+        5. Do NOT suggest multiple Bottoms or multiple pairs of Shoes.
+        6. ACCESSORIES: Always look for a matching Accessory (Watch, Belt, Bag, Hat, etc.) that complements the event type and colors.
+        7. COLOR HARMONY: Use classic color theory (e.g. complementary, analogous, or monochromatic) to make the user look high-end.
+        8. MATERIAL INTELLIGENCE: Prioritize breathable natural fabrics (Linen/Cotton) for hot weather (>24°C) and insulating fabrics (Wool/Denim) for cold weather (<12°C). 
+        9. PRACTICALITY & PROTECTION: DO NOT recommend Leather or Suede for 'Heavy Rain' or 'Snowy' conditions; they will be damaged! Instead, favor Synthetics (Polyester/Nylon) or Canvas for wet weather. Avoid 'Linen' in the cold – it's too thin.
         9. If NO GOOD OUTFIT can be formed, return an empty list for "item_ids" and a tip.
         
         Respond ONLY with a valid JSON in this format:
@@ -803,6 +814,8 @@ def get_or_create_profile(request):
             # HANDLE IMAGE UPLOAD (works for both)
             if request.FILES.get("profile_picture"):
                 profile.profile_picture = request.FILES["profile_picture"]
+            elif request.data.get("delete_picture") == "true":
+                profile.profile_picture = None
 
             # HANDLE NEW FIELDS
             if "bio" in request.data:
@@ -995,15 +1008,6 @@ def wardrobes(request):
         queryset = Wardrobe.objects.filter(owner=profile).order_by("-is_default", "name")
         return Response(WardrobeSerializer(queryset, many=True, context={"request": request}).data)
 
-    # Limit Check for Free Plan
-    # Only count non-default wardrobes towards the 5-wardrobe limit? 
-    # Or total? The Plan Screen just said "5 Wardrobes". 
-    # I'll count total (including default).
-    if profile.plan.lower() == "free" and profile.wardrobes.count() >= 5:
-        return Response({
-            "error": "Free plan limit reached (5 wardrobes). Please upgrade to Premium for unlimited storage!"
-        }, status=403)
-
     name = (request.data.get("name") or "").strip()
     if not name:
         return Response({"error": "name is required"}, status=400)
@@ -1094,12 +1098,21 @@ def wardrobe_items(request, wardrobe_id):
         return error_response
 
     try:
-        wardrobe = Wardrobe.objects.get(id=wardrobe_id, owner=profile)
+        # Check ownership first
+        wardrobe = Wardrobe.objects.get(id=wardrobe_id)
+        if wardrobe.owner != profile:
+            # If not owner, check if featured
+            is_featured = FeaturedWardrobeRequest.objects.filter(
+                wardrobe=wardrobe,
+                status="approved"
+            ).exists()
+            if not is_featured:
+                return Response({"error": "Wardrobe is private"}, status=404)
     except Wardrobe.DoesNotExist:
         return Response({"error": "Wardrobe not found"}, status=404)
 
     if request.method == "GET":
-        queryset = wardrobe.items.filter(owner=profile).order_by("-created_at")
+        queryset = wardrobe.items.all().order_by("-created_at")
         return Response(ClothingItemSerializer(queryset, many=True, context={"request": request}).data)
 
     if _is_wardrobe_locked(wardrobe):

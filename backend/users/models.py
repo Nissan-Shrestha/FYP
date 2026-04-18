@@ -11,12 +11,7 @@ class Profile(models.Model):
 
     plan = models.CharField(max_length=20, default="Free")
     premium_until = models.DateTimeField(null=True, blank=True)
-    wardrobe_count = models.IntegerField(default=0)
-    wardrobe_limit = models.IntegerField(default=100)
-
-    outfits_count = models.IntegerField(default=0)
-    outfits_limit = models.IntegerField(default=200)
-
+    
     profile_picture = models.ImageField(upload_to="profile_pics/", null=True, blank=True)
     
     # New discovery/social fields
@@ -64,6 +59,14 @@ class Profile(models.Model):
         if self.can_use_analysis:
             return None
         return self._get_time_until_midnight(self.last_analysis_usage)
+
+    @property
+    def wardrobe_count_live(self):
+        return self.wardrobes.count()
+
+    @property
+    def outfits_count_live(self):
+        return self.outfits.count()
 
     def _get_time_until_midnight(self, last_usage):
         now = timezone.now()

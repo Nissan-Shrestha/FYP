@@ -141,7 +141,13 @@ class OutfitService {
     if (response.statusCode == 201) {
       return OutfitModel.fromJson(jsonDecode(response.body));
     }
-    throw Exception("Failed to create outfit");
+    
+    try {
+      final errorData = jsonDecode(response.body);
+      throw Exception(errorData["error"] ?? "Failed to create outfit");
+    } catch (_) {
+      throw Exception("Failed to create outfit (Status: ${response.statusCode})");
+    }
   }
 
   static Future<OutfitModel> updateOutfit(

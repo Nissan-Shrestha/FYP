@@ -8,6 +8,7 @@ import 'package:provider/provider.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:fit_app/widgets/verified_badge.dart';
 
+import 'package:fit_app/viewmodels/auth_viewmodel.dart';
 import 'package:fit_app/screens/outfits/edit_outfit_screen.dart';
 
 class OutfitDetailScreen extends StatefulWidget {
@@ -118,7 +119,7 @@ class _OutfitDetailScreenState extends State<OutfitDetailScreen> {
           ),
         ),
         actions: [
-          if (!widget.readOnly) ...[  
+          if (!widget.readOnly) ...[
             IconButton(
               onPressed: () async {
                 final result = await Navigator.push(
@@ -138,6 +139,58 @@ class _OutfitDetailScreenState extends State<OutfitDetailScreen> {
             IconButton(
               onPressed: () => _confirmDelete(context),
               icon: const Icon(Icons.delete_outline, color: Colors.red),
+            ),
+          ] else if (outfit.ownerFirebaseUid !=
+              context.read<AuthViewmodel>().profile?.firebaseUid) ...[
+            Consumer<OutfitViewmodel>(
+              builder: (context, vm, _) {
+                // Find the latest state of this outfit from the viewmodel
+                final latestOutfit = vm.exploreOutfits.firstWhere(
+                  (o) => o.id == outfit.id,
+                  orElse: () => outfit,
+                );
+                return IconButton(
+                  onPressed: () async {
+                    await vm.toggleSaveOutfit(latestOutfit);
+                    // Update local reference just in case
+                    if (mounted) {
+                      setState(() {
+                        outfit = vm.exploreOutfits.firstWhere(
+                          (o) => o.id == latestOutfit.id,
+                          orElse: () => latestOutfit,
+                        );
+                      });
+                    }
+                  },
+                  icon: Icon(
+                    latestOutfit.isSaved ? Icons.bookmark : Icons.bookmark_outline,
+                    color: latestOutfit.isSaved
+                        ? const Color(0xFF673AB7)
+                        : Colors.grey,
+                  ),
+                );
+              },
+            ),
+            IconButton(
+              onPressed: () async {
+                final result = await _showReportDialog(context, "Report Outfit");
+                if (result != null && context.mounted) {
+                  await context.read<OutfitViewmodel>().reportOutfit(
+                    outfit.id,
+                    result["reason"]!,
+                    description: result["description"],
+                  );
+                  if (!context.mounted) return;
+                  ScaffoldMessenger.of(
+                    context,
+                  ).showSnackBar(const SnackBar(content: Text("Reported")));
+                }
+              },
+              icon: const Icon(
+                Icons.report_problem_outlined,
+                size: 18,
+                color: Colors.grey,
+              ),
             ),
           ],
           const SizedBox(width: 8),
@@ -403,6 +456,81 @@ class _OutfitDetailScreenState extends State<OutfitDetailScreen> {
           ),
         ),
       ],
+    ),
+  );
+}
+
+Future<Map<String, String>?> _showReportDialog(
+  BuildContext context,
+  String title,
+) async {
+  String? selectedReason;
+  final descController = TextEditingController();
+
+  return showDialog<Map<String, String>>(
+    context: context,
+    builder: (context) => StatefulBuilder(
+      builder: (context, setDialogState) => AlertDialog(
+        title: Text(title),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            DropdownButtonFormField<String>(
+              value: selectedReason,
+              hint: const Text("Select a reason"),
+              items: [
+                "Inappropriate",
+                "Spam",
+                "Copyright",
+                "Other",
+              ].map((r) => DropdownMenuItem(value: r, child: Text(r))).toList(),
+              onChanged: (v) => setDialogState(() => selectedReason = v),
+              decoration: InputDecoration(
+                contentPadding: const EdgeInsets.symmetric(horizontal: 12),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+              ),
+            ),
+            const SizedBox(height: 16),
+            TextField(
+              controller: descController,
+              maxLines: 3,
+              style: const TextStyle(fontSize: 14),
+              decoration: InputDecoration(
+                hintText: "Additional details (optional)",
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                contentPadding: const EdgeInsets.all(12),
+              ),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text("Cancel"),
+          ),
+          ElevatedButton(
+            onPressed: selectedReason == null
+                ? null
+                : () => Navigator.pop(context, {
+                    "reason": selectedReason!,
+                    "description": descController.text,
+                  }),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color(0xFF673AB7),
+              foregroundColor: Colors.white,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(8),
+              ),
+            ),
+            child: const Text("Submit"),
+          ),
+        ],
+      ),
     ),
   );
 }

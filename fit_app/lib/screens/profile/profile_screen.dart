@@ -203,6 +203,35 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   Navigator.pop(context);
                   authVM.updateProfilePicture(ImageSource.gallery);
                 }),
+                if (authVM.profile?.profilePicture != null)
+                  _actionIcon(Icons.delete_outline, "Remove", () {
+                    Navigator.pop(context);
+                    showDialog(
+                      context: context,
+                      builder: (context) => AlertDialog(
+                        title: const Text("Remove Photo?"),
+                        content: const Text(
+                          "Are you sure you want to remove your profile picture?",
+                        ),
+                        actions: [
+                          TextButton(
+                            onPressed: () => Navigator.pop(context),
+                            child: const Text("Cancel"),
+                          ),
+                          TextButton(
+                            onPressed: () {
+                              Navigator.pop(context);
+                              authVM.deleteProfilePicture();
+                            },
+                            child: const Text(
+                              "Remove",
+                              style: TextStyle(color: Colors.red),
+                            ),
+                          ),
+                        ],
+                      ),
+                    );
+                  }),
               ],
             ),
             const SizedBox(height: 12),

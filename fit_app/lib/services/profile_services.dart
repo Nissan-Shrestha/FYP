@@ -97,6 +97,20 @@ class ProfileService {
     }
   }
 
+  static Future<ProfileModel> deleteProfilePicture() async {
+    final response = await http.patch(
+      Uri.parse(baseUrl),
+      headers: await _authHeaders(),
+      body: jsonEncode({"delete_picture": "true"}),
+    );
+
+    if (response.statusCode == 200) {
+      return ProfileModel.fromJson(jsonDecode(response.body));
+    } else {
+      throw Exception("Failed to delete profile picture");
+    }
+  }
+
   static Future<ProfileModel> updateProfile({
     String? bio,
     Map<String, dynamic>? socialLinks,

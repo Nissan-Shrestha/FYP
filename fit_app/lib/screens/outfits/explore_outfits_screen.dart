@@ -799,6 +799,36 @@ class _CommunityFeaturedWardrobesSection extends StatelessWidget {
                                       ),
                                     ),
                                   ),
+                                  ],
+                                ),
+                              const SizedBox(height: 8),
+                              // Wardrobe & Social Row
+                              Row(
+                                children: [
+                                  Expanded(
+                                    child: InkWell(
+                                      onTap: () => Navigator.push(
+                                        context,
+                                        MaterialPageRoute(
+                                          builder: (_) => WardrobeViewScreen(
+                                            wardrobeId: lb.wardrobe.id,
+                                            wardrobeName: lb.wardrobe.name,
+                                            readOnly: true,
+                                          ),
+                                        ),
+                                      ),
+                                      child: Text(
+                                        lb.wardrobe.name,
+                                        style: GoogleFonts.manrope(
+                                          fontSize: 16.2,
+                                          fontWeight: FontWeight.bold,
+                                        ),
+                                        maxLines: 1,
+                                        overflow: TextOverflow.ellipsis,
+                                      ),
+                                    ),
+                                  ),
+                                  _buildSocialLinks(socials),
                                   if (lb.owner.firebaseUid !=
                                       context
                                           .read<AuthViewmodel>()
@@ -832,43 +862,13 @@ class _CommunityFeaturedWardrobesSection extends StatelessWidget {
                                         }
                                       },
                                       constraints: const BoxConstraints(),
-                                      padding: const EdgeInsets.only(left: 4),
+                                      padding: const EdgeInsets.only(left: 8),
                                       icon: const Icon(
                                         Icons.report_problem_outlined,
-                                        size: 14,
+                                        size: 18,
                                         color: Colors.grey,
                                       ),
                                     ),
-                                ],
-                              ),
-                              const SizedBox(height: 8),
-                              // Wardrobe & Social Row
-                              Row(
-                                children: [
-                                  Expanded(
-                                    child: InkWell(
-                                      onTap: () => Navigator.push(
-                                        context,
-                                        MaterialPageRoute(
-                                          builder: (_) => WardrobeViewScreen(
-                                            wardrobeId: lb.wardrobe.id,
-                                            wardrobeName: lb.wardrobe.name,
-                                            readOnly: true,
-                                          ),
-                                        ),
-                                      ),
-                                      child: Text(
-                                        lb.wardrobe.name,
-                                        style: GoogleFonts.manrope(
-                                          fontSize: 16.2,
-                                          fontWeight: FontWeight.bold,
-                                        ),
-                                        maxLines: 1,
-                                        overflow: TextOverflow.ellipsis,
-                                      ),
-                                    ),
-                                  ),
-                                  _buildSocialLinks(socials),
                                 ],
                               ),
                             ],

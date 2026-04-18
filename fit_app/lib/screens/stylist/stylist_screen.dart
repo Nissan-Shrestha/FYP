@@ -1,6 +1,8 @@
 import 'package:fit_app/viewmodels/stylist_viewmodel.dart';
 import '../../viewmodels/wardrobe_viewmodel.dart';
+import 'package:fit_app/viewmodels/outfit_viewmodel.dart';
 import 'package:fit_app/viewmodels/weather_viewmodel.dart';
+import 'package:fit_app/screens/outfits/outfit_detail_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
@@ -147,11 +149,14 @@ class _StylistScreenState extends State<StylistScreen> {
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            Text(
-              useAutoWeather ? "Live Weather (Auto)" : "Manual Fashion Mode",
-              style: GoogleFonts.manrope(
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
+            Flexible(
+              child: Text(
+                useAutoWeather ? "Live Weather (Auto)" : "Manual Fashion Mode",
+                style: GoogleFonts.manrope(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                ),
+                overflow: TextOverflow.ellipsis,
               ),
             ),
             Switch(
@@ -519,20 +524,24 @@ class _StylistScreenState extends State<StylistScreen> {
                           strokeWidth: 2,
                         ),
                       )
-                    : const Row(
+                    : Row(
                         mainAxisAlignment: MainAxisAlignment.center,
+                        mainAxisSize: MainAxisSize.min,
                         children: [
-                          Icon(
+                          const Icon(
                             Icons.auto_awesome,
                             color: Colors.amber,
                             size: 16,
                           ),
-                          SizedBox(width: 8),
-                          Text(
-                            "Get Styled",
-                            style: TextStyle(
-                              color: Colors.white,
-                              fontWeight: FontWeight.bold,
+                          const SizedBox(width: 8),
+                          Flexible(
+                            child: Text(
+                              "Get Styled",
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontWeight: FontWeight.bold,
+                              ),
+                              overflow: TextOverflow.ellipsis,
                             ),
                           ),
                         ],
@@ -585,14 +594,18 @@ class _StylistScreenState extends State<StylistScreen> {
                         width: 20,
                         child: CircularProgressIndicator(strokeWidth: 2),
                       )
-                    : const Row(
+                    : Row(
                         mainAxisAlignment: MainAxisAlignment.center,
+                        mainAxisSize: MainAxisSize.min,
                         children: [
-                          Icon(Icons.search, size: 16),
-                          SizedBox(width: 8),
-                          Text(
-                            "Analyze Closet",
-                            style: TextStyle(fontWeight: FontWeight.bold),
+                          const Icon(Icons.search, size: 16),
+                          const SizedBox(width: 8),
+                          Flexible(
+                            child: Text(
+                              "Analyze Closet",
+                              style: const TextStyle(fontWeight: FontWeight.bold),
+                              overflow: TextOverflow.ellipsis,
+                            ),
                           ),
                         ],
                       ),
@@ -613,17 +626,21 @@ class _StylistScreenState extends State<StylistScreen> {
           Padding(
             padding: const EdgeInsets.only(bottom: 12),
             child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Text(
-                  stylistVM.lookName!.toUpperCase(),
-                  style: GoogleFonts.manrope(
-                    fontSize: 14.4,
-                    fontWeight: FontWeight.w900,
-                    letterSpacing: 2.5,
-                    color: Colors.black.withValues(alpha: 0.7),
+                Expanded(
+                  child: Text(
+                    stylistVM.lookName!.toUpperCase(),
+                    style: GoogleFonts.manrope(
+                      fontSize: 14.4,
+                      fontWeight: FontWeight.w900,
+                      letterSpacing: 2.5,
+                      color: Colors.black.withValues(alpha: 0.7),
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
                   ),
                 ),
+                const SizedBox(width: 8),
                 IconButton(
                   onPressed: () => stylistVM.resetRecommendation(),
                   icon: const Icon(Icons.close_rounded, size: 20),
@@ -704,6 +721,7 @@ class _StylistScreenState extends State<StylistScreen> {
                     ),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
+                      mainAxisSize: MainAxisSize.min,
                       children: [
                         Text(
                           item.category,
@@ -712,6 +730,7 @@ class _StylistScreenState extends State<StylistScreen> {
                             fontSize: 10.8,
                           ),
                           maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
                         ),
                         Text(
                           item.color,
@@ -719,6 +738,8 @@ class _StylistScreenState extends State<StylistScreen> {
                             fontSize: 9,
                             color: Colors.grey,
                           ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
                         ),
                       ],
                     ),
@@ -728,6 +749,25 @@ class _StylistScreenState extends State<StylistScreen> {
             );
           },
         ),
+        const SizedBox(height: 20),
+        if (!stylistVM.isRecommendationSaved)
+          SizedBox(
+            width: double.infinity,
+            child: ElevatedButton.icon(
+              onPressed: () => _showSaveOutfitDialog(context, stylistVM),
+              icon: const Icon(Icons.bookmark_add_outlined),
+              label: const Text("Save as Outfit"),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xff0AAE00),
+                foregroundColor: Colors.white,
+                padding: const EdgeInsets.symmetric(vertical: 16),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(20),
+                ),
+                elevation: 0,
+              ),
+            ),
+          ),
         const SizedBox(height: 20),
       ],
     );
@@ -761,28 +801,35 @@ class _StylistScreenState extends State<StylistScreen> {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Row(
-                children: [
-                  Text(
-                    "Closet Audit",
-                    style: GoogleFonts.manrope(
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
+              Flexible(
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Flexible(
+                      child: Text(
+                        "Closet Audit",
+                        style: GoogleFonts.manrope(
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                        ),
+                        overflow: TextOverflow.ellipsis,
+                      ),
                     ),
-                  ),
-                  const SizedBox(width: 8),
-                  IconButton(
-                    onPressed: () => stylistVM.resetAnalysis(),
-                    icon: const Icon(
-                      Icons.close_rounded,
-                      size: 18,
-                      color: Colors.grey,
+                    const SizedBox(width: 8),
+                    IconButton(
+                      onPressed: () => stylistVM.resetAnalysis(),
+                      icon: const Icon(
+                        Icons.close_rounded,
+                        size: 18,
+                        color: Colors.grey,
+                      ),
+                      padding: EdgeInsets.zero,
+                      constraints: const BoxConstraints(),
                     ),
-                    padding: EdgeInsets.zero,
-                    constraints: const BoxConstraints(),
-                  ),
-                ],
+                  ],
+                ),
               ),
+              const SizedBox(width: 8),
               Container(
                 padding: const EdgeInsets.symmetric(
                   horizontal: 12,
@@ -922,6 +969,169 @@ class _StylistScreenState extends State<StylistScreen> {
               ),
             ),
         ],
+      ),
+    );
+  }
+
+  void _showSaveOutfitDialog(BuildContext context, StylistViewmodel stylistVM) {
+    final TextEditingController nameController =
+        TextEditingController(text: stylistVM.lookName);
+    final outfitVM = context.read<OutfitViewmodel>();
+    String? localError;
+
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => StatefulBuilder(
+        builder: (context, setDialogState) {
+          return AlertDialog(
+            shape:
+                RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+            title: Text(
+              "Save AI Outfit",
+              style: GoogleFonts.manrope(fontWeight: FontWeight.bold),
+            ),
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  "Give your new look a specific name to find it later in your closet.",
+                  style: GoogleFonts.manrope(
+                    fontSize: 12,
+                    color: Colors.grey.shade600,
+                  ),
+                ),
+                const SizedBox(height: 16),
+                TextField(
+                  controller: nameController,
+                  autofocus: true,
+                  decoration: InputDecoration(
+                    labelText: "Outfit Name",
+                    hintText: "e.g. Tropical Vacation",
+                    errorText: localError,
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(16),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 12),
+                Container(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                  decoration: BoxDecoration(
+                    color: Colors.grey.shade100,
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Row(
+                    children: [
+                      const Icon(Icons.event_note_outlined,
+                          size: 14, color: Colors.grey),
+                      const SizedBox(width: 8),
+                      Text(
+                        "Occasion: $selectedOccasion",
+                        style: GoogleFonts.manrope(
+                          fontSize: 11,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.grey.shade700,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+            actions: [
+              TextButton(
+                onPressed: outfitVM.isSubmitting
+                    ? null
+                    : () => Navigator.pop(context),
+                child: Text(
+                  "Cancel",
+                  style: TextStyle(color: Colors.grey.shade600),
+                ),
+              ),
+              ElevatedButton(
+                onPressed: outfitVM.isSubmitting
+                    ? null
+                    : () async {
+                        final name = nameController.text.trim();
+                        if (name.isEmpty) {
+                          setDialogState(() => localError = "Name is required");
+                          return;
+                        }
+
+                        final itemIds = stylistVM.recommendedItems!
+                            .map((e) => e.id)
+                            .toList();
+
+                        final result = await outfitVM.createOutfit(
+                          name: name,
+                          occasion: selectedOccasion,
+                          itemIds: itemIds,
+                        );
+
+                        if (result != null) {
+                          stylistVM.markAsSaved();
+                          if (!context.mounted) return;
+                          Navigator.pop(context);
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: const Row(
+                                children: [
+                                  Icon(Icons.check_circle, color: Colors.white),
+                                  SizedBox(width: 12),
+                                  Text("Outfit saved to your closet!"),
+                                ],
+                              ),
+                              backgroundColor: const Color(0xff0AAE00),
+                              behavior: SnackBarBehavior.floating,
+                              duration: const Duration(seconds: 4),
+                              action: SnackBarAction(
+                                label: "VIEW",
+                                textColor: Colors.white,
+                                onPressed: () {
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (_) =>
+                                          OutfitDetailScreen(outfit: result),
+                                    ),
+                                  );
+                                },
+                              ),
+                            ),
+                          );
+                        } else {
+                          // Extract cleaner error message if possible
+                          String errorMsg =
+                              outfitVM.error ?? "Failed to save outfit";
+                          if (errorMsg.contains("already exists")) {
+                            errorMsg = "An outfit with this name already exists";
+                          }
+                          setDialogState(() => localError = errorMsg);
+                        }
+                      },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFF673AB7),
+                  foregroundColor: Colors.white,
+                  shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12)),
+                ),
+                child: outfitVM.isSubmitting
+                    ? const SizedBox(
+                        height: 18,
+                        width: 18,
+                        child: CircularProgressIndicator(
+                          color: Colors.white,
+                          strokeWidth: 2,
+                        ),
+                      )
+                    : const Text("Save Outfit"),
+              ),
+            ],
+          );
+        },
       ),
     );
   }
