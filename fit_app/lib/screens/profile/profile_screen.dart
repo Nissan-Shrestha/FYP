@@ -11,6 +11,7 @@ import 'plan_screen.dart';
 import 'statistics_screen.dart';
 import 'package:fit_app/screens/profile/featured_requests_screen.dart';
 import 'package:fit_app/screens/profile/change_password_screen.dart';
+import 'package:fit_app/widgets/verified_badge.dart';
 
 String capitalize(String s) =>
     s.isEmpty ? s : s[0].toUpperCase() + s.substring(1);
@@ -755,6 +756,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                   fontWeight: FontWeight.w800,
                                 ),
                               ),
+                              if (profile.isFeatured) ...[
+                                const SizedBox(width: 8),
+                                const VerifiedBadge(size: 16),
+                              ],
                               const SizedBox(width: 8),
                               IconButton(
                                 onPressed: () =>

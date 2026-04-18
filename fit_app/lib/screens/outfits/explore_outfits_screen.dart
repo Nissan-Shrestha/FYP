@@ -11,6 +11,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+import 'package:fit_app/widgets/verified_badge.dart';
 
 class ExploreOutfitsScreen extends StatefulWidget {
   const ExploreOutfitsScreen({super.key});
@@ -341,12 +342,20 @@ class _ExploreOutfitCard extends StatelessWidget {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(
-                        outfit.ownerUsername ?? "User",
-                        style: const TextStyle(
-                          fontWeight: FontWeight.bold,
-                          fontSize: 13.5,
-                        ),
+                      Row(
+                        children: [
+                          Text(
+                            outfit.ownerUsername ?? "User",
+                            style: const TextStyle(
+                              fontWeight: FontWeight.bold,
+                              fontSize: 13.5,
+                            ),
+                          ),
+                          if (outfit.ownerIsFeatured) ...[
+                            const SizedBox(width: 4),
+                            const VerifiedBadge(size: 14),
+                          ],
+                        ],
                       ),
                       Text(
                         capitalize(outfit.name),
@@ -476,27 +485,15 @@ class _ExploreOutfitCard extends StatelessWidget {
                   const Spacer(),
                   IconButton(
                     onPressed: () async {
-                      final reason = await showDialog<String>(
-                        context: context,
-                        builder: (context) => AlertDialog(
-                          title: const Text("Report Outfit"),
-                          content: Column(
-                            mainAxisSize: MainAxisSize.min,
-                            children: ["Inappropriate", "Spam", "Other"]
-                                .map(
-                                  (r) => ListTile(
-                                    title: Text(r),
-                                    onTap: () => Navigator.pop(context, r),
-                                  ),
-                                )
-                                .toList(),
-                          ),
-                        ),
+                      final result = await _showReportDialog(
+                        context,
+                        "Report Outfit",
                       );
-                      if (reason != null && context.mounted) {
+                      if (result != null && context.mounted) {
                         await context.read<OutfitViewmodel>().reportOutfit(
                           outfit.id,
-                          reason,
+                          result["reason"]!,
+                          description: result["description"],
                         );
                         if (!context.mounted) return;
                         ScaffoldMessenger.of(context).showSnackBar(
@@ -760,13 +757,24 @@ class _CommunityFeaturedWardrobesSection extends StatelessWidget {
                                   ),
                                   const SizedBox(width: 8),
                                   Expanded(
-                                    child: Text(
-                                      lb.owner.username,
-                                      style: const TextStyle(
-                                        fontWeight: FontWeight.bold,
-                                        fontSize: 11.7,
-                                      ),
-                                      maxLines: 1,
+                                    child: Row(
+                                      children: [
+                                        Flexible(
+                                          child: Text(
+                                            lb.owner.username,
+                                            style: const TextStyle(
+                                              fontWeight: FontWeight.bold,
+                                              fontSize: 11.7,
+                                            ),
+                                            maxLines: 1,
+                                            overflow: TextOverflow.ellipsis,
+                                          ),
+                                        ),
+                                        if (lb.owner.isFeatured) ...[
+                                          const SizedBox(width: 4),
+                                          const VerifiedBadge(size: 12),
+                                        ],
+                                      ],
                                     ),
                                   ),
                                   const SizedBox(width: 8),
@@ -791,6 +799,46 @@ class _CommunityFeaturedWardrobesSection extends StatelessWidget {
                                       ),
                                     ),
                                   ),
+                                  if (lb.owner.firebaseUid !=
+                                      context
+                                          .read<AuthViewmodel>()
+                                          .profile
+                                          ?.firebaseUid)
+                                    IconButton(
+                                      onPressed: () async {
+                                        final result = await _showReportDialog(
+                                          context,
+                                          "Report Wardrobe",
+                                        );
+                                        if (result != null && context.mounted) {
+                                          await context
+                                              .read<OutfitViewmodel>()
+                                              .reportFeaturedWardrobe(
+                                                lb.requestId,
+                                                result["reason"]!,
+                                                description:
+                                                    result["description"],
+                                              );
+                                          if (!context.mounted) return;
+                                          ScaffoldMessenger.of(
+                                            context,
+                                          ).showSnackBar(
+                                            const SnackBar(
+                                              content: Text(
+                                                "Wardrobe Reported",
+                                              ),
+                                            ),
+                                          );
+                                        }
+                                      },
+                                      constraints: const BoxConstraints(),
+                                      padding: const EdgeInsets.only(left: 4),
+                                      icon: const Icon(
+                                        Icons.report_problem_outlined,
+                                        size: 14,
+                                        color: Colors.grey,
+                                      ),
+                                    ),
                                 ],
                               ),
                               const SizedBox(height: 8),
@@ -864,4 +912,79 @@ class _SocialIcon extends StatelessWidget {
       ),
     );
   }
+}
+
+Future<Map<String, String>?> _showReportDialog(
+  BuildContext context,
+  String title,
+) async {
+  String? selectedReason;
+  final descController = TextEditingController();
+
+  return showDialog<Map<String, String>>(
+    context: context,
+    builder: (context) => StatefulBuilder(
+      builder: (context, setDialogState) => AlertDialog(
+        title: Text(title),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            DropdownButtonFormField<String>(
+              value: selectedReason,
+              hint: const Text("Select a reason"),
+              items: [
+                "Inappropriate",
+                "Spam",
+                "Copyright",
+                "Other",
+              ].map((r) => DropdownMenuItem(value: r, child: Text(r))).toList(),
+              onChanged: (v) => setDialogState(() => selectedReason = v),
+              decoration: InputDecoration(
+                contentPadding: const EdgeInsets.symmetric(horizontal: 12),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+              ),
+            ),
+            const SizedBox(height: 16),
+            TextField(
+              controller: descController,
+              maxLines: 3,
+              style: const TextStyle(fontSize: 14),
+              decoration: InputDecoration(
+                hintText: "Additional details (optional)",
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                contentPadding: const EdgeInsets.all(12),
+              ),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text("Cancel"),
+          ),
+          ElevatedButton(
+            onPressed: selectedReason == null
+                ? null
+                : () => Navigator.pop(context, {
+                    "reason": selectedReason!,
+                    "description": descController.text,
+                  }),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color(0xFF673AB7),
+              foregroundColor: Colors.white,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(8),
+              ),
+            ),
+            child: const Text("Submit"),
+          ),
+        ],
+      ),
+    ),
+  );
 }

@@ -9,7 +9,9 @@ from google import genai
 import os
 from django.db import models
 import stripe
+import requests
 
+from django.shortcuts import render
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
@@ -1380,7 +1382,11 @@ def admin_user_update(request, firebase_uid):
         user_to_update.username = request.data["username"]
     
     if "plan" in request.data:
-        user_to_update.plan = request.data["plan"]
+        new_plan = request.data["plan"]
+        # If admin is manually promoting to premium, clear the expiry date to make it permanent
+        if new_plan.lower() == "premium" and user_to_update.plan.lower() != "premium":
+            user_to_update.premium_until = None
+        user_to_update.plan = new_plan
         
     if "is_admin" in request.data:
         # Prevent demoting a superadmin
@@ -1520,36 +1526,43 @@ def admin_user_view(request, firebase_uid):
 @api_view(["POST"])
 def create_report(request):
     """
-    Creates a new report for an outfit.
+    Creates a new report for an outfit or a featured wardrobe.
     """
-    
-    
     firebase_uid, err = get_firebase_uid(request)
-    if err:
-        return err
+    if err: return err
     profile, _ = _get_profile_by_firebase_uid(firebase_uid)
     
     outfit_id = request.data.get("outfit_id")
+    feat_req_id = request.data.get("featured_request_id")
     reason = request.data.get("reason")
+    description = request.data.get("description")
     
-    if not outfit_id or not reason:
-        return Response({"error": "outfit_id and reason are required"}, status=400)
-        
+    if not (outfit_id or feat_req_id) or not reason:
+        return Response({"error": "Target ID (outfit or featured) and reason are required"}, status=400)
+    
     try:
-        outfit = Outfit.objects.get(id=outfit_id)
+        report_data = {
+            "reporter": profile,
+            "reason": reason,
+            "description": description
+        }
         
-        # Block self-reporting
-        if outfit.owner == profile:
-            return Response({"error": "You cannot report your own outfit."}, status=400)
-
-        report = Report.objects.create(
-            reporter=profile,
-            outfit=outfit,
-            reason=reason
-        )
+        if outfit_id:
+            outfit = Outfit.objects.get(id=outfit_id)
+            if outfit.owner == profile:
+                return Response({"error": "You cannot report your own outfit."}, status=400)
+            report_data["outfit"] = outfit
+        else:
+            feat_req = FeaturedWardrobeRequest.objects.get(id=feat_req_id)
+            if feat_req.requester == profile:
+                return Response({"error": "You cannot report your own wardrobe."}, status=400)
+            report_data["featured_request"] = feat_req
+            
+        Report.objects.create(**report_data)
+            
         return Response({"message": "Report submitted successfully"}, status=201)
-    except Outfit.DoesNotExist:
-        return Response({"error": "Outfit not found"}, status=404)
+    except (Outfit.DoesNotExist, FeaturedWardrobeRequest.DoesNotExist):
+        return Response({"error": "Target not found"}, status=404)
 
 
 @api_view(["GET"])
@@ -1607,6 +1620,36 @@ def admin_report_action(request, report_id):
         elif action == "delete_outfit":
             if report.outfit:
                 report.outfit.delete()
+            report.status = "resolved"
+            report.save()
+        elif action == "remove_featured":
+            if report.featured_request:
+                feat = report.featured_request
+                # 1. Un-feature it immediately
+                feat.status = "rejected"
+                feat.admin_feedback = "Removed by admin following community report."
+                feat.save()
+                
+                # 2. Resolve ALL other pending reports for this wardrobe automatically
+                Report.objects.filter(featured_request=feat, status='pending').update(status='resolved')
+                
+                # 3. Demote the user so they are no longer 'Trusted' for auto-approval
+                target_user = feat.requester
+                target_user.is_featured = False
+                target_user.save()
+                
+                # 4. Notify the user their featured wardrobe was removed
+                from .utils import send_push_notification
+                if target_user.fcm_token:
+                    send_push_notification(
+                        fcm_token=target_user.fcm_token,
+                        title="Featured Wardrobe Removed",
+                        body=f"Your wardrobe '{feat.wardrobe.name}' was removed from Discovery following a review.",
+                        data={"type": "feature_rejection", "request_id": str(feat.id)}
+                    )
+                
+                print(f"ADMIN ACTION: Un-featured request {feat.id} and demoted user {target_user.username}", flush=True)
+
             report.status = "resolved"
             report.save()
         else:
@@ -1925,6 +1968,45 @@ def create_premium_payment_intent(request):
         return Response({'error': str(e)}, status=400)
 
 
+def _handle_featured_request_payment_success(feat_req):
+    """
+    Called when a payment is verified (Stripe or Khalti).
+    Handles auto-approval for Trusted Creators.
+    """
+    feat_req.is_paid = True
+    
+    # Check if this user has passed moderation before (is_featured badge)
+    if feat_req.requester.is_featured:
+        feat_req.status = 'approved'
+        feat_req.admin_feedback = "Auto-approved (Trusted Creator)."
+        feat_req.save()
+        
+        # Notify of approval
+        from .utils import send_push_notification
+        if feat_req.requester.fcm_token:
+            send_push_notification(
+                fcm_token=feat_req.requester.fcm_token,
+                title="Wardrobe Approved! 🌟",
+                body=f"Your wardrobe '{feat_req.wardrobe.name}' is live! (Auto-approved as Trusted Creator)",
+                data={"type": "feature_approval", "request_id": str(feat_req.id)}
+            )
+        print(f"AUTO-APPROVED: Trusted user {feat_req.requester.username} request {feat_req.id}", flush=True)
+    else:
+        # First-timer: needs manual review
+        feat_req.save()
+        
+        # Notify of pending review
+        from .utils import send_push_notification
+        if feat_req.requester.fcm_token:
+            send_push_notification(
+                fcm_token=feat_req.requester.fcm_token,
+                title="Payment Successful! 🎉",
+                body=f"Your feature request for '{feat_req.wardrobe.name}' is now pending review.",
+                data={"type": "payment_success"}
+            )
+        print(f"PENDING REVIEW: First-time request from {feat_req.requester.username} (ID: {feat_req.id})", flush=True)
+
+
 @api_view(["POST"])
 @permission_classes([AllowAny])
 def stripe_webhook(request):
@@ -1966,9 +2048,7 @@ def stripe_webhook(request):
 
             if event_type == 'featured_wardrobe':
                 feat_req = FeaturedWardrobeRequest.objects.get(stripe_payment_intent_id=payment_intent_id)
-                feat_req.is_paid = True
-                feat_req.save()
-                print(f"WEBHOOK SUCCESS: Featured Wardrobe Request {feat_req.id} marked as PAID.", flush=True)
+                _handle_featured_request_payment_success(feat_req)
             
             elif event_type == 'premium_subscription':
                 profile_id = getattr(metadata, 'profile_id', None)
@@ -1992,6 +2072,163 @@ def stripe_webhook(request):
             traceback.print_exc()
 
     return Response({"status": "success"}, status=200)
+
+
+@api_view(["POST"])
+def initiate_khalti_payment(request):
+    """
+    Initiates a Khalti ePayment and returns the payment URL and pidx.
+    """
+    firebase_uid, err = get_firebase_uid(request)
+    if err: return err
+    profile, _ = _get_profile_by_firebase_uid(firebase_uid)
+
+    wardrobe_id = request.data.get("wardrobe_id")
+    if not wardrobe_id:
+        return Response({"error": "wardrobe_id is required"}, status=400)
+
+    try:
+        wardrobe = Wardrobe.objects.get(id=wardrobe_id, owner=profile)
+    except Wardrobe.DoesNotExist:
+        return Response({"error": "Wardrobe not found"}, status=404)
+
+    # 1. Rule: Ensure wardrobe is not empty before allowing feature request
+    if wardrobe.items.count() == 0:
+        return Response({"error": "You cannot feature an empty wardrobe. Add some items first!"}, status=400)
+
+    # 2. Rule: Check for active requests that are actually PAID or recently APPROVED.
+    # We allow them to try again if the previous attempt was never paid.
+    from datetime import timedelta
+    three_days_ago = timezone.now() - timedelta(days=1)
+    
+    active_request = FeaturedWardrobeRequest.objects.filter(
+        requester=profile, 
+        wardrobe=wardrobe
+    ).filter(
+        models.Q(status='pending', is_paid=True) | 
+        models.Q(status='approved', updated_at__gte=three_days_ago)
+    ).first()
+
+    if active_request:
+        return Response({"error": "This wardrobe is already featured or has an active paid request."}, status=400)
+
+    # 3. Rule: Clean up any old unpaid requests for this wardrobe so we don't clutter the DB
+    FeaturedWardrobeRequest.objects.filter(requester=profile, wardrobe=wardrobe, is_paid=False).delete()
+
+    # Khalti Setup
+    secret_key = os.getenv("KHALTI_SECRET_KEY")
+    base_url = os.getenv("KHALTI_BASE_URL")
+    
+    if not secret_key or not base_url:
+        return Response({"error": "Khalti is not configured on the server."}, status=500)
+
+    # Amount in Paisa (1 NPR = 100 Paisa). 
+    # $1.99 Featured Request = ~270 NPR. Let's fix it at 200 NPR for testing.
+    amount = 20000 
+
+    headers = {
+        'Authorization': f'key {secret_key}',
+        'Content-Type': 'application/json',
+    }
+    
+    # Return URL for Khalti redirect.
+    return_url = request.build_absolute_uri('/api/payments/khalti/verify/')
+
+    payload = {
+        "return_url": return_url,
+        "website_url": "https://fitapp.com",
+        "amount": amount,
+        "purchase_order_id": f"feat_{wardrobe.id}_{profile.id}",
+        "purchase_order_name": f"Feature Wardrobe: {wardrobe.name}",
+        "customer_info": {
+            "name": profile.username,
+            "email": profile.email,
+        }
+    }
+
+    try:
+        response = requests.post(f"{base_url}/initiate/", json=payload, headers=headers)
+        res_data = response.json()
+
+        if response.status_code != 200:
+            print(f"KHALTI ERROR: {res_data}")
+            return Response({"error": res_data.get("detail", "Khalti initiation failed")}, status=400)
+
+        pidx = res_data.get("pidx")
+        payment_url = res_data.get("payment_url")
+
+        # Create UNPAID request placeholder
+        feat_request = FeaturedWardrobeRequest.objects.create(
+            requester=profile,
+            wardrobe=wardrobe,
+            is_paid=False,
+            khalti_pidx=pidx
+        )
+
+        return Response({
+            'payment_url': payment_url,
+            'pidx': pidx,
+            'request_id': feat_request.id
+        })
+
+    except Exception as e:
+        return Response({'error': str(e)}, status=400)
+
+
+@api_view(["GET"])
+@permission_classes([AllowAny])
+def verify_khalti_payment(request):
+    """
+    Khalti Callback: Verifies the payment and marks as PAID.
+    """
+    pidx = request.GET.get("pidx")
+    
+    if not pidx:
+        return Response({"error": "pidx missing"}, status=400)
+
+    secret_key = os.getenv("KHALTI_SECRET_KEY")
+    base_url = os.getenv("KHALTI_BASE_URL")
+
+    headers = {
+        'Authorization': f'key {secret_key}',
+        'Content-Type': 'application/json',
+    }
+    
+    payload = {"pidx": pidx}
+
+    try:
+        # Lookup the transaction status at Khalti
+        response = requests.post(f"{base_url}/lookup/", json=payload, headers=headers)
+        res_data = response.json()
+
+        actual_status = res_data.get("status")
+        
+        if actual_status == "Completed":
+            try:
+                feat_req = FeaturedWardrobeRequest.objects.get(khalti_pidx=pidx)
+                if not feat_req.is_paid:
+                    # Save transaction details for future refunds
+                    transaction_id = res_data.get("transaction_id")
+                    mobile = res_data.get("mobile")
+                    
+                    feat_req.khalti_transaction_id = transaction_id
+                    feat_req.khalti_mobile = mobile
+                    
+                    # This helper handles is_paid=True, auto-approval, and notifications
+                    _handle_featured_request_payment_success(feat_req)
+                
+                # Render the beautiful success page
+                return render(request, "khalti_success.html")
+            
+            except FeaturedWardrobeRequest.DoesNotExist:
+                return render(request, "khalti_error.html", {"status": "Request record not found in database."})
+        else:
+            # Render the error page with the received status
+            return render(request, "khalti_error.html", {"status": actual_status or "Failed"})
+
+    except Exception as e:
+        print(f"KHALTI VERIFICATION FATAL ERROR: {str(e)}")
+        return render(request, "khalti_error.html", {"status": str(e)})
 
 
 @api_view(["GET", "POST"])
@@ -2040,32 +2277,71 @@ def admin_featured_wardrobe_requests(request):
             feat_req.requester.save()
 
             from .utils import send_push_notification
-            send_push_notification(
-                fcm_token=feat_req.requester.fcm_token,
-                title="Wardrobe Approved! 🌟",
-                body=f"Congratulations! Your wardrobe '{feat_req.wardrobe.name}' is now live in Discovery.",
-                data={"type": "feature_approval", "request_id": str(feat_req.id)}
-            )
+            if feat_req.requester.fcm_token:
+                send_push_notification(
+                    fcm_token=feat_req.requester.fcm_token,
+                    title="Wardrobe Approved! 🌟",
+                    body=f"Congratulations! Your wardrobe '{feat_req.wardrobe.name}' is now live in Discovery.",
+                    data={"type": "feature_approval", "request_id": str(feat_req.id)}
+                )
 
         if new_status == "rejected":
-            # Automatic Refund
+            # Automatic Refund (errors here should NOT prevent user notification)
             try:
-                stripe.api_key = os.getenv("STRIPE_SECRET_KEY")
-                if feat_req.is_paid and feat_req.stripe_payment_intent_id:
+                # 1. Stripe Refund
+                if feat_req.stripe_payment_intent_id:
+                    stripe.api_key = os.getenv("STRIPE_SECRET_KEY")
                     stripe.Refund.create(
                         payment_intent=feat_req.stripe_payment_intent_id,
                     )
-                    print(f"REFUND SUCCESS: Request {feat_req.id} refunded.")
+                    print(f"STRIPE REFUND SUCCESS: Request {feat_req.id} refunded.")
 
-                    from .utils import send_push_notification
-                    send_push_notification(
-                        fcm_token=feat_req.requester.fcm_token,
-                        title="Wardrobe Review Update",
-                        body=f"Your feature request for '{feat_req.wardrobe.name}' was not approved this time. A full refund has been issued.",
-                        data={"type": "feature_rejection"}
-                    )
+                # 2. Khalti Refund
+                elif feat_req.khalti_transaction_id:
+                    secret_key = os.getenv("KHALTI_SECRET_KEY")
+                    is_debug = os.getenv("DEBUG", "True") == "True"
+                    domain = "dev.khalti.com" if is_debug else "khalti.com"
+                    
+                    # New documented Refund API URL
+                    refund_url = f"https://{domain}/api/merchant-transaction/{feat_req.khalti_transaction_id}/refund/"
+                    
+                    if secret_key:
+                        headers = {
+                            'Authorization': f'key {secret_key}',
+                            'Content-Type': 'application/json',
+                        }
+                        # Mobile is required for bank refunds, optional for wallet
+                        payload = {}
+                        if feat_req.khalti_mobile:
+                            payload["mobile"] = feat_req.khalti_mobile
+                        
+                        print(f"KHALTI REFUND: Attempting automatic refund for Transaction {feat_req.khalti_transaction_id}...")
+                        try:
+                            r = requests.post(refund_url, headers=headers, json=payload)
+                            if r.status_code == 200:
+                                print(f"KHALTI REFUND SUCCESS: Request {feat_req.id} reversed.")
+                            else:
+                                print(f"KHALTI REFUND FAILED: Status {r.status_code} - {r.text}")
+                        except Exception as e:
+                            print(f"KHALTI REFUND ERROR: {str(e)}")
+                    else:
+                        print(f"KHALTI REFUND SKIPPED: Missing KHALTI_SECRET_KEY in env.")
+                
+                elif feat_req.khalti_pidx:
+                    print(f"KHALTI REFUND SKIPPED: Request {feat_req.id} has no Transaction ID. Please refund manually in Dashboard.")
+
             except Exception as e:
-                print(f"REFUND ERROR: {str(e)}")
+                print(f"REFUND PROCESSING ERROR: {str(e)}")
+
+            # Notify User (ALWAYS send, regardless of refund outcome)
+            from .utils import send_push_notification
+            if feat_req.requester.fcm_token:
+                send_push_notification(
+                    fcm_token=feat_req.requester.fcm_token,
+                    title="Wardrobe Review Update",
+                    body=f"Your feature request for '{feat_req.wardrobe.name}' was not approved this time. A full refund has been issued.",
+                    data={"type": "feature_rejection", "request_id": str(feat_req.id)}
+                )
 
         return Response({"message": f"Request marked as {new_status}"})
     except FeaturedWardrobeRequest.DoesNotExist:
@@ -2097,3 +2373,130 @@ def admin_wardrobe_view(request, wardrobe_id):
         return Response(data)
     except Wardrobe.DoesNotExist:
         return Response({"error": "Wardrobe not found"}, status=404)
+
+@api_view(["POST"])
+def initiate_khalti_premium_payment(request):
+    """
+    Initiates a Khalti payment for Premium Subscription (500 NPR).
+    """
+    firebase_uid, err = get_firebase_uid(request)
+    if err:
+        return err
+
+    profile, error_response = _get_profile_by_firebase_uid(firebase_uid)
+    if error_response:
+        return error_response
+
+    # Khalti Setup
+    secret_key = os.getenv("KHALTI_SECRET_KEY")
+    base_url = os.getenv("KHALTI_BASE_URL")
+    
+    if not secret_key or not base_url:
+        return Response({"error": "Khalti is not configured on the server."}, status=500)
+
+    # Price for Premium: ~670 NPR ($4.99). We use 500 NPR for testing.
+    amount = 50000 
+
+    headers = {
+        'Authorization': f'key {secret_key}',
+        'Content-Type': 'application/json',
+    }
+    
+    # Return URL for Khalti redirect.
+    return_url = request.build_absolute_uri('/api/payments/khalti/premium/verify/')
+
+    payload = {
+        "return_url": return_url,
+        "website_url": "https://fitapp.com",
+        "amount": amount,
+        "purchase_order_id": f"premium_{profile.id}",
+        "purchase_order_name": "Premium Subscription (30 Days)",
+        "customer_info": {
+            "name": profile.username,
+            "email": profile.email,
+        }
+    }
+
+    try:
+        response = requests.post(f"{base_url}/initiate/", json=payload, headers=headers)
+        res_data = response.json()
+
+        if response.status_code != 200:
+            return Response({"error": res_data.get("detail", "Khalti initiation failed")}, status=400)
+
+        return Response({
+            'payment_url': res_data.get("payment_url"),
+            'pidx': res_data.get("pidx")
+        })
+
+    except Exception as e:
+        return Response({'error': str(e)}, status=400)
+
+
+@api_view(["GET"])
+@permission_classes([AllowAny])
+def verify_khalti_premium_payment(request):
+    """
+    Verifies Khalti payment for Premium and upgrades the profile.
+    """
+    pidx = request.GET.get("pidx")
+    print(f"KHALTI PREMIUM [Verify]: Received pidx={pidx}")
+    
+    if not pidx:
+        return render(request, "khalti_error.html", {"status": "pidx missing"})
+
+    secret_key = os.getenv("KHALTI_SECRET_KEY")
+    base_url = os.getenv("KHALTI_BASE_URL")
+
+    headers = {
+        'Authorization': f'key {secret_key}',
+        'Content-Type': 'application/json',
+    }
+    
+    payload = {"pidx": pidx}
+
+    try:
+        response = requests.post(f"{base_url}/lookup/", json=payload, headers=headers)
+        res_data = response.json()
+        print(f"KHALTI PREMIUM [Lookup]: Status={res_data.get('status')}, PO_ID={res_data.get('purchase_order_id')}")
+
+        if res_data.get("status") == "Completed":
+            # Extract profile_id from purchase_order_id (e.g. 'premium_42')
+            po_id = res_data.get("purchase_order_id") or request.GET.get("purchase_order_id")
+            print(f"KHALTI PREMIUM [Verify]: Extracted PO_ID={po_id}")
+
+            if po_id and po_id.startswith("premium_"):
+                try:
+                    profile_id = int(po_id.split("_")[1])
+                    profile = Profile.objects.get(id=profile_id)
+                    
+                    # Upgrade logic
+                    profile.plan = "premium"
+                    profile.premium_until = timezone.now() + timezone.timedelta(days=30)
+                    profile.save()
+                    print(f"KHALTI PREMIUM SUCCESS: User {profile.username} (ID: {profile_id}) upgraded via Khalti.")
+                    
+                    # Notify user of success
+                    from .utils import send_push_notification
+                    if profile.fcm_token:
+                        send_push_notification(
+                            fcm_token=profile.fcm_token,
+                            title="Premium Activated! 💎",
+                            body="Welcome to the Premium club! Explore all your new features now.",
+                            data={"type": "premium_success"}
+                        )
+
+                    return render(request, "khalti_success.html")
+                except (ValueError, IndexError, Profile.DoesNotExist) as e:
+                    print(f"KHALTI PREMIUM ERROR: Parsing/Profile failure: {e}")
+                    return render(request, "khalti_error.html", {"status": "User profile not found."})
+            else:
+                print(f"KHALTI PREMIUM ERROR: Invalid PO_ID structure: {po_id}")
+                return render(request, "khalti_error.html", {"status": "Invalid purchase order identifier."})
+        else:
+            print(f"KHALTI PREMIUM ERROR: Transaction not completed: {res_data.get('status')}")
+            return render(request, "khalti_error.html", {"status": res_data.get("status", "Payment Failed")})
+
+    except Exception as e:
+        print(f"KHALTI PREMIUM EXCEPTION: {str(e)}")
+        return render(request, "khalti_error.html", {"status": str(e)})

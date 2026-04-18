@@ -76,16 +76,26 @@ function renderReports(reports) {
         if (report.status === "ignored") statusBadgeClass = "bg-light text-dark border";
 
         const hasOutfit = !!report.outfit;
-        const outfitInfo = hasOutfit 
-            ? `<div class="fw-bold">${report.outfit_name}</div><div class="small text-muted">by ${report.outfit_owner_username}</div>`
-            : `<div class="text-muted"><i>Outfit Deleted</i></div>`;
+        const hasFeatured = !!report.featured_request;
+        
+        let targetInfo = "";
+        if (hasOutfit) {
+            targetInfo = `<span class="badge bg-info text-dark mb-1" style="font-size: 0.65rem; opacity: 0.8;">OUTFIT</span><div class="fw-bold">${report.outfit_name}</div><div class="small text-muted">by ${report.outfit_owner_username}</div>`;
+        } else if (hasFeatured) {
+            const feat = report.featured_request_details;
+            const wardrobeName = feat ? feat.wardrobe_name : "Private Wardrobe";
+            const ownerName = feat ? feat.requester_username : "Unknown";
+            targetInfo = `<span class="badge bg-primary mb-1" style="font-size: 0.65rem; opacity: 0.8;">WARDROBE</span><div class="fw-bold">${wardrobeName}</div><div class="small text-muted">by ${ownerName}</div>`;
+        } else {
+            targetInfo = `<div class="text-muted"><i>Content Deleted</i></div>`;
+        }
 
         row.innerHTML = `
             <td>
                 <div class="fw-medium">${report.reporter_username}</div>
             </td>
             <td>
-                ${outfitInfo}
+                ${targetInfo}
             </td>
             <td>
                 <div class="reason-cell text-wrap">${report.reason}</div>

@@ -287,18 +287,6 @@ class Outfit(models.Model):
         return f"{self.name} ({self.owner.username})"
 
 
-# Signals
-from django.db.models.signals import post_delete
-from django.dispatch import receiver
-
-@receiver(post_delete, sender=Outfit)
-def resolve_reports_on_outfit_delete(sender, instance, **kwargs):
-    """
-    When an outfit is deleted, mark any pending reports as 'resolved' automatically.
-    """
-    from .models import Report
-    Report.objects.filter(outfit=instance, status='pending').update(status='resolved')
-
 
 class Report(models.Model):
     STATUS_CHOICES = [
@@ -317,8 +305,17 @@ class Report(models.Model):
         on_delete=models.SET_NULL,
         related_name="reports",
         null=True,
+        blank=True
+    )
+    featured_request = models.ForeignKey(
+        'FeaturedWardrobeRequest',
+        on_delete=models.SET_NULL,
+        related_name="reports",
+        null=True,
+        blank=True
     )
     reason = models.CharField(max_length=255)
+    description = models.TextField(null=True, blank=True, help_text="Optional additional context from the reporter")
     status = models.CharField(
         max_length=20,
         choices=STATUS_CHOICES,
@@ -328,7 +325,12 @@ class Report(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
 
     def __str__(self):
-        return f"Report by {self.reporter.username} on {self.outfit.name if self.outfit else 'Deleted Outfit'}"
+        target = "Unknown"
+        if self.outfit:
+            target = f"Outfit: {self.outfit.name}"
+        elif self.featured_request:
+            target = f"Featured Wardrobe: {self.featured_request.wardrobe.name}"
+        return f"Report by {self.reporter.username} on {target}"
 
 class Schedule(models.Model):
     owner = models.ForeignKey(
@@ -378,6 +380,9 @@ class FeaturedWardrobeRequest(models.Model):
     admin_feedback = models.TextField(null=True, blank=True)
     is_paid = models.BooleanField(default=False)
     stripe_payment_intent_id = models.CharField(max_length=255, null=True, blank=True)
+    khalti_pidx = models.CharField(max_length=255, null=True, blank=True, help_text="Khalti Payment ID (pidx)")
+    khalti_transaction_id = models.CharField(max_length=255, null=True, blank=True, help_text="Khalti Transaction ID from lookup")
+    khalti_mobile = models.CharField(max_length=20, null=True, blank=True, help_text="Mobile used for payment")
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 

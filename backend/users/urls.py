@@ -1,4 +1,5 @@
 from django.urls import path
+# Force reload for Khalti
 from .views import (
     admin_categories,
     admin_dashboard_data,
@@ -40,6 +41,10 @@ from .views import (
     create_featured_wardrobe_payment_intent,
     create_premium_payment_intent,
     stripe_webhook,
+    initiate_khalti_payment,
+    verify_khalti_payment,
+    initiate_khalti_premium_payment,
+    verify_khalti_premium_payment,
 )
 
 urlpatterns = [
@@ -89,4 +94,8 @@ urlpatterns = [
     path("payments/create-intent/", create_featured_wardrobe_payment_intent),
     path("payments/create-premium-intent/", create_premium_payment_intent),
     path("payments/webhook/", stripe_webhook),
+    path("payments/khalti/initiate/", initiate_khalti_payment),
+    path("payments/khalti/verify/", verify_khalti_payment),
+    path("payments/khalti/premium/initiate/", initiate_khalti_premium_payment),
+    path("payments/khalti/premium/verify/", verify_khalti_premium_payment),
 ]

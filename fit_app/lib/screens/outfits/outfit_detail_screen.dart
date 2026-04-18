@@ -6,6 +6,7 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'package:fit_app/widgets/verified_badge.dart';
 
 import 'package:fit_app/screens/outfits/edit_outfit_screen.dart';
 
@@ -219,6 +220,10 @@ class _OutfitDetailScreenState extends State<OutfitDetailScreen> {
                           color: Colors.grey.shade800,
                         ),
                       ),
+                      if (outfit.ownerIsFeatured) ...[
+                        const SizedBox(width: 4),
+                        const VerifiedBadge(size: 14),
+                      ],
                     ],
                   ),
                   if (outfit.ownerBio?.isNotEmpty == true)

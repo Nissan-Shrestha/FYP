@@ -93,14 +93,15 @@ class ClothingItemSerializer(serializers.ModelSerializer):
 
 
 class WardrobeSerializer(serializers.ModelSerializer):
+    items = ClothingItemSerializer(many=True, read_only=True)
     item_count = serializers.SerializerMethodField()
     thumbnail = serializers.SerializerMethodField()
     is_locked = serializers.SerializerMethodField()
 
     class Meta:
         model = Wardrobe
-        fields = ["id", "owner", "name", "is_default", "item_count", "thumbnail", "is_locked", "created_at", "updated_at"]
-        read_only_fields = ("id", "owner", "items", "created_at", "updated_at")
+        fields = ["id", "owner", "name", "is_default", "items", "item_count", "thumbnail", "is_locked", "created_at", "updated_at"]
+        read_only_fields = ("id", "owner", "created_at", "updated_at")
 
     def get_is_locked(self, obj):
         from datetime import timedelta
@@ -160,18 +161,6 @@ class OutfitSerializer(serializers.ModelSerializer):
         read_only_fields = ("id", "owner", "created_at", "updated_at")
 
 
-class ReportSerializer(serializers.ModelSerializer):
-    reporter_username = serializers.CharField(source="reporter.username", read_only=True)
-    outfit_name = serializers.CharField(source="outfit.name", read_only=True)
-    outfit_owner_username = serializers.CharField(source="outfit.owner.username", read_only=True)
-    outfit_owner_firebase_uid = serializers.CharField(source="outfit.owner.firebase_uid", read_only=True)
-    outfit_details = OutfitSerializer(source="outfit", read_only=True)
-
-    class Meta:
-        model = Report
-        fields = "__all__"
-        read_only_fields = ("id", "reporter", "created_at", "updated_at")
-
 
 class ScheduleSerializer(serializers.ModelSerializer):
     outfit_details = OutfitSerializer(source="outfit", read_only=True)
@@ -184,10 +173,29 @@ class ScheduleSerializer(serializers.ModelSerializer):
 
 class FeaturedWardrobeRequestSerializer(serializers.ModelSerializer):
     wardrobe_name = serializers.CharField(source="wardrobe.name", read_only=True)
+    wardrobe_details = WardrobeSerializer(source="wardrobe", read_only=True)
     requester_username = serializers.CharField(source="requester.username", read_only=True)
     requester_firebase_uid = serializers.CharField(source="requester.firebase_uid", read_only=True)
+    requester_profile_picture = serializers.ImageField(source="requester.profile_picture", read_only=True)
+    requester_bio = serializers.CharField(source="requester.bio", read_only=True)
+    requester_social_links = serializers.JSONField(source="requester.social_links", read_only=True)
     
     class Meta:
         model = FeaturedWardrobeRequest
         fields = "__all__"
         read_only_fields = ("id", "requester", "status", "admin_feedback", "created_at", "updated_at")
+
+
+class ReportSerializer(serializers.ModelSerializer):
+    reporter_username = serializers.CharField(source="reporter.username", read_only=True)
+    outfit_name = serializers.CharField(source="outfit.name", read_only=True)
+    outfit_owner_username = serializers.CharField(source="outfit.owner.username", read_only=True)
+    outfit_owner_firebase_uid = serializers.CharField(source="outfit.owner.firebase_uid", read_only=True)
+    outfit_details = OutfitSerializer(source="outfit", read_only=True)
+    
+    featured_request_details = FeaturedWardrobeRequestSerializer(source="featured_request", read_only=True)
+
+    class Meta:
+        model = Report
+        fields = "__all__"
+        read_only_fields = ("id", "reporter", "created_at", "updated_at")

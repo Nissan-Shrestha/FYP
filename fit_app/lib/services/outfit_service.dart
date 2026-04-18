@@ -178,11 +178,30 @@ class OutfitService {
     }
   }
 
-  static Future<bool> reportOutfit(int outfitId, String reason) async {
+  static Future<bool> reportOutfit(int outfitId, String reason,
+      {String? description}) async {
     final response = await http.post(
       Uri.parse("$_baseApi/outfits/report/"),
       headers: await _authHeaders(),
-      body: jsonEncode({"outfit_id": outfitId, "reason": reason}),
+      body: jsonEncode({
+        "outfit_id": outfitId,
+        "reason": reason,
+        if (description != null) "description": description,
+      }),
+    );
+    return response.statusCode == 201;
+  }
+
+  static Future<bool> reportFeaturedWardrobe(int requestId, String reason,
+      {String? description}) async {
+    final response = await http.post(
+      Uri.parse("$_baseApi/outfits/report/"),
+      headers: await _authHeaders(),
+      body: jsonEncode({
+        "featured_request_id": requestId,
+        "reason": reason,
+        if (description != null) "description": description,
+      }),
     );
     return response.statusCode == 201;
   }

@@ -9,4 +9,4 @@ rembg==2.0.60
 onnxruntime==1.20.1
 google-genai
 stripe
-
+requests

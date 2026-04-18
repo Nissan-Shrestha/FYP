@@ -12,6 +12,7 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 import 'package:fit_app/viewmodels/auth_viewmodel.dart';
+import 'package:fit_app/widgets/verified_badge.dart';
 
 class Homescreen extends StatefulWidget {
   const Homescreen({super.key});
@@ -117,15 +118,23 @@ class _HomescreenState extends State<Homescreen> {
                   fontWeight: FontWeight.w500,
                 ),
               ),
-              Text(
-                profile?.username != null
-                    ? capitalize(profile!.username)
-                    : "Stylish!",
-                style: GoogleFonts.manrope(
-                  fontSize: 19.4,
-                  fontWeight: FontWeight.w900,
-                  letterSpacing: -0.5,
-                ),
+              Row(
+                children: [
+                  Text(
+                    profile?.username != null
+                        ? capitalize(profile!.username)
+                        : "Stylish!",
+                    style: GoogleFonts.manrope(
+                      fontSize: 19.4,
+                      fontWeight: FontWeight.w900,
+                      letterSpacing: -0.5,
+                    ),
+                  ),
+                  if (profile?.isFeatured == true) ...[
+                    const SizedBox(width: 8),
+                    const VerifiedBadge(size: 16),
+                  ],
+                ],
               ),
             ],
           ),

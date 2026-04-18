@@ -567,14 +567,42 @@ class _WardrobeViewScreenState extends State<WardrobeViewScreen> {
 
     if (!mounted) return;
 
+    if (!mounted) return;
+
+    final isTrusted = context.read<AuthViewmodel>().profile?.isFeatured ?? false;
+
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: Text(
-          success
-              ? "Payment successful! Your request will be reviewed shortly."
-              : (vm.lastActionError ?? "Failed to process payment"),
+        content: Row(
+          children: [
+            Icon(
+              success
+                  ? (isTrusted ? Icons.verified_rounded : Icons.check_circle)
+                  : Icons.error_outline,
+              color: Colors.white,
+              size: 20,
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Text(
+                success
+                    ? (isTrusted
+                        ? "Wardrobe Featured Successfully! 🌟"
+                        : "Payment successful! Request submitted for review.")
+                    : (vm.lastActionError ?? "Failed to process payment"),
+                style: GoogleFonts.manrope(
+                  fontWeight: FontWeight.w600,
+                  fontSize: 14,
+                ),
+              ),
+            ),
+          ],
         ),
         backgroundColor: success ? const Color(0xff0AAE00) : Colors.redAccent,
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        margin: const EdgeInsets.fromLTRB(16, 0, 16, 24),
+        duration: const Duration(seconds: 4),
       ),
     );
   }
