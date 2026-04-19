@@ -1842,8 +1842,8 @@ def featured_wardrobe_discovery(request):
     
     results = []
     for req in approved_requests:
-        # Get first 4 items for preview
-        preview_items = req.wardrobe.items.all()[:4]
+        # Get first 6 items for preview (to match 3x2 UI grid)
+        preview_items = req.wardrobe.items.all()[:6]
         preview_data = ClothingItemSerializer(preview_items, many=True, context={"request": request}).data
 
         results.append({

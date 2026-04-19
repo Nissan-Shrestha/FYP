@@ -13,6 +13,7 @@ class OutfitViewmodel extends ChangeNotifier {
   bool isLoadingSaved = false;
   bool isLoadingFeatured = false;
   bool isSubmitting = false;
+  bool isSharing = false;
   String? error;
 
   int currentExplorePage = 1;
@@ -274,6 +275,11 @@ class OutfitViewmodel extends ChangeNotifier {
       notifyListeners();
       return false;
     }
+  }
+
+  void setSharing(bool value) {
+    isSharing = value;
+    notifyListeners();
   }
 
   String _cleanError(dynamic e) {

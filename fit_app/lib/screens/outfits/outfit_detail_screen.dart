@@ -10,6 +10,10 @@ import 'package:fit_app/widgets/verified_badge.dart';
 
 import 'package:fit_app/viewmodels/auth_viewmodel.dart';
 import 'package:fit_app/screens/outfits/edit_outfit_screen.dart';
+import 'package:screenshot/screenshot.dart';
+import 'package:fit_app/services/sharing_service.dart';
+import 'dart:typed_data';
+import 'package:fit_app/widgets/outfit_share_card.dart';
 
 class OutfitDetailScreen extends StatefulWidget {
   final OutfitModel outfit;
@@ -23,6 +27,7 @@ class OutfitDetailScreen extends StatefulWidget {
 
 class _OutfitDetailScreenState extends State<OutfitDetailScreen> {
   late OutfitModel outfit;
+  final ScreenshotController _screenshotController = ScreenshotController();
 
   @override
   void initState() {
@@ -83,6 +88,43 @@ class _OutfitDetailScreenState extends State<OutfitDetailScreen> {
     );
   }
 
+
+  Future<void> _shareOutfit() async {
+    final outfitVM = context.read<OutfitViewmodel>();
+    if (outfitVM.isSharing) return;
+
+    outfitVM.setSharing(true);
+    
+    try {
+      // Use the lighter capture() method instead of captureFromWidget
+      final Uint8List? imageBytes = await _screenshotController.capture(
+        delay: const Duration(milliseconds: 10),
+      );
+
+      if (!mounted) return;
+
+      if (imageBytes != null) {
+        // We set sharing to false here so the UI is responsive while the share sheet is open
+        outfitVM.setSharing(false);
+
+        await SharingService.shareImageBytes(
+          imageBytes, 
+          'outfit_${DateTime.now().millisecondsSinceEpoch}.png',
+          text: 'Check out my ${outfit.name} outfit on Fit App! #Fashion #FitApp',
+        );
+      } else {
+        outfitVM.setSharing(false);
+      }
+    } catch (e) {
+      if (mounted) {
+        outfitVM.setSharing(false);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text("Error sharing outfit: $e")),
+        );
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -119,6 +161,14 @@ class _OutfitDetailScreenState extends State<OutfitDetailScreen> {
           ),
         ),
         actions: [
+          Consumer<OutfitViewmodel>(
+            builder: (context, vm, _) => IconButton(
+              onPressed: vm.isSharing ? null : _shareOutfit,
+              icon: vm.isSharing 
+                ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2))
+                : const Icon(Icons.share_outlined, color: Colors.black87),
+            ),
+          ),
           if (!widget.readOnly) ...[
             IconButton(
               onPressed: () async {
@@ -205,9 +255,21 @@ class _OutfitDetailScreenState extends State<OutfitDetailScreen> {
           ),
         ),
       ),
-      body: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+      body: Stack(
         children: [
+          // HIDDEN SCREENSHOT LAYER (Pre-rendered but off-screen)
+          Positioned(
+            left: -1000, // Move it way off screen
+            top: 0,
+            child: Screenshot(
+              controller: _screenshotController,
+              child: OutfitShareCard(outfit: outfit),
+            ),
+          ),
+          // MAIN UI CONTENT
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
           Padding(
             padding: const EdgeInsets.fromLTRB(20, 10, 20, 0),
             child: Row(
@@ -455,7 +517,9 @@ class _OutfitDetailScreenState extends State<OutfitDetailScreen> {
             },
           ),
         ),
-      ],
+       ],
+      ),
+     ],
     ),
   );
 }

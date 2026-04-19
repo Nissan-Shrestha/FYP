@@ -53,6 +53,8 @@ dependencies:
   khalti_checkout_flutter: ^1.0.0-dev.9
   flutter_launcher_icons: ^0.14.4
   font_awesome_flutter: ^11.0.0
+  share_plus: ^10.1.4
+  screenshot: ^3.0.0
 
 dependency_overrides:
   intl: any

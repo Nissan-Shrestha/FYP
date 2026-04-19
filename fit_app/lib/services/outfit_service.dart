@@ -138,16 +138,12 @@ class OutfitService {
         "is_public": isPublic,
       }),
     );
+    
     if (response.statusCode == 201) {
       return OutfitModel.fromJson(jsonDecode(response.body));
     }
     
-    try {
-      final errorData = jsonDecode(response.body);
-      throw Exception(errorData["error"] ?? "Failed to create outfit");
-    } catch (_) {
-      throw Exception("Failed to create outfit (Status: ${response.statusCode})");
-    }
+    throw Exception(_parseError(response.body, "Failed to create outfit (Status: ${response.statusCode})"));
   }
 
   static Future<OutfitModel> updateOutfit(
@@ -171,7 +167,7 @@ class OutfitService {
     if (response.statusCode == 200) {
       return OutfitModel.fromJson(jsonDecode(response.body));
     }
-    throw Exception("Failed to update outfit");
+    throw Exception(_parseError(response.body, "Failed to update outfit"));
   }
 
   static Future<void> deleteOutfit(int outfitId) async {
@@ -180,8 +176,26 @@ class OutfitService {
       headers: await _authHeaders(json: false),
     );
     if (response.statusCode != 204) {
-      throw Exception("Failed to delete outfit");
+      throw Exception(_parseError(response.body, "Failed to delete outfit"));
     }
+  }
+
+  static String _parseError(String body, String fallback) {
+    try {
+      final decoded = jsonDecode(body);
+      if (decoded is Map && decoded.containsKey("error")) {
+        return decoded["error"];
+      }
+      if (decoded is Map && decoded.values.isNotEmpty) {
+        // Handle DRF validation errors like {"name": ["This field is required"]}
+        final firstError = decoded.values.first;
+        if (firstError is List && firstError.isNotEmpty) {
+          return firstError.first.toString();
+        }
+        return firstError.toString();
+      }
+    } catch (_) {}
+    return fallback;
   }
 
   static Future<bool> reportOutfit(int outfitId, String reason,
